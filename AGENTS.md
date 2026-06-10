@@ -14,18 +14,18 @@ Completed phases:
 - Phase 2: general catalogs, catalog items, `document_type`, soft deletes, catalog seeders, and catalog APIs.
 - Phase 3: JWT authentication, refresh tokens, token revocation, auth sessions, admin user seeder, and split API routes.
 - Phase 4: condominiums, users by condominium, roles, permissions, menus, boards, condominium payment methods, seed data, and tests.
+- Phase 5: blocks, units, related people, access invitations, user billing profiles, unit aliquots, seed data, and tests.
 
 Upcoming phases:
 
-- Phase 5: blocks, units, owners, residents, and unit-user relationships.
-- Phase 6: billing concepts, fees, fee items, payments, allocations, attachments, and balances.
+- Phase 6: economic administration, condominium billing settings, monthly fees, fee items, extraordinary fees, payments, allocations, unit account movements, payment attachments, opening balances, bank movements, bank statement imports, bank reconciliations, expense categories, expenses, expense attachments, and online payment foundations.
 - Phase 7: common areas, reservations, incidents, maintenances, and maintenance tasks.
 - Phase 8: internal audit logs by session, user, condominium, endpoint, action, and before/after changes.
 - Phase 9: notification templates, notifications, deliveries, Redis-backed jobs, emails, and reminders.
 - Phase 10: condominium modules for enabling or disabling functionality per condominium.
 - Phase 11: reports, optimization, final Swagger review, and final project documentation.
 
-Every new phase must include migrations, seeders with usable test data, Swagger updates, module-specific routes, and tests.
+Phase 6 must support owner/tenant billing responsibility from Phase 5, late fees by condominium rules, advance payments, credit balances, bank reconciliation through imported CSV/Excel statement rows, voucher numbers on economic movements, manual bank adjustments, condominium expenses, and later gateway/webhook-based online payments. Every new phase must include migrations, seeders with usable test data, Swagger updates, module-specific routes, and tests.
 
 ## Build, Test, and Development Commands
 

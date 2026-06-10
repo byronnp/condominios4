@@ -579,6 +579,202 @@
                     }
                 }
             }
+        },
+        "/api/condominiums/{condominium}/blocks": {
+            "get": {
+                "tags": [
+                    "Unidades"
+                ],
+                "summary": "Listar bloques del condominio",
+                "operationId": "blocksIndex",
+                "responses": {
+                    "200": {
+                        "description": "Bloques encontrados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Unidades"
+                ],
+                "summary": "Crear bloque del condominio",
+                "operationId": "blocksStore",
+                "responses": {
+                    "201": {
+                        "description": "Bloque creado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/units": {
+            "get": {
+                "tags": [
+                    "Unidades"
+                ],
+                "summary": "Listar unidades",
+                "operationId": "unitsIndex",
+                "responses": {
+                    "200": {
+                        "description": "Unidades encontradas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Unidades"
+                ],
+                "summary": "Crear unidad",
+                "operationId": "unitsStore",
+                "responses": {
+                    "201": {
+                        "description": "Unidad creada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/units/{unit}": {
+            "get": {
+                "tags": [
+                    "Unidades"
+                ],
+                "summary": "Obtener unidad",
+                "operationId": "unitsShow",
+                "responses": {
+                    "200": {
+                        "description": "Unidad encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/units/{unit}/users": {
+            "get": {
+                "tags": [
+                    "Personas por unidad"
+                ],
+                "summary": "Listar personas de unidad",
+                "operationId": "unitUsersIndex",
+                "responses": {
+                    "200": {
+                        "description": "Personas encontradas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Personas por unidad"
+                ],
+                "summary": "Agregar persona a unidad",
+                "operationId": "unitUsersStore",
+                "responses": {
+                    "201": {
+                        "description": "Persona agregada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/units/{unit}/users/{user}/access-invitations": {
+            "post": {
+                "tags": [
+                    "Invitaciones"
+                ],
+                "summary": "Crear invitación de acceso",
+                "operationId": "accessInvitationsStore",
+                "responses": {
+                    "201": {
+                        "description": "Invitación creada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/access-invitations/{token}/accept": {
+            "post": {
+                "tags": [
+                    "Invitaciones"
+                ],
+                "summary": "Aceptar invitación de acceso",
+                "operationId": "accessInvitationsAccept",
+                "responses": {
+                    "200": {
+                        "description": "Invitación aceptada"
+                    }
+                }
+            }
+        },
+        "/api/users/{user}/billing-profiles": {
+            "get": {
+                "tags": [
+                    "Facturación usuarios"
+                ],
+                "summary": "Listar perfiles de facturación",
+                "operationId": "userBillingProfilesIndex",
+                "responses": {
+                    "200": {
+                        "description": "Perfiles encontrados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Facturación usuarios"
+                ],
+                "summary": "Crear perfil de facturación",
+                "operationId": "userBillingProfilesStore",
+                "responses": {
+                    "201": {
+                        "description": "Perfil creado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -626,6 +822,22 @@
         {
             "name": "Roles",
             "description": "Roles"
+        },
+        {
+            "name": "Unidades",
+            "description": "Unidades"
+        },
+        {
+            "name": "Personas por unidad",
+            "description": "Personas por unidad"
+        },
+        {
+            "name": "Invitaciones",
+            "description": "Invitaciones"
+        },
+        {
+            "name": "Facturación usuarios",
+            "description": "Facturación usuarios"
         }
     ]
 }

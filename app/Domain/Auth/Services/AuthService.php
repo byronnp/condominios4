@@ -15,8 +15,7 @@ class AuthService
 {
     public function __construct(
         private readonly JwtTokenService $jwtTokenService,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<string, mixed>  $data
@@ -32,6 +31,7 @@ class AuthService
                 'country' => $data['country'],
                 'document_type_id' => $data['document_type_id'],
                 'document_number' => $data['document_number'],
+                'is_access_enabled' => true,
             ]);
 
             return $this->createSessionTokens($user, $request);
@@ -46,8 +46,12 @@ class AuthService
     {
         $user = User::where('email', $data['email'])->first();
 
-        if (! $user || ! Hash::check($data['password'], $user->password)) {
+        if (! $user || ! $user->password || ! Hash::check($data['password'], $user->password)) {
             throw new RuntimeException('Credenciales inválidas.');
+        }
+
+        if (! $user->is_access_enabled) {
+            throw new RuntimeException('Acceso deshabilitado.');
         }
 
         return DB::transaction(fn (): array => $this->createSessionTokens($user, $request));

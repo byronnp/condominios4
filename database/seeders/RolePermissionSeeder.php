@@ -105,6 +105,16 @@ class RolePermissionSeeder extends Seeder
             ['module' => 'boards', 'action' => 'manage', 'name' => 'Administrar directivas', 'code' => 'boards.manage'],
             ['module' => 'payment_methods', 'action' => 'view', 'name' => 'Ver métodos de pago', 'code' => 'payment_methods.view'],
             ['module' => 'payment_methods', 'action' => 'manage', 'name' => 'Administrar métodos de pago', 'code' => 'payment_methods.manage'],
+            ['module' => 'units', 'action' => 'view', 'name' => 'Ver unidades', 'code' => 'units.view'],
+            ['module' => 'units', 'action' => 'manage', 'name' => 'Administrar unidades', 'code' => 'units.manage'],
+            ['module' => 'unit_users', 'action' => 'view', 'name' => 'Ver personas por unidad', 'code' => 'unit_users.view'],
+            ['module' => 'unit_users', 'action' => 'create', 'name' => 'Agregar personas por unidad', 'code' => 'unit_users.create'],
+            ['module' => 'unit_users', 'action' => 'update', 'name' => 'Actualizar personas por unidad', 'code' => 'unit_users.update'],
+            ['module' => 'unit_users', 'action' => 'deactivate', 'name' => 'Inactivar personas por unidad', 'code' => 'unit_users.deactivate'],
+            ['module' => 'unit_users', 'action' => 'manage_access', 'name' => 'Gestionar acceso de personas por unidad', 'code' => 'unit_users.manage_access'],
+            ['module' => 'unit_users', 'action' => 'manage_all', 'name' => 'Gestionar personas de todas las unidades', 'code' => 'unit_users.manage_all'],
+            ['module' => 'unit_users', 'action' => 'manage_own', 'name' => 'Gestionar personas de unidades propias', 'code' => 'unit_users.manage_own'],
+            ['module' => 'user_billing_profiles', 'action' => 'manage', 'name' => 'Administrar perfiles de facturación', 'code' => 'user_billing_profiles.manage'],
         ];
     }
 }

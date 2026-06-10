@@ -72,6 +72,7 @@ class CatalogSeeder extends Seeder
                 'description' => 'Relaciones posibles entre una persona residente y una unidad.',
                 'items' => [
                     ['code' => 'propietario', 'name' => 'Propietario'],
+                    ['code' => 'copropietario', 'name' => 'Copropietario'],
                     ['code' => 'inquilino', 'name' => 'Inquilino'],
                     ['code' => 'ocupante', 'name' => 'Ocupante'],
                     ['code' => 'familiar', 'name' => 'Familiar'],

@@ -10,11 +10,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
-#[Fillable(['name', 'email', 'password', 'country', 'document_type_id', 'document_number'])]
+#[Fillable(['name', 'email', 'password', 'country', 'document_type_id', 'document_number', 'phone', 'secondary_phone', 'is_access_enabled'])]
 #[Hidden(['password', 'remember_token', 'api_token'])]
 class User extends Authenticatable
 {
@@ -31,10 +34,11 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_access_enabled' => 'boolean',
         ];
     }
 
-    public function tenants(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function tenants(): BelongsToMany
     {
         return $this->belongsToMany(Tenant::class, 'tenant_user');
     }
@@ -61,14 +65,40 @@ class User extends Authenticatable
         return $this->hasMany(RefreshToken::class);
     }
 
-    public function roles(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function billingProfiles(): HasMany
+    {
+        return $this->hasMany(UserBillingProfile::class);
+    }
+
+    public function residentProfile(): HasOne
+    {
+        return $this->hasOne(ResidentProfile::class);
+    }
+
+    public function units(): BelongsToMany
+    {
+        return $this->belongsToMany(Unit::class, 'unit_user')
+            ->withPivot([
+                'id',
+                'relationship_type_id',
+                'started_at',
+                'ended_at',
+                'is_primary',
+                'is_billing_responsible',
+                'is_active',
+                'deleted_at',
+            ])
+            ->withTimestamps();
+    }
+
+    public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_user')->withPivot('tenant_id');
     }
 
-    public function permissionsForCondominium(Condominium $condominium): \Illuminate\Support\Collection
+    public function permissionsForCondominium(Condominium $condominium): Collection
     {
-        $condominiumUser = \Illuminate\Support\Facades\DB::table('condominium_user')
+        $condominiumUser = DB::table('condominium_user')
             ->where('condominium_id', $condominium->id)
             ->where('user_id', $this->id)
             ->where('is_active', true)

@@ -32,6 +32,9 @@ class DatabaseSeeder extends Seeder
             'country' => 'EC',
             'document_type_id' => $documentType->id,
             'document_number' => '1716128911',
+            'phone' => '0999999999',
+            'secondary_phone' => null,
+            'is_access_enabled' => true,
         ]);
 
         $this->call([
@@ -40,6 +43,7 @@ class DatabaseSeeder extends Seeder
             MenuSeeder::class,
             BoardSeeder::class,
             CondominiumPaymentMethodSeeder::class,
+            UnitSeeder::class,
         ]);
     }
 }

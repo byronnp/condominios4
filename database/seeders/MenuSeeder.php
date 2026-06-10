@@ -57,6 +57,7 @@ class MenuSeeder extends Seeder
                     ['name' => 'Usuarios', 'code' => 'usuarios', 'path' => '/usuarios', 'icon' => 'users', 'sort_order' => 2, 'permissions' => ['users.view']],
                     ['name' => 'Roles y permisos', 'code' => 'roles_permisos', 'path' => '/roles-permisos', 'icon' => 'shield', 'sort_order' => 3, 'permissions' => ['roles.view', 'permissions.view']],
                     ['name' => 'Menús', 'code' => 'menus', 'path' => '/menus', 'icon' => 'menu', 'sort_order' => 4, 'permissions' => ['menus.view']],
+                    ['name' => 'Unidades', 'code' => 'unidades', 'path' => '/unidades', 'icon' => 'home', 'sort_order' => 5, 'permissions' => ['units.view']],
                 ],
             ],
             [

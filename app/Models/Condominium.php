@@ -62,4 +62,14 @@ class Condominium extends Model
     {
         return $this->hasMany(CondominiumCatalogItem::class);
     }
+
+    public function blocks(): HasMany
+    {
+        return $this->hasMany(CondominiumBlock::class);
+    }
+
+    public function units(): HasMany
+    {
+        return $this->hasMany(Unit::class);
+    }
 }
