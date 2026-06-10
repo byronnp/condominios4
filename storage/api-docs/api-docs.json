@@ -1,0 +1,631 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Condominios API",
+        "description": "API para administración de condominios.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/",
+            "description": "Servidor actual"
+        }
+    ],
+    "paths": {
+        "/api/auth/register": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Registrar usuario",
+                "operationId": "authRegister",
+                "responses": {
+                    "201": {
+                        "description": "Usuario registrado"
+                    },
+                    "422": {
+                        "description": "Datos inválidos"
+                    }
+                }
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Iniciar sesión",
+                "operationId": "authLogin",
+                "responses": {
+                    "200": {
+                        "description": "Sesión iniciada"
+                    },
+                    "401": {
+                        "description": "Credenciales inválidas"
+                    }
+                }
+            }
+        },
+        "/api/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Renovar access token",
+                "operationId": "authRefresh",
+                "responses": {
+                    "200": {
+                        "description": "Token renovado"
+                    },
+                    "401": {
+                        "description": "Refresh token inválido"
+                    }
+                }
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Cerrar sesión actual",
+                "operationId": "authLogout",
+                "responses": {
+                    "200": {
+                        "description": "Sesión cerrada"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/logout-all": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Cerrar todas las sesiones",
+                "operationId": "authLogoutAll",
+                "responses": {
+                    "200": {
+                        "description": "Sesiones cerradas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/me": {
+            "get": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Obtener usuario autenticado",
+                "operationId": "authMe",
+                "responses": {
+                    "200": {
+                        "description": "Usuario autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/sessions": {
+            "get": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Listar sesiones activas",
+                "operationId": "authSessions",
+                "responses": {
+                    "200": {
+                        "description": "Sesiones encontradas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/sessions/{session}": {
+            "delete": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Revocar una sesión",
+                "operationId": "authRevokeSession",
+                "responses": {
+                    "200": {
+                        "description": "Sesión revocada"
+                    },
+                    "404": {
+                        "description": "Sesión no encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/boards": {
+            "get": {
+                "tags": [
+                    "Directivas"
+                ],
+                "summary": "Listar directivas por condominio",
+                "operationId": "boardsIndex",
+                "responses": {
+                    "200": {
+                        "description": "Directivas encontradas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Directivas"
+                ],
+                "summary": "Crear directiva",
+                "operationId": "boardsStore",
+                "responses": {
+                    "201": {
+                        "description": "Directiva creada"
+                    },
+                    "422": {
+                        "description": "Datos inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/catalogs": {
+            "get": {
+                "tags": [
+                    "Catálogos"
+                ],
+                "summary": "Listar catálogos generales activos",
+                "operationId": "catalogsIndex",
+                "responses": {
+                    "200": {
+                        "description": "Catálogos encontrados"
+                    }
+                }
+            }
+        },
+        "/api/catalogs/{catalog}": {
+            "get": {
+                "tags": [
+                    "Catálogos"
+                ],
+                "summary": "Consultar un catálogo general por código",
+                "operationId": "catalogsShow",
+                "parameters": [
+                    {
+                        "name": "catalog",
+                        "in": "path",
+                        "description": "Código del catálogo",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "document_types"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Catálogo encontrado"
+                    },
+                    "404": {
+                        "description": "Catálogo no encontrado"
+                    }
+                }
+            }
+        },
+        "/api/catalogs/{catalog}/items": {
+            "get": {
+                "tags": [
+                    "Catálogos"
+                ],
+                "summary": "Listar items activos de un catálogo general",
+                "operationId": "catalogsItems",
+                "parameters": [
+                    {
+                        "name": "catalog",
+                        "in": "path",
+                        "description": "Código del catálogo",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "document_types"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Items encontrados"
+                    },
+                    "404": {
+                        "description": "Catálogo no encontrado"
+                    }
+                }
+            }
+        },
+        "/api/condominiums": {
+            "get": {
+                "tags": [
+                    "Condominios"
+                ],
+                "summary": "Listar condominios",
+                "operationId": "condominiumsIndex",
+                "responses": {
+                    "200": {
+                        "description": "Condominios encontrados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Condominios"
+                ],
+                "summary": "Crear condominio",
+                "operationId": "condominiumsStore",
+                "responses": {
+                    "201": {
+                        "description": "Condominio creado"
+                    },
+                    "422": {
+                        "description": "Datos inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}": {
+            "get": {
+                "tags": [
+                    "Condominios"
+                ],
+                "summary": "Obtener condominio",
+                "operationId": "condominiumsShow",
+                "responses": {
+                    "200": {
+                        "description": "Condominio encontrado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/payment-methods": {
+            "get": {
+                "tags": [
+                    "Métodos de pago"
+                ],
+                "summary": "Listar métodos de pago del condominio",
+                "operationId": "condominiumPaymentMethodsIndex",
+                "responses": {
+                    "200": {
+                        "description": "Métodos de pago encontrados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Métodos de pago"
+                ],
+                "summary": "Crear método de pago del condominio",
+                "operationId": "condominiumPaymentMethodsStore",
+                "responses": {
+                    "201": {
+                        "description": "Método de pago creado"
+                    },
+                    "422": {
+                        "description": "Datos inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/menus": {
+            "get": {
+                "tags": [
+                    "Menús"
+                ],
+                "summary": "Listar menús",
+                "operationId": "menusIndex",
+                "responses": {
+                    "200": {
+                        "description": "Menús encontrados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Menús"
+                ],
+                "summary": "Crear menú padre o hijo",
+                "operationId": "menusStore",
+                "responses": {
+                    "201": {
+                        "description": "Menú creado"
+                    },
+                    "422": {
+                        "description": "Datos inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/menu": {
+            "get": {
+                "tags": [
+                    "Menús"
+                ],
+                "summary": "Obtener menú del usuario autenticado",
+                "operationId": "authMenu",
+                "responses": {
+                    "200": {
+                        "description": "Menú obtenido"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/permissions": {
+            "get": {
+                "tags": [
+                    "Permisos"
+                ],
+                "summary": "Listar permisos",
+                "operationId": "permissionsIndex",
+                "responses": {
+                    "200": {
+                        "description": "Permisos encontrados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Permisos"
+                ],
+                "summary": "Crear permiso",
+                "operationId": "permissionsStore",
+                "responses": {
+                    "201": {
+                        "description": "Permiso creado"
+                    },
+                    "422": {
+                        "description": "Datos inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/roles": {
+            "get": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Listar roles por condominio",
+                "operationId": "rolesIndex",
+                "responses": {
+                    "200": {
+                        "description": "Roles encontrados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Crear rol por condominio",
+                "operationId": "rolesStore",
+                "responses": {
+                    "201": {
+                        "description": "Rol creado"
+                    },
+                    "422": {
+                        "description": "Datos inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/roles/{role}/permissions": {
+            "put": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Asignar permisos a rol",
+                "operationId": "rolesSyncPermissions",
+                "responses": {
+                    "200": {
+                        "description": "Permisos actualizados"
+                    },
+                    "422": {
+                        "description": "Datos inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/health": {
+            "get": {
+                "tags": [
+                    "Sistema"
+                ],
+                "summary": "Verificar estado de la API",
+                "operationId": "systemHealth",
+                "responses": {
+                    "200": {
+                        "description": "API operativa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "API operativa."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "ok"
+                                                },
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Sistema",
+            "description": "Endpoints técnicos de la API"
+        },
+        {
+            "name": "Autenticación",
+            "description": "Registro, login y sesiones"
+        },
+        {
+            "name": "Catálogos",
+            "description": "Catálogos generales del sistema"
+        },
+        {
+            "name": "Condominios",
+            "description": "Administración multi-condominio"
+        },
+        {
+            "name": "Directivas",
+            "description": "Directivas"
+        },
+        {
+            "name": "Métodos de pago",
+            "description": "Métodos de pago"
+        },
+        {
+            "name": "Menús",
+            "description": "Menús"
+        },
+        {
+            "name": "Permisos",
+            "description": "Permisos"
+        },
+        {
+            "name": "Roles",
+            "description": "Roles"
+        }
+    ]
+}

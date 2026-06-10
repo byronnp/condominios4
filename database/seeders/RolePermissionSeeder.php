@@ -1,0 +1,110 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Condominium;
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class RolePermissionSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $permissions = collect($this->permissions())->mapWithKeys(function (array $permission): array {
+            $model = Permission::updateOrCreate([
+                'code' => $permission['code'],
+            ], [
+                'module' => $permission['module'],
+                'action' => $permission['action'],
+                'name' => $permission['name'],
+                'description' => $permission['description'] ?? null,
+                'is_system' => true,
+                'is_active' => true,
+            ]);
+
+            return [$model->code => $model];
+        });
+
+        Condominium::query()->each(function (Condominium $condominium) use ($permissions): void {
+            $roles = collect($this->roles())->mapWithKeys(function (array $role) use ($condominium): array {
+                $model = Role::updateOrCreate([
+                    'condominium_id' => $condominium->id,
+                    'code' => $role['code'],
+                ], [
+                    'name' => $role['name'],
+                    'description' => $role['description'] ?? null,
+                    'is_system' => true,
+                    'is_active' => true,
+                ]);
+
+                return [$model->code => $model];
+            });
+
+            $administrator = $roles->get('administrador');
+            $administrator?->permissions()->sync($permissions->pluck('id')->all());
+
+            $viewPermissions = $permissions
+                ->filter(fn (Permission $permission): bool => str_ends_with($permission->code, '.view'))
+                ->pluck('id')
+                ->all();
+
+            foreach (['presidente', 'tesorero', 'secretario'] as $code) {
+                $roles->get($code)?->permissions()->sync($viewPermissions);
+            }
+
+            $adminUser = User::where('email', 'byron_np@hotmail.com')->first();
+            $condominiumUser = DB::table('condominium_user')
+                ->where('condominium_id', $condominium->id)
+                ->where('user_id', $adminUser?->id)
+                ->first();
+
+            if ($condominiumUser && $administrator) {
+                DB::table('condominium_user_role')->updateOrInsert([
+                    'condominium_user_id' => $condominiumUser->id,
+                    'role_id' => $administrator->id,
+                ], [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'deleted_at' => null,
+                ]);
+            }
+        });
+    }
+
+    private function roles(): array
+    {
+        return [
+            ['code' => 'administrador', 'name' => 'Administrador', 'description' => 'Acceso completo al condominio.'],
+            ['code' => 'presidente', 'name' => 'Presidente', 'description' => 'Miembro principal de la directiva.'],
+            ['code' => 'tesorero', 'name' => 'Tesorero', 'description' => 'Responsable de seguimiento financiero.'],
+            ['code' => 'secretario', 'name' => 'Secretario', 'description' => 'Responsable de actas y comunicaciones.'],
+            ['code' => 'guardia', 'name' => 'Guardia', 'description' => 'Control operativo de accesos.'],
+            ['code' => 'propietario', 'name' => 'Propietario', 'description' => 'Propietario de una unidad.'],
+            ['code' => 'residente', 'name' => 'Residente', 'description' => 'Residente del condominio.'],
+        ];
+    }
+
+    private function permissions(): array
+    {
+        return [
+            ['module' => 'condominiums', 'action' => 'view', 'name' => 'Ver condominios', 'code' => 'condominiums.view'],
+            ['module' => 'condominiums', 'action' => 'create', 'name' => 'Crear condominios', 'code' => 'condominiums.create'],
+            ['module' => 'condominiums', 'action' => 'update', 'name' => 'Actualizar condominios', 'code' => 'condominiums.update'],
+            ['module' => 'users', 'action' => 'view', 'name' => 'Ver usuarios', 'code' => 'users.view'],
+            ['module' => 'users', 'action' => 'assign', 'name' => 'Asignar usuarios', 'code' => 'users.assign'],
+            ['module' => 'roles', 'action' => 'view', 'name' => 'Ver roles', 'code' => 'roles.view'],
+            ['module' => 'roles', 'action' => 'manage', 'name' => 'Administrar roles', 'code' => 'roles.manage'],
+            ['module' => 'permissions', 'action' => 'view', 'name' => 'Ver permisos', 'code' => 'permissions.view'],
+            ['module' => 'permissions', 'action' => 'manage', 'name' => 'Administrar permisos', 'code' => 'permissions.manage'],
+            ['module' => 'menus', 'action' => 'view', 'name' => 'Ver menús', 'code' => 'menus.view'],
+            ['module' => 'menus', 'action' => 'manage', 'name' => 'Administrar menús', 'code' => 'menus.manage'],
+            ['module' => 'boards', 'action' => 'view', 'name' => 'Ver directivas', 'code' => 'boards.view'],
+            ['module' => 'boards', 'action' => 'manage', 'name' => 'Administrar directivas', 'code' => 'boards.manage'],
+            ['module' => 'payment_methods', 'action' => 'view', 'name' => 'Ver métodos de pago', 'code' => 'payment_methods.view'],
+            ['module' => 'payment_methods', 'action' => 'manage', 'name' => 'Administrar métodos de pago', 'code' => 'payment_methods.manage'],
+        ];
+    }
+}

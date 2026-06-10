@@ -1,0 +1,10 @@
+vendor
+node_modules
+.env
+.env.local
+npm-debug.log
+Dockerfile
+docker-compose.yml
+storage/framework/cache/data
+storage/logs
+storage/testing

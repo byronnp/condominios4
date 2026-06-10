@@ -1,0 +1,45 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: condominios4-app
+    container_name: condominios4-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/var/www/html:cached
+      - vendor_data:/var/www/html/vendor
+    env_file:
+      - .env
+    environment:
+      DB_HOST: host.docker.internal
+      DB_CONNECTION: mysql
+      DB_PORT: 3306
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    working_dir: /var/www/html
+    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    container_name: condominios4-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  vendor_data:
+    driver: local
+  redis_data:
+    driver: local
