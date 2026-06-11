@@ -19,11 +19,11 @@ Completed phases:
 
 Upcoming phases:
 
-- Phase 7: visits, visitor registration by owner/admin/security, entry/exit logs, visit status, common areas, reservations, incidents, maintenances, maintenance tasks, seed data, and tests.
-- Phase 8: internal audit logs by session, user, condominium, endpoint, IP/user agent, action, affected model, before/after changes, token/session events, invitation events, seed data, and tests.
-- Phase 9: notification templates, notifications, notification deliveries, Redis-backed jobs, email invitations, login/account access emails, payment reminders, visit alerts, and tests.
-- Phase 10: condominium modules for enabling or disabling functionality per condominium. Keep menus and permissions independent from module activation.
-- Phase 11: reports, economic summaries, bank reconciliation reports, treasury handover reports, optimization, final Swagger review, and final project documentation. Do not create a `docs/` folder until this phase.
+- Phase 7: daily operation. Implement visits, visitor registration by owner/admin/security, visit authorization, entry/exit logs, visit status, common areas, reservations, availability validation, incidents, maintenances, and maintenance tasks. Expected tables include `visitors`, `visits`, `visit_logs`, `common_areas`, `common_area_reservations`, `incidents`, `maintenances`, and `maintenance_tasks`.
+- Phase 8: internal audit. Register activity by session, user, condominium, endpoint, HTTP method, IP, user agent, action, affected model, affected record, before/after values, token/session events, invitation events, and relevant economic events. Expected tables include `audit_logs` and optionally `audit_log_changes` when field-level change storage is needed.
+- Phase 9: notifications and email. Implement notification templates, internal notifications, delivery records, Redis-backed jobs, email invitations, account access emails, login notifications, payment reminders, visit alerts, reservation alerts, and failed delivery tracking. Expected tables include `notification_templates`, `notifications`, `notification_deliveries`, and `email_logs`.
+- Phase 10: condominium modules. Implement system modules and per-condominium module activation for enabling or disabling functionality. Keep modules independent from menus and permissions: modules decide whether a feature is available; menus decide navigation; permissions decide allowed actions. Expected tables include `system_modules` and `condominium_modules`.
+- Phase 11: reports, optimization, and closure. Implement economic summaries, unit account statements, payments, late fees, expenses, bank reconciliation, treasury handover, visits, and reservations reports. Review indexes, query performance, Swagger/OpenAPI coverage, seed data quality, and final project documentation. Create a `docs/` folder only in this phase if final documentation files are required.
 
 Every new phase must include migrations, seeders with usable test data, Swagger updates, module-specific routes, FormRequest validation classes, reusable rules when needed, and tests.
 
