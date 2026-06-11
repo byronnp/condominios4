@@ -164,6 +164,82 @@
                 ]
             }
         },
+        "/api/billing-concepts": {
+            "get": {
+                "tags": [
+                    "Economía"
+                ],
+                "summary": "Listar conceptos de cobro",
+                "operationId": "billingConceptsIndex",
+                "responses": {
+                    "200": {
+                        "description": "Conceptos encontrados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/billing-settings": {
+            "get": {
+                "tags": [
+                    "Economía"
+                ],
+                "summary": "Obtener configuración económica",
+                "operationId": "billingSettingsShow",
+                "responses": {
+                    "200": {
+                        "description": "Configuración encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/monthly-fees": {
+            "get": {
+                "tags": [
+                    "Economía"
+                ],
+                "summary": "Listar cuotas mensuales",
+                "operationId": "monthlyFeesIndex",
+                "responses": {
+                    "200": {
+                        "description": "Cuotas encontradas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/monthly-fees/generate": {
+            "post": {
+                "tags": [
+                    "Economía"
+                ],
+                "summary": "Generar cuotas mensuales",
+                "operationId": "monthlyFeesGenerate",
+                "responses": {
+                    "201": {
+                        "description": "Cuotas generadas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/condominiums/{condominium}/boards": {
             "get": {
                 "tags": [
@@ -802,6 +878,10 @@
         {
             "name": "Condominios",
             "description": "Administración multi-condominio"
+        },
+        {
+            "name": "Economía",
+            "description": "Economía"
         },
         {
             "name": "Directivas",

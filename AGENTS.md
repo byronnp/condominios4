@@ -13,19 +13,19 @@ Completed phases:
 - Phase 1: base Laravel API, Docker, Redis, Swagger/OpenAPI, standard API responses, centralized errors, and `api/health`.
 - Phase 2: general catalogs, catalog items, `document_type`, soft deletes, catalog seeders, and catalog APIs.
 - Phase 3: JWT authentication, refresh tokens, token revocation, auth sessions, admin user seeder, and split API routes.
-- Phase 4: condominiums, users by condominium, roles, permissions, menus, boards, condominium payment methods, seed data, and tests.
-- Phase 5: blocks, units, related people, access invitations, user billing profiles, unit aliquots, seed data, and tests.
+- Phase 4: condominiums, users by condominium, roles, permissions, two-level menus, boards/directives with dates, condominium payment methods, seed data, and tests.
+- Phase 5: blocks, units/houses, parking assignment through unit data, related people, owners, co-owners, tenants, residents, billing profiles, access invitations, user access enablement, unit aliquots, seed data, and tests.
+- Phase 6: economic administration, billing settings by condominium, monthly fees, extraordinary fees, late fee foundations, advance payments, credit balances, payments, allocations, unit account movements, bank opening balances, bank movements, statement imports, reconciliations, expenses, treasury handovers, payment order foundations, seed data, and tests.
 
 Upcoming phases:
 
-- Phase 6: economic administration, condominium billing settings, monthly fees, fee items, extraordinary fees, payments, allocations, unit account movements, payment attachments, opening balances, bank movements, bank statement imports, bank reconciliations, expense categories, expenses, expense attachments, and online payment foundations.
-- Phase 7: common areas, reservations, incidents, maintenances, and maintenance tasks.
-- Phase 8: internal audit logs by session, user, condominium, endpoint, action, and before/after changes.
-- Phase 9: notification templates, notifications, deliveries, Redis-backed jobs, emails, and reminders.
-- Phase 10: condominium modules for enabling or disabling functionality per condominium.
-- Phase 11: reports, optimization, final Swagger review, and final project documentation.
+- Phase 7: visits, visitor registration by owner/admin/security, entry/exit logs, visit status, common areas, reservations, incidents, maintenances, maintenance tasks, seed data, and tests.
+- Phase 8: internal audit logs by session, user, condominium, endpoint, IP/user agent, action, affected model, before/after changes, token/session events, invitation events, seed data, and tests.
+- Phase 9: notification templates, notifications, notification deliveries, Redis-backed jobs, email invitations, login/account access emails, payment reminders, visit alerts, and tests.
+- Phase 10: condominium modules for enabling or disabling functionality per condominium. Keep menus and permissions independent from module activation.
+- Phase 11: reports, economic summaries, bank reconciliation reports, treasury handover reports, optimization, final Swagger review, and final project documentation. Do not create a `docs/` folder until this phase.
 
-Phase 6 must support owner/tenant billing responsibility from Phase 5, late fees by condominium rules, advance payments, credit balances, bank reconciliation through imported CSV/Excel statement rows, voucher numbers on economic movements, manual bank adjustments, condominium expenses, and later gateway/webhook-based online payments. Every new phase must include migrations, seeders with usable test data, Swagger updates, module-specific routes, and tests.
+Every new phase must include migrations, seeders with usable test data, Swagger updates, module-specific routes, FormRequest validation classes, reusable rules when needed, and tests.
 
 ## Build, Test, and Development Commands
 
@@ -42,6 +42,12 @@ Use Docker commands when validating database-backed behavior because the project
 Follow Laravel conventions and PSR-12 formatting through Pint. Use 4-space indentation for PHP. Name controllers by module and action scope, for example `CondominiumController`, `RoleController`, and `MenuController`.
 
 Use English technical identifiers for code, tables, routes, and permission codes, while user-facing database seed names may be Spanish. Permission codes use `module.action`, for example `roles.manage` or `boards.view`. API responses should use `App\Support\Api\ApiResponse`.
+
+## Request Validation & Rules
+
+Do not place `$request->validate()` rules inside API controllers. Create FormRequest classes under `app/Http/Requests/Api/{Module}` and inject them into controller actions. Name requests with the controller/action intent, for example `PaymentStoreRequest`, `MonthlyFeeGenerateRequest`, or `TreasuryHandoverCalculateRequest`.
+
+Controllers should call `$request->validated()` and remain focused on orchestration only. Cross-field, catalog, condominium-scoped, or reusable validation logic should live in dedicated rule classes under `app/Rules`, for example `ValidCatalogItem`, instead of being duplicated across requests.
 
 ## Testing Guidelines
 
