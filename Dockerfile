@@ -1,4 +1,4 @@
-FROM php:8.3-cli
+FROM php:8.5-cli
 
 RUN apt-get update \
     && apt-get install -y git unzip libzip-dev zip zlib1g-dev libonig-dev libxml2-dev libsqlite3-dev libicu-dev \
