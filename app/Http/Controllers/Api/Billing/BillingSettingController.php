@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Billing;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Billing\BillingSettingStoreRequest;
+use App\Http\Resources\Api\Billing\BillingSettingResource;
 use App\Models\Condominium;
 use App\Models\CondominiumBillingSetting;
 use App\Support\Api\ApiResponse;
@@ -16,7 +17,7 @@ class BillingSettingController extends Controller
     public function show(Condominium $condominium): JsonResponse
     {
         return ApiResponse::success(
-            $condominium->hasOne(CondominiumBillingSetting::class)->where('is_active', true)->first(),
+            new BillingSettingResource($condominium->hasOne(CondominiumBillingSetting::class)->where('is_active', true)->first()),
             'Configuración económica encontrada.'
         );
     }
@@ -34,6 +35,6 @@ class BillingSettingController extends Controller
             'is_active' => true,
         ]);
 
-        return ApiResponse::success($setting, 'Configuración económica guardada correctamente.', 201);
+        return ApiResponse::success(new BillingSettingResource($setting), 'Configuración económica guardada correctamente.', 201);
     }
 }

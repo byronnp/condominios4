@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Billing;
 use App\Domain\Billing\Services\BillingService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Billing\MonthlyFeeGenerateRequest;
+use App\Http\Resources\Api\Billing\MonthlyFeeResource;
 use App\Models\Condominium;
 use App\Models\MonthlyFee;
 use App\Support\Api\ApiResponse;
@@ -19,7 +20,7 @@ class MonthlyFeeController extends Controller
     public function index(Condominium $condominium): JsonResponse
     {
         return ApiResponse::success(
-            MonthlyFee::where('condominium_id', $condominium->id)->with(['unit', 'billingResponsible', 'items.billingConcept'])->latest()->get(),
+            MonthlyFeeResource::collection(MonthlyFee::where('condominium_id', $condominium->id)->with(['unit', 'billingResponsible', 'items.billingConcept'])->latest()->get()),
             'Cuotas mensuales encontradas.'
         );
     }
@@ -31,6 +32,6 @@ class MonthlyFeeController extends Controller
 
         $fees = $this->billingService->generateMonthlyFees($condominium, (int) $data['period_year'], (int) $data['period_month']);
 
-        return ApiResponse::success($fees, 'Cuotas mensuales generadas correctamente.', 201);
+        return ApiResponse::success(MonthlyFeeResource::collection($fees), 'Cuotas mensuales generadas correctamente.', 201);
     }
 }

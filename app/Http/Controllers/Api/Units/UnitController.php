@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Api\Units;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Units\UnitStoreRequest;
+use App\Http\Resources\Api\Units\UnitResource;
 use App\Models\Condominium;
 use App\Models\Unit;
-use App\Rules\ValidCatalogItem;
 use App\Support\Api\ApiResponse;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 class UnitController extends Controller
@@ -20,30 +20,18 @@ class UnitController extends Controller
     public function index(Condominium $condominium): JsonResponse
     {
         return ApiResponse::success(
-            $condominium->units()
+            UnitResource::collection($condominium->units()
                 ->with(['block', 'parentUnit', 'childUnits.unitType', 'unitType'])
                 ->orderBy('code')
-                ->get(),
+                ->get()),
             'Unidades encontradas.'
         );
     }
 
     #[OA\Post(path: '/api/condominiums/{condominium}/units', operationId: 'unitsStore', summary: 'Crear unidad', tags: ['Unidades'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 201, description: 'Unidad creada')])]
-    public function store(Request $request, Condominium $condominium): JsonResponse
+    public function store(UnitStoreRequest $request, Condominium $condominium): JsonResponse
     {
-        $data = $request->validate([
-            'condominium_block_id' => ['nullable', 'integer', Rule::exists('condominium_blocks', 'id')->where('condominium_id', $condominium->id)],
-            'parent_unit_id' => ['nullable', 'integer', Rule::exists('units', 'id')->where('condominium_id', $condominium->id)],
-            'unit_type_id' => ['required', 'integer', new ValidCatalogItem('unit_types')],
-            'code' => ['required', 'string', 'max:100', Rule::unique('units', 'code')->where('condominium_id', $condominium->id)],
-            'number' => ['required', 'string', 'max:100'],
-            'floor' => ['nullable', 'string', 'max:50'],
-            'area_m2' => ['nullable', 'numeric', 'min:0'],
-            'current_aliquot_percentage' => ['nullable', 'numeric', 'min:0'],
-            'aliquot_starts_on' => ['nullable', 'date'],
-            'is_assignable' => ['nullable', 'boolean'],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
+        $data = $request->validated();
 
         if (isset($data['parent_unit_id'])) {
             $parent = Unit::findOrFail($data['parent_unit_id']);
@@ -81,7 +69,7 @@ class UnitController extends Controller
             return $unit;
         });
 
-        return ApiResponse::success($unit->load(['block', 'parentUnit', 'unitType', 'aliquots']), 'Unidad creada correctamente.', 201);
+        return ApiResponse::success(new UnitResource($unit->load(['block', 'parentUnit', 'unitType', 'aliquots'])), 'Unidad creada correctamente.', 201);
     }
 
     #[OA\Get(path: '/api/condominiums/{condominium}/units/{unit}', operationId: 'unitsShow', summary: 'Obtener unidad', tags: ['Unidades'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Unidad encontrada')])]
@@ -90,7 +78,7 @@ class UnitController extends Controller
         abort_if($unit->condominium_id !== $condominium->id, 404);
 
         return ApiResponse::success(
-            $unit->load(['block', 'parentUnit', 'childUnits.unitType', 'unitType', 'aliquots']),
+            new UnitResource($unit->load(['block', 'parentUnit', 'childUnits.unitType', 'unitType', 'aliquots'])),
             'Unidad encontrada.'
         );
     }
@@ -98,11 +86,11 @@ class UnitController extends Controller
     public function myUnits(Request $request): JsonResponse
     {
         return ApiResponse::success(
-            $request->user()->units()
+            UnitResource::collection($request->user()->units()
                 ->wherePivot('is_active', true)
                 ->wherePivotNull('deleted_at')
                 ->with(['condominium', 'unitType'])
-                ->get(),
+                ->get()),
             'Unidades del usuario encontradas.'
         );
     }

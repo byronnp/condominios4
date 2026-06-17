@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Billing;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Billing\AccountOpeningBalanceStoreRequest;
+use App\Http\Resources\Api\Billing\AccountOpeningBalanceResource;
 use App\Models\Condominium;
 use App\Models\CondominiumAccountOpeningBalance;
 use App\Support\Api\ApiResponse;
@@ -14,7 +15,7 @@ class AccountOpeningBalanceController extends Controller
     public function index(Condominium $condominium): JsonResponse
     {
         return ApiResponse::success(
-            CondominiumAccountOpeningBalance::where('condominium_id', $condominium->id)->with('paymentMethod')->get(),
+            AccountOpeningBalanceResource::collection(CondominiumAccountOpeningBalance::where('condominium_id', $condominium->id)->with('paymentMethod')->get()),
             'Saldos iniciales encontrados.'
         );
     }
@@ -30,6 +31,6 @@ class AccountOpeningBalanceController extends Controller
             'is_active' => true,
         ]);
 
-        return ApiResponse::success($balance, 'Saldo inicial registrado correctamente.', 201);
+        return ApiResponse::success(new AccountOpeningBalanceResource($balance), 'Saldo inicial registrado correctamente.', 201);
     }
 }

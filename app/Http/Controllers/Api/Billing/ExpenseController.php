@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Billing;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Billing\ExpenseStoreRequest;
+use App\Http\Resources\Api\Billing\ExpenseResource;
 use App\Models\Condominium;
 use App\Models\Expense;
 use App\Support\Api\ApiResponse;
@@ -14,7 +15,7 @@ class ExpenseController extends Controller
     public function index(Condominium $condominium): JsonResponse
     {
         return ApiResponse::success(
-            Expense::where('condominium_id', $condominium->id)->with('category')->latest()->get(),
+            ExpenseResource::collection(Expense::where('condominium_id', $condominium->id)->with('category')->latest()->get()),
             'Egresos encontrados.'
         );
     }
@@ -30,6 +31,6 @@ class ExpenseController extends Controller
             'status' => $data['status'] ?? 'pending',
         ]);
 
-        return ApiResponse::success($expense->load('category'), 'Egreso registrado correctamente.', 201);
+        return ApiResponse::success(new ExpenseResource($expense->load('category')), 'Egreso registrado correctamente.', 201);
     }
 }

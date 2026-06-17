@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Billing;
 use App\Domain\Billing\Services\BillingService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Billing\PaymentStoreRequest;
+use App\Http\Resources\Api\Billing\PaymentResource;
 use App\Models\Condominium;
 use App\Models\Payment;
 use App\Models\Unit;
@@ -18,7 +19,7 @@ class PaymentController extends Controller
     public function index(Condominium $condominium): JsonResponse
     {
         return ApiResponse::success(
-            Payment::where('condominium_id', $condominium->id)->with(['unit', 'user', 'allocations.monthlyFee'])->latest()->get(),
+            PaymentResource::collection(Payment::where('condominium_id', $condominium->id)->with(['unit', 'user', 'allocations.monthlyFee'])->latest()->get()),
             'Pagos encontrados.'
         );
     }
@@ -42,6 +43,6 @@ class PaymentController extends Controller
 
         $payment = $this->billingService->allocatePayment($payment, $data['monthly_fee_ids'] ?? []);
 
-        return ApiResponse::success($payment->load(['unit', 'user', 'allocations.monthlyFee']), 'Pago registrado correctamente.', 201);
+        return ApiResponse::success(new PaymentResource($payment->load(['unit', 'user', 'allocations.monthlyFee'])), 'Pago registrado correctamente.', 201);
     }
 }

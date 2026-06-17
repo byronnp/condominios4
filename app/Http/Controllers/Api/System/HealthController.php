@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\System;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\System\HealthResource;
 use App\Support\Api\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
@@ -39,9 +40,9 @@ class HealthController extends Controller
     )]
     public function __invoke(): JsonResponse
     {
-        return ApiResponse::success([
+        return ApiResponse::success(new HealthResource([
             'status' => 'ok',
             'timestamp' => now()->toISOString(),
-        ], 'API operativa.');
+        ]), 'API operativa.');
     }
 }

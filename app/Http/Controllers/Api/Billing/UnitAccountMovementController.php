@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Billing;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\Billing\UnitAccountMovementResource;
 use App\Models\Condominium;
 use App\Models\Unit;
 use App\Models\UnitAccountMovement;
@@ -16,7 +17,7 @@ class UnitAccountMovementController extends Controller
         abort_if($unit->condominium_id !== $condominium->id, 404);
 
         return ApiResponse::success(
-            UnitAccountMovement::where('unit_id', $unit->id)->latest()->get(),
+            UnitAccountMovementResource::collection(UnitAccountMovement::where('unit_id', $unit->id)->latest()->get()),
             'Movimientos de cuenta encontrados.'
         );
     }

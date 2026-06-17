@@ -19,12 +19,26 @@ use OpenApi\Attributes as OA;
         new OA\Tag(name: 'Catálogos', description: 'Catálogos generales del sistema'),
         new OA\Tag(name: 'Condominios', description: 'Administración multi-condominio'),
         new OA\Tag(name: 'Roles y permisos', description: 'Control de acceso'),
+        new OA\Tag(name: 'Economía', description: 'Administración económica del condominio'),
+        new OA\Tag(name: 'Gastos', description: 'Categorías y registro de gastos'),
+        new OA\Tag(name: 'Pagos', description: 'Pagos y órdenes de pago'),
+        new OA\Tag(name: 'Tesorería', description: 'Entregas y recepción de tesorería'),
+        new OA\Tag(name: 'Unidades', description: 'Bloques, unidades y movimientos por unidad'),
+        new OA\Tag(name: 'Personas por unidad', description: 'Relaciones entre usuarios y unidades'),
+        new OA\Tag(name: 'Invitaciones', description: 'Invitaciones de acceso para usuarios'),
+        new OA\Tag(name: 'Tenants', description: 'Endpoints legacy protegidos por API token'),
     ]
 )]
 #[OA\SecurityScheme(
     securityScheme: 'bearerAuth',
     type: 'http',
     bearerFormat: 'JWT',
+    scheme: 'bearer'
+)]
+#[OA\SecurityScheme(
+    securityScheme: 'apiToken',
+    type: 'http',
+    bearerFormat: 'API token',
     scheme: 'bearer'
 )]
 class ApiSpecification {}

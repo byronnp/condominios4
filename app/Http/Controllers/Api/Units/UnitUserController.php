@@ -3,17 +3,20 @@
 namespace App\Http\Controllers\Api\Units;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Units\UnitBillingResponsibleRequest;
+use App\Http\Requests\Api\Units\UnitUserDeactivateRequest;
+use App\Http\Requests\Api\Units\UnitUserStoreRequest;
+use App\Http\Resources\Api\Auth\UserResource;
+use App\Http\Resources\Api\Units\UnitUserResource;
 use App\Models\Catalog;
 use App\Models\Condominium;
 use App\Models\Unit;
 use App\Models\User;
-use App\Rules\ValidCatalogItem;
 use App\Support\Api\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 class UnitUserController extends Controller
@@ -23,27 +26,15 @@ class UnitUserController extends Controller
     {
         $this->assertUnit($condominium, $unit);
 
-        return ApiResponse::success($this->unitPeople($unit), 'Personas de la unidad encontradas.');
+        return ApiResponse::success(UnitUserResource::collection($this->unitPeople($unit)), 'Personas de la unidad encontradas.');
     }
 
     #[OA\Post(path: '/api/condominiums/{condominium}/units/{unit}/users', operationId: 'unitUsersStore', summary: 'Agregar persona a unidad', tags: ['Personas por unidad'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 201, description: 'Persona agregada')])]
-    public function store(Request $request, Condominium $condominium, Unit $unit): JsonResponse
+    public function store(UnitUserStoreRequest $request, Condominium $condominium, Unit $unit): JsonResponse
     {
         $this->assertUnit($condominium, $unit);
 
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'country' => ['required', 'string', 'size:2'],
-            'document_type_id' => ['required', 'integer', new ValidCatalogItem('document_types')],
-            'document_number' => ['required', 'string', 'max:30'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'secondary_phone' => ['nullable', 'string', 'max:50'],
-            'relationship_type_id' => ['required', 'integer', new ValidCatalogItem('resident_relationship_types')],
-            'started_at' => ['nullable', 'date'],
-            'ended_at' => ['nullable', 'date', 'after_or_equal:started_at'],
-            'is_primary' => ['nullable', 'boolean'],
-            'is_billing_responsible' => ['nullable', 'boolean'],
-        ]);
+        $data = $request->validated();
 
         $relationshipCode = $this->relationshipCode((int) $data['relationship_type_id']);
         abort_if(! $this->canManageRelationship($request, $condominium, $unit, $relationshipCode), 403, 'No autorizado para agregar esta relación.');
@@ -87,19 +78,16 @@ class UnitUserController extends Controller
         });
 
         return ApiResponse::success([
-            'user' => $user->fresh('documentType'),
-            'unit_relation' => $this->unitPeople($unit)->firstWhere('id', $user->id),
+            'user' => new UserResource($user->fresh('documentType')),
+            'unit_relation' => new UnitUserResource($this->unitPeople($unit)->firstWhere('id', $user->id)),
         ], 'Persona agregada a la unidad correctamente.', 201);
     }
 
-    public function deactivate(Request $request, Condominium $condominium, Unit $unit, User $user): JsonResponse
+    public function deactivate(UnitUserDeactivateRequest $request, Condominium $condominium, Unit $unit, User $user): JsonResponse
     {
         $this->assertUnit($condominium, $unit);
 
-        $data = $request->validate([
-            'ended_at' => ['required', 'date'],
-            'disable_access' => ['nullable', 'boolean'],
-        ]);
+        $data = $request->validated();
 
         DB::table('unit_user')
             ->where('unit_id', $unit->id)
@@ -118,13 +106,11 @@ class UnitUserController extends Controller
         return ApiResponse::success(message: 'Relación con la unidad inactivada correctamente.');
     }
 
-    public function billingResponsible(Request $request, Condominium $condominium, Unit $unit): JsonResponse
+    public function billingResponsible(UnitBillingResponsibleRequest $request, Condominium $condominium, Unit $unit): JsonResponse
     {
         $this->assertUnit($condominium, $unit);
 
-        $data = $request->validate([
-            'user_id' => ['required', 'integer', Rule::exists('users', 'id')],
-        ]);
+        $data = $request->validated();
 
         $relation = DB::table('unit_user')
             ->where('unit_id', $unit->id)
@@ -143,7 +129,7 @@ class UnitUserController extends Controller
                 ->update(['is_billing_responsible' => true, 'updated_at' => now()]);
         });
 
-        return ApiResponse::success($this->unitPeople($unit), 'Responsable de facturación actualizado correctamente.');
+        return ApiResponse::success(UnitUserResource::collection($this->unitPeople($unit)), 'Responsable de facturación actualizado correctamente.');
     }
 
     private function assertUnit(Condominium $condominium, Unit $unit): void

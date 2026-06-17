@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Billing;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Billing\BankStatementImportStoreRequest;
+use App\Http\Resources\Api\Billing\BankStatementImportResource;
 use App\Models\BankStatementImport;
 use App\Models\Condominium;
 use App\Support\Api\ApiResponse;
@@ -14,7 +15,7 @@ class BankStatementImportController extends Controller
 {
     public function index(Condominium $condominium): JsonResponse
     {
-        return ApiResponse::success(BankStatementImport::where('condominium_id', $condominium->id)->with('rows')->latest()->get(), 'Importaciones bancarias encontradas.');
+        return ApiResponse::success(BankStatementImportResource::collection(BankStatementImport::where('condominium_id', $condominium->id)->with('rows')->latest()->get()), 'Importaciones bancarias encontradas.');
     }
 
     public function store(BankStatementImportStoreRequest $request, Condominium $condominium): JsonResponse
@@ -63,6 +64,6 @@ class BankStatementImportController extends Controller
             return $import;
         });
 
-        return ApiResponse::success($import->load('rows'), 'Movimientos bancarios importados correctamente.', 201);
+        return ApiResponse::success(new BankStatementImportResource($import->load('rows')), 'Movimientos bancarios importados correctamente.', 201);
     }
 }

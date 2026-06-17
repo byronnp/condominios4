@@ -32,10 +32,14 @@ Every new phase must include migrations, seeders with usable test data, Swagger 
 - `docker compose up -d`: start the Laravel app and Redis containers.
 - `docker compose exec app php artisan migrate --seed`: run migrations and seed required test data.
 - `docker compose exec app php artisan test`: run the full test suite.
-- `php artisan l5-swagger:generate`: regenerate OpenAPI/Swagger documentation.
+- `docker compose exec app php artisan openapi:generate`: regenerate OpenAPI/Swagger documentation with request and response examples.
 - `./vendor/bin/pint --dirty`: format changed PHP files with Laravel Pint.
 
 Use Docker commands when validating database-backed behavior because the project is configured against the local MySQL server through the container.
+
+Whenever a migration is created, changed, or executed, run it together with seeders using `docker compose exec app php artisan migrate --seed`. If the schema is already up to date and only seed data changed, run `docker compose exec app php artisan db:seed`.
+
+Whenever API behavior changes, update the OpenAPI/Swagger documentation in the same change. This includes new or changed routes, request payloads, validation rules, response payloads, status codes, authentication requirements, permissions, query parameters, and examples. Every API operation must include request payload examples when it receives a body and response examples using the real API envelope or resource shape. After updating annotations, regenerate the documentation with `docker compose exec app php artisan openapi:generate`.
 
 ## Coding Style & Naming Conventions
 

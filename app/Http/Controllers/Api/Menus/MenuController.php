@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Api\Menus;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Menus\MenuStoreRequest;
+use App\Http\Resources\Api\Menus\MenuResource;
 use App\Models\Condominium;
 use App\Models\Menu;
 use App\Support\Api\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 class MenuController extends Controller
@@ -18,34 +19,23 @@ class MenuController extends Controller
     public function index(): JsonResponse
     {
         return ApiResponse::success(
-            Menu::query()
+            MenuResource::collection(Menu::query()
                 ->with(['children.permissions', 'permissions'])
                 ->whereNull('parent_id')
                 ->orderBy('sort_order')
-                ->get(),
+                ->get()),
             'Menús encontrados.'
         );
     }
 
     #[OA\Post(path: '/api/menus', operationId: 'menusStore', summary: 'Crear menú padre o hijo', tags: ['Menús'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 201, description: 'Menú creado'), new OA\Response(response: 422, description: 'Datos inválidos')])]
-    public function store(Request $request): JsonResponse
+    public function store(MenuStoreRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'parent_id' => ['nullable', 'integer', 'exists:menus,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'code' => ['nullable', 'string', 'max:100', 'unique:menus,code'],
-            'path' => ['nullable', 'string', 'max:255'],
-            'icon' => ['nullable', 'string', 'max:100'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
-            'permission_ids' => ['nullable', 'array'],
-            'permission_ids.*' => ['integer', Rule::exists('permissions', 'id')->where('is_active', true)],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
+        $data = $request->validated();
 
         if (isset($data['parent_id'])) {
             $parent = Menu::findOrFail($data['parent_id']);
             abort_if($parent->parent_id !== null, 422, 'No se permite crear menús de más de dos niveles.');
-            validator($data, ['path' => ['required', 'string', 'max:255']])->validate();
         }
 
         $menu = Menu::create([
@@ -60,7 +50,7 @@ class MenuController extends Controller
 
         $menu->permissions()->sync($data['permission_ids'] ?? []);
 
-        return ApiResponse::success($menu->load('permissions'), 'Menú creado correctamente.', 201);
+        return ApiResponse::success(new MenuResource($menu->load('permissions')), 'Menú creado correctamente.', 201);
     }
 
     #[OA\Get(path: '/api/auth/menu', operationId: 'authMenu', summary: 'Obtener menú del usuario autenticado', tags: ['Menús'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Menú obtenido')])]
@@ -72,7 +62,7 @@ class MenuController extends Controller
             ?? $request->user()->condominiums()->first();
 
         if (! $condominium) {
-            return ApiResponse::success([], 'Menú obtenido correctamente.');
+            return ApiResponse::success(MenuResource::collection(collect()), 'Menú obtenido correctamente.');
         }
 
         $permissionCodes = $request->user()
@@ -118,6 +108,6 @@ class MenuController extends Controller
             ->filter()
             ->values();
 
-        return ApiResponse::success($parents, 'Menú obtenido correctamente.');
+        return ApiResponse::success(MenuResource::collection($parents), 'Menú obtenido correctamente.');
     }
 }

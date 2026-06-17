@@ -1,58 +1,103 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Condominios API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API Laravel para administracion de condominios. Incluye autenticacion JWT, catalogos, condominios, roles, permisos, menus, unidades, usuarios por unidad y administracion economica.
 
-## About Laravel
+## Entorno local
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Levantar contenedores:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+docker compose up -d
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Ejecutar migraciones con seeders:
 
-## Contributing
+```bash
+docker compose exec app php artisan migrate --seed
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Si la base ya esta migrada y solo se requiere actualizar datos de prueba:
 
-## Code of Conduct
+```bash
+docker compose exec app php artisan db:seed
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Swagger
 
-## Security Vulnerabilities
+La documentacion Swagger esta disponible en:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```text
+/api/documentation
+```
 
-## License
+Regenerar documentacion OpenAPI:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+docker compose exec app php artisan openapi:generate
+```
+
+Este comando genera Swagger y agrega ejemplos de payload de envio y respuesta para las operaciones documentadas.
+
+## Usuario de pruebas
+
+Los seeders crean un usuario local para probar los servicios desde Swagger:
+
+```text
+Email: swagger.admin@example.com
+Password: Swagger123!
+```
+
+Este usuario queda asociado al condominio de prueba y tiene rol `administrador`.
+
+## Probar servicios en Swagger
+
+1. Ejecutar seeders si el usuario aun no existe:
+
+```bash
+docker compose exec app php artisan db:seed
+```
+
+2. Abrir Swagger en `/api/documentation`.
+
+3. Ejecutar `POST /api/auth/login` con:
+
+```json
+{
+  "email": "swagger.admin@example.com",
+  "password": "Swagger123!",
+  "device_name": "Swagger UI"
+}
+```
+
+4. Copiar `data.access_token` de la respuesta.
+
+5. Presionar `Authorize` en Swagger y usar:
+
+```text
+Bearer {access_token}
+```
+
+6. Probar los endpoints protegidos.
+
+## Pruebas
+
+Ejecutar suite completa:
+
+```bash
+docker compose exec app php artisan test
+```
+
+Ejecutar pruebas especificas:
+
+```bash
+docker compose exec app php artisan test --filter=JwtAuthTest
+docker compose exec app php artisan test --filter=SwaggerDocumentationTest
+```
+
+## Formato
+
+Formatear archivos PHP modificados:
+
+```bash
+./vendor/bin/pint --dirty
+```

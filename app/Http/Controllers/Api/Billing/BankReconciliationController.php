@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Billing;
 use App\Domain\Billing\Services\BankingService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Billing\BankReconciliationStoreRequest;
+use App\Http\Resources\Api\Billing\BankReconciliationResource;
 use App\Models\BankReconciliation;
 use App\Models\Condominium;
 use App\Support\Api\ApiResponse;
@@ -16,7 +17,7 @@ class BankReconciliationController extends Controller
 
     public function index(Condominium $condominium): JsonResponse
     {
-        return ApiResponse::success(BankReconciliation::where('condominium_id', $condominium->id)->with('items')->latest()->get(), 'Conciliaciones encontradas.');
+        return ApiResponse::success(BankReconciliationResource::collection(BankReconciliation::where('condominium_id', $condominium->id)->with('items')->latest()->get()), 'Conciliaciones encontradas.');
     }
 
     public function store(BankReconciliationStoreRequest $request, Condominium $condominium): JsonResponse
@@ -36,6 +37,6 @@ class BankReconciliationController extends Controller
             'reconciled_at' => now(),
         ]);
 
-        return ApiResponse::success($reconciliation, 'Conciliación generada correctamente.', 201);
+        return ApiResponse::success(new BankReconciliationResource($reconciliation), 'Conciliación generada correctamente.', 201);
     }
 }

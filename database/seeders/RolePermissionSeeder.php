@@ -119,6 +119,19 @@ class RolePermissionSeeder extends Seeder
             ['module' => 'unit_users', 'action' => 'manage_all', 'name' => 'Gestionar personas de todas las unidades', 'code' => 'unit_users.manage_all'],
             ['module' => 'unit_users', 'action' => 'manage_own', 'name' => 'Gestionar personas de unidades propias', 'code' => 'unit_users.manage_own'],
             ['module' => 'user_billing_profiles', 'action' => 'manage', 'name' => 'Administrar perfiles de facturación', 'code' => 'user_billing_profiles.manage'],
+            ['module' => 'visitors', 'action' => 'view', 'name' => 'Ver visitantes', 'code' => 'visitors.view'],
+            ['module' => 'visitors', 'action' => 'manage', 'name' => 'Administrar visitantes', 'code' => 'visitors.manage'],
+            ['module' => 'visits', 'action' => 'view', 'name' => 'Ver visitas', 'code' => 'visits.view'],
+            ['module' => 'visits', 'action' => 'manage', 'name' => 'Administrar visitas', 'code' => 'visits.manage'],
+            ['module' => 'visit_logs', 'action' => 'manage', 'name' => 'Registrar accesos de visitas', 'code' => 'visit_logs.manage'],
+            ['module' => 'common_areas', 'action' => 'view', 'name' => 'Ver áreas comunes', 'code' => 'common_areas.view'],
+            ['module' => 'common_areas', 'action' => 'manage', 'name' => 'Administrar áreas comunes', 'code' => 'common_areas.manage'],
+            ['module' => 'reservations', 'action' => 'view', 'name' => 'Ver reservas', 'code' => 'reservations.view'],
+            ['module' => 'reservations', 'action' => 'manage', 'name' => 'Administrar reservas', 'code' => 'reservations.manage'],
+            ['module' => 'incidents', 'action' => 'view', 'name' => 'Ver incidentes', 'code' => 'incidents.view'],
+            ['module' => 'incidents', 'action' => 'manage', 'name' => 'Administrar incidentes', 'code' => 'incidents.manage'],
+            ['module' => 'maintenances', 'action' => 'view', 'name' => 'Ver mantenimientos', 'code' => 'maintenances.view'],
+            ['module' => 'maintenances', 'action' => 'manage', 'name' => 'Administrar mantenimientos', 'code' => 'maintenances.manage'],
         ];
     }
 }

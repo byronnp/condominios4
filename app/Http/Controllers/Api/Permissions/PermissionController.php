@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\Permissions;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Permissions\PermissionStoreRequest;
+use App\Http\Resources\Api\Permissions\PermissionResource;
 use App\Models\Permission;
 use App\Support\Api\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 class PermissionController extends Controller
@@ -16,27 +16,15 @@ class PermissionController extends Controller
     public function index(): JsonResponse
     {
         return ApiResponse::success(
-            Permission::query()->orderBy('module')->orderBy('action')->get(),
+            PermissionResource::collection(Permission::query()->orderBy('module')->orderBy('action')->get()),
             'Permisos encontrados.'
         );
     }
 
     #[OA\Post(path: '/api/permissions', operationId: 'permissionsStore', summary: 'Crear permiso', tags: ['Permisos'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 201, description: 'Permiso creado'), new OA\Response(response: 422, description: 'Datos inválidos')])]
-    public function store(Request $request): JsonResponse
+    public function store(PermissionStoreRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'module' => ['required', 'string', 'max:100'],
-            'action' => ['required', 'string', 'max:100'],
-            'name' => ['required', 'string', 'max:255'],
-            'code' => ['nullable', 'string', 'max:150', 'regex:/^[a-z0-9_]+\.[a-z0-9_]+$/', 'unique:permissions,code'],
-            'description' => ['nullable', 'string'],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
-
-        $data['code'] ??= $data['module'].'.'.$data['action'];
-        validator($data, [
-            'code' => ['required', 'string', 'max:150', 'regex:/^[a-z0-9_]+\.[a-z0-9_]+$/', Rule::unique('permissions', 'code')],
-        ])->validate();
+        $data = $request->validated();
 
         $permission = Permission::create([
             ...$data,
@@ -44,6 +32,6 @@ class PermissionController extends Controller
             'is_active' => $data['is_active'] ?? true,
         ]);
 
-        return ApiResponse::success($permission, 'Permiso creado correctamente.', 201);
+        return ApiResponse::success(new PermissionResource($permission), 'Permiso creado correctamente.', 201);
     }
 }

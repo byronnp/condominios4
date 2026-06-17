@@ -6,6 +6,7 @@ use App\Domain\Billing\Services\BankingService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Billing\TreasuryHandoverCalculateRequest;
 use App\Http\Requests\Api\Billing\TreasuryHandoverStoreRequest;
+use App\Http\Resources\Api\Billing\TreasuryHandoverResource;
 use App\Models\Condominium;
 use App\Models\TreasuryHandover;
 use App\Support\Api\ApiResponse;
@@ -18,14 +19,14 @@ class TreasuryHandoverController extends Controller
 
     public function index(Condominium $condominium): JsonResponse
     {
-        return ApiResponse::success(TreasuryHandover::where('condominium_id', $condominium->id)->latest('handover_date')->get(), 'Registros de tesorería encontrados.');
+        return ApiResponse::success(TreasuryHandoverResource::collection(TreasuryHandover::where('condominium_id', $condominium->id)->latest('handover_date')->get()), 'Registros de tesorería encontrados.');
     }
 
     public function calculate(TreasuryHandoverCalculateRequest $request, Condominium $condominium): JsonResponse
     {
         $data = $request->validated();
 
-        return ApiResponse::success($this->calculateValues($condominium, $data), 'Valores de tesorería calculados.');
+        return ApiResponse::success(new TreasuryHandoverResource($this->calculateValues($condominium, $data)), 'Valores de tesorería calculados.');
     }
 
     public function store(TreasuryHandoverStoreRequest $request, Condominium $condominium): JsonResponse
@@ -61,7 +62,7 @@ class TreasuryHandoverController extends Controller
             'notes' => $data['notes'] ?? null,
         ]);
 
-        return ApiResponse::success($handover, 'Registro de tesorería creado correctamente.', 201);
+        return ApiResponse::success(new TreasuryHandoverResource($handover), 'Registro de tesorería creado correctamente.', 201);
     }
 
     private function calculateValues(Condominium $condominium, array $data): array

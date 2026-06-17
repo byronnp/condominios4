@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Billing;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Billing\ExtraordinaryFeeStoreRequest;
+use App\Http\Resources\Api\Billing\ExtraordinaryFeeResource;
 use App\Models\BillingConcept;
 use App\Models\Condominium;
 use App\Models\ExtraordinaryFee;
@@ -15,7 +16,7 @@ class ExtraordinaryFeeController extends Controller
 {
     public function index(Condominium $condominium): JsonResponse
     {
-        return ApiResponse::success($condominium->hasMany(ExtraordinaryFee::class)->with('units')->get(), 'Cuotas extraordinarias encontradas.');
+        return ApiResponse::success(ExtraordinaryFeeResource::collection($condominium->hasMany(ExtraordinaryFee::class)->with('units')->get()), 'Cuotas extraordinarias encontradas.');
     }
 
     public function store(ExtraordinaryFeeStoreRequest $request, Condominium $condominium): JsonResponse
@@ -43,6 +44,6 @@ class ExtraordinaryFeeController extends Controller
             return $fee;
         });
 
-        return ApiResponse::success($fee->load('units'), 'Cuota extraordinaria creada correctamente.', 201);
+        return ApiResponse::success(new ExtraordinaryFeeResource($fee->load('units')), 'Cuota extraordinaria creada correctamente.', 201);
     }
 }

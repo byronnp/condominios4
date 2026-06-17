@@ -58,6 +58,7 @@ class DatabaseSeeder extends Seeder
             CondominiumPaymentMethodSeeder::class,
             UnitSeeder::class,
             BillingSeeder::class,
+            OperationsSeeder::class,
         ]);
     }
 }
