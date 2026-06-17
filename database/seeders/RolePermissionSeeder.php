@@ -55,22 +55,26 @@ class RolePermissionSeeder extends Seeder
                 $roles->get($code)?->permissions()->sync($viewPermissions);
             }
 
-            $adminUser = User::where('email', 'byron_np@hotmail.com')->first();
-            $condominiumUser = DB::table('condominium_user')
-                ->where('condominium_id', $condominium->id)
-                ->where('user_id', $adminUser?->id)
-                ->first();
+            User::query()
+                ->whereIn('email', ['byron_np@hotmail.com', 'swagger.admin@example.com'])
+                ->get()
+                ->each(function (User $adminUser) use ($condominium, $administrator): void {
+                    $condominiumUser = DB::table('condominium_user')
+                        ->where('condominium_id', $condominium->id)
+                        ->where('user_id', $adminUser->id)
+                        ->first();
 
-            if ($condominiumUser && $administrator) {
-                DB::table('condominium_user_role')->updateOrInsert([
-                    'condominium_user_id' => $condominiumUser->id,
-                    'role_id' => $administrator->id,
-                ], [
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                    'deleted_at' => null,
-                ]);
-            }
+                    if ($condominiumUser && $administrator) {
+                        DB::table('condominium_user_role')->updateOrInsert([
+                            'condominium_user_id' => $condominiumUser->id,
+                            'role_id' => $administrator->id,
+                        ], [
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                            'deleted_at' => null,
+                        ]);
+                    }
+                });
         });
     }
 

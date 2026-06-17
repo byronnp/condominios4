@@ -4,6 +4,7 @@ namespace Tests\Feature\Api\Auth;
 
 use App\Models\Catalog;
 use Database\Seeders\CatalogSeeder;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -95,6 +96,26 @@ class JwtAuthTest extends TestCase
                 'data' => [
                     'access_token',
                     'refresh_token',
+                ],
+            ]);
+    }
+
+    public function test_swagger_seed_user_can_login(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'swagger.admin@example.com',
+            'password' => 'Swagger123!',
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.token_type', 'Bearer')
+            ->assertJsonStructure([
+                'data' => [
+                    'access_token',
+                    'refresh_token',
+                    'expires_in',
                 ],
             ]);
     }

@@ -8,7 +8,7 @@ use OpenApi\Attributes as OA;
     info: new OA\Info(
         version: '1.0.0',
         title: 'Condominios API',
-        description: 'API para administración de condominios.'
+        description: "API para administración de condominios.\n\nCredenciales locales para probar en Swagger:\n- Email: swagger.admin@example.com\n- Password: Swagger123!\n\nUsa /api/auth/login para obtener el access_token y luego el botón Authorize con el valor Bearer {access_token}."
     ),
     servers: [
         new OA\Server(url: '/', description: 'Servidor actual'),
@@ -27,6 +27,4 @@ use OpenApi\Attributes as OA;
     bearerFormat: 'JWT',
     scheme: 'bearer'
 )]
-class ApiSpecification
-{
-}
+class ApiSpecification {}

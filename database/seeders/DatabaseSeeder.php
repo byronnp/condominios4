@@ -37,6 +37,19 @@ class DatabaseSeeder extends Seeder
             'is_access_enabled' => true,
         ]);
 
+        User::updateOrCreate([
+            'email' => 'swagger.admin@example.com',
+        ], [
+            'name' => 'SWAGGER ADMIN',
+            'password' => 'Swagger123!',
+            'country' => 'EC',
+            'document_type_id' => $documentType->id,
+            'document_number' => '1799999999',
+            'phone' => '0999999998',
+            'secondary_phone' => null,
+            'is_access_enabled' => true,
+        ]);
+
         $this->call([
             CondominiumSeeder::class,
             RolePermissionSeeder::class,

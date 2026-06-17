@@ -26,16 +26,17 @@ class CondominiumSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        $admin = User::where('email', 'byron_np@hotmail.com')->first();
-
-        if ($admin) {
-            $condominium->users()->syncWithoutDetaching([
-                $admin->id => [
-                    'is_active' => true,
-                    'joined_at' => now(),
-                ],
-            ]);
-        }
+        User::query()
+            ->whereIn('email', ['byron_np@hotmail.com', 'swagger.admin@example.com'])
+            ->get()
+            ->each(function (User $admin) use ($condominium): void {
+                $condominium->users()->syncWithoutDetaching([
+                    $admin->id => [
+                        'is_active' => true,
+                        'joined_at' => now(),
+                    ],
+                ]);
+            });
 
         Condominium::query()
             ->whereNull('slug')
