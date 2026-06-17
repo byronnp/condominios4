@@ -56,7 +56,7 @@ class RolePermissionSeeder extends Seeder
             }
 
             User::query()
-                ->whereIn('email', ['byron_np@hotmail.com', 'swagger.admin@example.com'])
+                ->whereIn('email', ['byron_np@hotmail.com', 'byronnp@gmail.com', 'swagger.admin@example.com'])
                 ->get()
                 ->each(function (User $adminUser) use ($condominium, $administrator): void {
                     $condominiumUser = DB::table('condominium_user')

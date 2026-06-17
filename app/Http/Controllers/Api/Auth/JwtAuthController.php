@@ -5,27 +5,31 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Domain\Auth\Services\AuthService;
 use App\Domain\Auth\Services\JwtTokenService;
 use App\Http\Controllers\Controller;
-use App\Http\Middleware\AuthenticateJwt;
 use App\Http\Requests\Api\Auth\LoginRequest;
 use App\Http\Requests\Api\Auth\LogoutRequest;
 use App\Http\Requests\Api\Auth\RefreshTokenRequest;
 use App\Http\Requests\Api\Auth\RegisterRequest;
 use App\Http\Resources\Api\Auth\AuthSessionResource;
 use App\Http\Resources\Api\Auth\UserResource;
+use App\Http\Resources\Api\Condominiums\CondominiumResource;
+use App\Http\Resources\Api\Roles\RoleResource;
 use App\Models\AuthSession;
+use App\Models\Condominium;
+use App\Models\Role;
+use App\Models\User;
 use App\Support\Api\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use RuntimeException;
+use Illuminate\Support\Collection;
 use OpenApi\Attributes as OA;
+use RuntimeException;
 
 class JwtAuthController extends Controller
 {
     public function __construct(
         private readonly AuthService $authService,
         private readonly JwtTokenService $jwtTokenService,
-    ) {
-    }
+    ) {}
 
     #[OA\Post(path: '/api/auth/register', operationId: 'authRegister', summary: 'Registrar usuario', tags: ['Autenticación'], responses: [new OA\Response(response: 201, description: 'Usuario registrado'), new OA\Response(response: 422, description: 'Datos inválidos')])]
     public function register(RegisterRequest $request): JsonResponse
@@ -94,9 +98,14 @@ class JwtAuthController extends Controller
     #[OA\Get(path: '/api/auth/me', operationId: 'authMe', summary: 'Obtener usuario autenticado', tags: ['Autenticación'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Usuario autenticado')])]
     public function me(Request $request): JsonResponse
     {
+        $user = $request->user();
+        $condominium = $this->currentCondominium($request, $user);
+
         return ApiResponse::success(
             data: [
-                'user' => new UserResource($request->user()->load('documentType')),
+                'user' => new UserResource($user->load('documentType')),
+                'condominium' => $condominium ? new CondominiumResource($condominium) : null,
+                'roles' => RoleResource::collection($condominium ? $this->rolesForCondominium($user, $condominium) : collect()),
                 'auth_session' => new AuthSessionResource($request->attributes->get('auth_session')),
             ],
             message: 'Usuario autenticado.',
@@ -154,5 +163,50 @@ class JwtAuthController extends Controller
             'access_token_expires_at' => $tokens['access_token_expires_at']->toISOString(),
             'refresh_token_expires_at' => $tokens['refresh_token_expires_at']->toISOString(),
         ];
+    }
+
+    private function currentCondominium(Request $request, User $user): ?Condominium
+    {
+        $headerCondominiumId = $request->header('X-Condominium-Id');
+
+        if ($headerCondominiumId) {
+            return $user->condominiums()
+                ->where('condominiums.id', $headerCondominiumId)
+                ->wherePivot('is_active', true)
+                ->wherePivotNull('deleted_at')
+                ->first();
+        }
+
+        return $user->condominiums()
+            ->wherePivot('is_active', true)
+            ->wherePivotNull('deleted_at')
+            ->first();
+    }
+
+    /**
+     * @return Collection<int, Role>
+     */
+    private function rolesForCondominium(User $user, Condominium $condominium): Collection
+    {
+        $condominiumUser = $user->condominiums()
+            ->where('condominiums.id', $condominium->id)
+            ->wherePivot('is_active', true)
+            ->wherePivotNull('deleted_at')
+            ->first()?->pivot;
+
+        if (! $condominiumUser) {
+            return collect();
+        }
+
+        return Role::query()
+            ->select('roles.*')
+            ->join('condominium_user_role', 'condominium_user_role.role_id', '=', 'roles.id')
+            ->where('condominium_user_role.condominium_user_id', $condominiumUser->id)
+            ->where('roles.condominium_id', $condominium->id)
+            ->where('roles.is_active', true)
+            ->whereNull('roles.deleted_at')
+            ->whereNull('condominium_user_role.deleted_at')
+            ->orderBy('roles.name')
+            ->get();
     }
 }

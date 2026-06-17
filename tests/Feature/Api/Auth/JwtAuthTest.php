@@ -120,6 +120,23 @@ class JwtAuthTest extends TestCase
             ]);
     }
 
+    public function test_me_returns_user_roles_for_current_condominium(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $login = $this->postJson('/api/auth/login', [
+            'email' => 'swagger.admin@example.com',
+            'password' => 'Swagger123!',
+        ])->assertOk();
+
+        $this->getJson('/api/auth/me', [
+            'Authorization' => 'Bearer '.$login->json('data.access_token'),
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.condominium.name', 'Condominio Los Cedros')
+            ->assertJsonFragment(['code' => 'administrador']);
+    }
+
     public function test_logout_revokes_current_access_token(): void
     {
         $documentTypeId = $this->documentTypeId();

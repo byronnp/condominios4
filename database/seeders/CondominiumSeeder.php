@@ -27,7 +27,7 @@ class CondominiumSeeder extends Seeder
         ]);
 
         User::query()
-            ->whereIn('email', ['byron_np@hotmail.com', 'swagger.admin@example.com'])
+            ->whereIn('email', ['byron_np@hotmail.com', 'byronnp@gmail.com', 'swagger.admin@example.com'])
             ->get()
             ->each(function (User $admin) use ($condominium): void {
                 $condominium->users()->syncWithoutDetaching([

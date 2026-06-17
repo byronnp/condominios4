@@ -56,7 +56,7 @@ class CondominiumPhaseTest extends TestCase
             ->assertJsonFragment(['code' => 'administracion'])
             ->assertJsonFragment(['code' => 'directivas']);
 
-        $this->postJson("/api/condominiums/{$condominium->id}/roles", [
+        $roleResponse = $this->postJson("/api/condominiums/{$condominium->id}/roles", [
             'name' => 'Supervisor de mantenimiento',
             'description' => 'Puede revisar incidencias y mantenimientos.',
             'permission_ids' => [$permission->id],
@@ -64,8 +64,12 @@ class CondominiumPhaseTest extends TestCase
             'Authorization' => "Bearer {$token}",
         ])
             ->assertCreated()
-            ->assertJsonPath('data.code', 'supervisor_de_mantenimiento')
-            ->assertJsonFragment(['code' => 'boards.view']);
+            ->assertJsonPath('data.code', 'supervisor_de_mantenimiento');
+
+        $this->assertDatabaseHas('role_permission', [
+            'role_id' => $roleResponse->json('data.id'),
+            'permission_id' => $permission->id,
+        ]);
     }
 
     public function test_permission_code_can_be_generated_from_module_and_action(): void
