@@ -98,6 +98,7 @@ class RolePermissionSeeder extends Seeder
             ['module' => 'condominiums', 'action' => 'create', 'name' => 'Crear condominios', 'code' => 'condominiums.create'],
             ['module' => 'condominiums', 'action' => 'update', 'name' => 'Actualizar condominios', 'code' => 'condominiums.update'],
             ['module' => 'users', 'action' => 'view', 'name' => 'Ver usuarios', 'code' => 'users.view'],
+            ['module' => 'users', 'action' => 'create', 'name' => 'Crear usuarios', 'code' => 'users.create'],
             ['module' => 'users', 'action' => 'assign', 'name' => 'Asignar usuarios', 'code' => 'users.assign'],
             ['module' => 'roles', 'action' => 'view', 'name' => 'Ver roles', 'code' => 'roles.view'],
             ['module' => 'roles', 'action' => 'manage', 'name' => 'Administrar roles', 'code' => 'roles.manage'],

@@ -36,7 +36,8 @@ class CondominiumPhaseTest extends TestCase
         $this->assertSame(24, $condominium->total_units);
         $this->assertDatabaseHas('roles', ['condominium_id' => $condominium->id, 'code' => 'administrador']);
         $this->assertDatabaseHas('permissions', ['code' => 'roles.manage']);
-        $this->assertDatabaseHas('menus', ['code' => 'administracion']);
+        $this->assertDatabaseHas('menus', ['code' => 'dashboard', 'category_code' => 'principal']);
+        $this->assertDatabaseHas('menus', ['code' => 'reportes', 'category_code' => 'herramientas']);
         $this->assertDatabaseHas('condominium_boards', ['condominium_id' => $condominium->id, 'name' => 'Directiva 2026-2028']);
         $this->assertDatabaseHas('condominium_payment_methods', ['condominium_id' => $condominium->id, 'account_number' => '2200123456']);
     }
@@ -53,8 +54,9 @@ class CondominiumPhaseTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonFragment(['code' => 'administracion'])
-            ->assertJsonFragment(['code' => 'directivas']);
+            ->assertJsonFragment(['code' => 'principal'])
+            ->assertJsonFragment(['code' => 'herramientas'])
+            ->assertJsonFragment(['code' => 'pagos']);
 
         $roleResponse = $this->postJson("/api/condominiums/{$condominium->id}/roles", [
             'name' => 'Supervisor de mantenimiento',

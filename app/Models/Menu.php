@@ -19,6 +19,9 @@ class Menu extends Model
         'code',
         'path',
         'icon',
+        'category_code',
+        'category_name',
+        'category_sort_order',
         'sort_order',
         'is_active',
     ];
@@ -26,6 +29,7 @@ class Menu extends Model
     protected function casts(): array
     {
         return [
+            'category_sort_order' => 'integer',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];

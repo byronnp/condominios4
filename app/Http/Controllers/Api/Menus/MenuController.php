@@ -44,6 +44,9 @@ class MenuController extends Controller
             'code' => $data['code'] ?? Str::of($data['name'])->slug('_')->toString(),
             'path' => $data['path'] ?? null,
             'icon' => $data['icon'] ?? null,
+            'category_code' => isset($data['parent_id']) ? null : ($data['category_code'] ?? null),
+            'category_name' => isset($data['parent_id']) ? null : ($data['category_name'] ?? null),
+            'category_sort_order' => isset($data['parent_id']) ? 0 : ($data['category_sort_order'] ?? 0),
             'sort_order' => $data['sort_order'] ?? 0,
             'is_active' => $data['is_active'] ?? true,
         ]);
@@ -71,12 +74,15 @@ class MenuController extends Controller
             ->all();
 
         $parents = Menu::query()
-            ->with(['children.permissions'])
+            ->with(['children.permissions', 'permissions'])
             ->whereNull('parent_id')
             ->where('is_active', true)
+            ->orderBy('category_sort_order')
+            ->orderBy('category_name')
             ->orderBy('sort_order')
             ->get()
             ->map(function (Menu $parent) use ($permissionCodes): ?array {
+                $required = $parent->permissions->pluck('code');
                 $children = $parent->children
                     ->filter(function (Menu $child) use ($permissionCodes): bool {
                         $required = $child->permissions->pluck('code');
@@ -92,7 +98,11 @@ class MenuController extends Controller
                         'path' => $child->path,
                     ]);
 
-                if ($children->isEmpty()) {
+                if ($children->isEmpty() && ! $parent->path) {
+                    return null;
+                }
+
+                if ($children->isEmpty() && $required->isNotEmpty() && $required->intersect($permissionCodes)->isEmpty()) {
                     return null;
                 }
 
@@ -103,9 +113,35 @@ class MenuController extends Controller
                     'icon' => $parent->icon,
                     'path' => $parent->path,
                     'children' => $children,
+                    'category' => [
+                        'code' => $parent->category_code ?? 'sin_categoria',
+                        'name' => $parent->category_name ?? 'Sin categoría',
+                        'sort_order' => $parent->category_sort_order,
+                    ],
                 ];
             })
             ->filter()
+            ->groupBy('category.code')
+            ->map(function ($menus): array {
+                $first = $menus->first();
+
+                return [
+                    'code' => $first['category']['code'],
+                    'name' => $first['category']['name'],
+                    'sort_order' => $first['category']['sort_order'],
+                    'menus' => $menus
+                        ->map(fn (array $menu): array => [
+                            'id' => $menu['id'],
+                            'name' => $menu['name'],
+                            'code' => $menu['code'],
+                            'icon' => $menu['icon'],
+                            'path' => $menu['path'],
+                            'children' => $menu['children']->values(),
+                        ])
+                        ->values(),
+                ];
+            })
+            ->sortBy('sort_order')
             ->values();
 
         return ApiResponse::success(MenuResource::collection($parents), 'Menú obtenido correctamente.');
