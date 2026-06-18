@@ -76,6 +76,54 @@ class CatalogEndpointTest extends TestCase
             ]);
     }
 
+    public function test_condominium_features_catalog_can_be_listed(): void
+    {
+        $this->seed(CatalogSeeder::class);
+
+        $response = $this->getJson('/api/catalogs/condominium_features/items');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('meta.catalog.code', 'condominium_features')
+            ->assertJsonFragment([
+                'code' => 'seguridad_24_7',
+                'name' => 'Seguridad 24/7',
+            ])
+            ->assertJsonFragment([
+                'code' => 'piscina',
+                'name' => 'Piscina',
+            ])
+            ->assertJsonFragment([
+                'code' => 'parqueadero_visitas',
+                'name' => 'Parqueadero de visitas',
+            ]);
+    }
+
+    public function test_condominium_types_catalog_can_be_listed(): void
+    {
+        $this->seed(CatalogSeeder::class);
+
+        $response = $this->getJson('/api/catalogs/condominium_types/items');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('meta.catalog.code', 'condominium_types')
+            ->assertJsonFragment([
+                'code' => 'residencial',
+                'name' => 'Residencial',
+            ])
+            ->assertJsonFragment([
+                'code' => 'mixto',
+                'name' => 'Mixto',
+            ])
+            ->assertJsonFragment([
+                'code' => 'conjunto_habitacional',
+                'name' => 'Conjunto habitacional',
+            ]);
+    }
+
     public function test_unknown_catalog_returns_standard_not_found_response(): void
     {
         $this->seed(CatalogSeeder::class);
