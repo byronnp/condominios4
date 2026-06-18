@@ -349,6 +349,49 @@
                                             "secondary_phone": null,
                                             "is_access_enabled": true
                                         },
+                                        "platform_role": {
+                                            "id": 1,
+                                            "name": "Administrador Senior",
+                                            "code": "administrador_senior"
+                                        },
+                                        "is_platform_admin": true,
+                                        "condominium": {
+                                            "id": 1,
+                                            "name": "Condominio Los Cedros",
+                                            "slug": "condominio-los-cedros",
+                                            "ruc": "1799999999001",
+                                            "email": "administracion@loscedros.ec",
+                                            "phone": "0999999999",
+                                            "address": "Av. Amazonas N34-120 y Atahualpa",
+                                            "city": "Quito",
+                                            "province": "Pichincha",
+                                            "country": "EC",
+                                            "total_units": 24,
+                                            "is_active": true
+                                        },
+                                        "roles": [
+                                            {
+                                                "id": 1,
+                                                "condominium_id": 1,
+                                                "name": "Administrador",
+                                                "code": "administrador",
+                                                "permissions": [
+                                                    {
+                                                        "id": 1,
+                                                        "module": "roles",
+                                                        "action": "manage",
+                                                        "code": "roles.manage",
+                                                        "name": "Administrar roles",
+                                                        "is_active": true
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "permissions": [
+                                            "condominiums.view",
+                                            "condominiums.create",
+                                            "roles.manage"
+                                        ],
                                         "auth_session": {
                                             "id": 1,
                                             "device_name": "Swagger UI",
@@ -1659,6 +1702,49 @@
                                             "secondary_phone": null,
                                             "is_access_enabled": true
                                         },
+                                        "platform_role": {
+                                            "id": 1,
+                                            "name": "Administrador Senior",
+                                            "code": "administrador_senior"
+                                        },
+                                        "is_platform_admin": true,
+                                        "condominium": {
+                                            "id": 1,
+                                            "name": "Condominio Los Cedros",
+                                            "slug": "condominio-los-cedros",
+                                            "ruc": "1799999999001",
+                                            "email": "administracion@loscedros.ec",
+                                            "phone": "0999999999",
+                                            "address": "Av. Amazonas N34-120 y Atahualpa",
+                                            "city": "Quito",
+                                            "province": "Pichincha",
+                                            "country": "EC",
+                                            "total_units": 24,
+                                            "is_active": true
+                                        },
+                                        "roles": [
+                                            {
+                                                "id": 1,
+                                                "condominium_id": 1,
+                                                "name": "Administrador",
+                                                "code": "administrador",
+                                                "permissions": [
+                                                    {
+                                                        "id": 1,
+                                                        "module": "roles",
+                                                        "action": "manage",
+                                                        "code": "roles.manage",
+                                                        "name": "Administrar roles",
+                                                        "is_active": true
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "permissions": [
+                                            "condominiums.view",
+                                            "condominiums.create",
+                                            "roles.manage"
+                                        ],
                                         "auth_session": {
                                             "id": 1,
                                             "device_name": "Swagger UI",
@@ -4964,6 +5050,49 @@
                                             "secondary_phone": null,
                                             "is_access_enabled": true
                                         },
+                                        "platform_role": {
+                                            "id": 1,
+                                            "name": "Administrador Senior",
+                                            "code": "administrador_senior"
+                                        },
+                                        "is_platform_admin": true,
+                                        "condominium": {
+                                            "id": 1,
+                                            "name": "Condominio Los Cedros",
+                                            "slug": "condominio-los-cedros",
+                                            "ruc": "1799999999001",
+                                            "email": "administracion@loscedros.ec",
+                                            "phone": "0999999999",
+                                            "address": "Av. Amazonas N34-120 y Atahualpa",
+                                            "city": "Quito",
+                                            "province": "Pichincha",
+                                            "country": "EC",
+                                            "total_units": 24,
+                                            "is_active": true
+                                        },
+                                        "roles": [
+                                            {
+                                                "id": 1,
+                                                "condominium_id": 1,
+                                                "name": "Administrador",
+                                                "code": "administrador",
+                                                "permissions": [
+                                                    {
+                                                        "id": 1,
+                                                        "module": "roles",
+                                                        "action": "manage",
+                                                        "code": "roles.manage",
+                                                        "name": "Administrar roles",
+                                                        "is_active": true
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "permissions": [
+                                            "condominiums.view",
+                                            "condominiums.create",
+                                            "roles.manage"
+                                        ],
                                         "auth_session": {
                                             "id": 1,
                                             "device_name": "Swagger UI",

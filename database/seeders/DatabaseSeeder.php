@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Catalog;
+use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -34,7 +35,7 @@ class DatabaseSeeder extends Seeder
         $seniorAdmin = User::updateOrCreate([
             'email' => 'byron_np@hotmail.com',
         ], [
-            'name' => 'ADMINISTRADOR SENIOR',
+            'name' => 'BYRON VINICIO PILATAXI ALMACHI',
             'password' => 'admin123',
             'country' => 'EC',
             'document_type_id' => $documentType->id,
@@ -45,7 +46,18 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $seniorAdmin->tenants()->syncWithoutDetaching([$tenant->id]);
-        $seniorAdmin->assignRole('admin', $tenant);
+
+        $seniorRole = Role::updateOrCreate([
+            'condominium_id' => null,
+            'code' => 'administrador_senior',
+        ], [
+            'name' => 'Administrador Senior',
+            'description' => 'Acceso maestro a la plataforma.',
+            'is_system' => true,
+            'is_active' => true,
+        ]);
+
+        $seniorAdmin->roles()->syncWithoutDetaching([$seniorRole->id => ['tenant_id' => $tenant->id]]);
 
         User::updateOrCreate([
             'email' => 'byronnp@gmail.com',

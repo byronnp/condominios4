@@ -85,7 +85,10 @@ class JwtAuthTest extends TestCase
             'Authorization' => "Bearer {$accessToken}",
         ])
             ->assertOk()
-            ->assertJsonPath('data.user.email', 'ana@example.com');
+            ->assertJsonPath('data.user.email', 'ana@example.com')
+            ->assertJsonPath('data.platform_role', null)
+            ->assertJsonPath('data.is_platform_admin', false)
+            ->assertJsonPath('data.permissions', []);
 
         $this->postJson('/api/auth/refresh', [
             'refresh_token' => $refreshToken,
@@ -134,7 +137,32 @@ class JwtAuthTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('data.condominium.name', 'Condominio Los Cedros')
+            ->assertJsonPath('data.is_platform_admin', false)
             ->assertJsonFragment(['code' => 'administrador']);
+    }
+
+    public function test_me_returns_platform_role_for_senior_admin(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $login = $this->postJson('/api/auth/login', [
+            'email' => 'byron_np@hotmail.com',
+            'password' => 'admin123',
+        ])->assertOk();
+
+        $response = $this->getJson('/api/auth/me', [
+            'Authorization' => 'Bearer '.$login->json('data.access_token'),
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.platform_role.code', 'administrador_senior')
+            ->assertJsonPath('data.platform_role.name', 'Administrador Senior')
+            ->assertJsonPath('data.is_platform_admin', true)
+            ->assertJsonPath('data.condominium.name', 'Condominio Los Cedros')
+            ->assertJsonFragment(['code' => 'administrador']);
+
+        $this->assertContains('roles.manage', $response->json('data.permissions'));
     }
 
     public function test_logout_revokes_current_access_token(): void

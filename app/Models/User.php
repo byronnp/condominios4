@@ -137,6 +137,26 @@ class User extends Authenticatable
         return $this->roles()->wherePivot('tenant_id', $tenant->id)->get();
     }
 
+    public function platformRoles(): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->roles()
+            ->whereNull('roles.condominium_id')
+            ->where('roles.is_active', true)
+            ->get();
+    }
+
+    public function platformRole(): ?Role
+    {
+        return $this->platformRoles()
+            ->first(fn (Role $role): bool => in_array($role->code, ['administrador_senior', 'admin'], true)
+                || in_array($role->name, ['ADMINISTRADOR SENIOR', 'Administrador Senior', 'admin'], true));
+    }
+
+    public function isPlatformAdmin(): bool
+    {
+        return $this->platformRole() !== null;
+    }
+
     public function hasRole(string $role, Tenant $tenant): bool
     {
         return $this->rolesForTenant($tenant)->contains('name', $role);

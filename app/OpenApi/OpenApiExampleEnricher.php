@@ -312,6 +312,15 @@ class OpenApiExampleEnricher
             str_contains($operationKey, '/auth/me'),
             $operationKey === 'GET /api/user' => [
                 'user' => $this->user(),
+                'platform_role' => [
+                    'id' => 1,
+                    'name' => 'Administrador Senior',
+                    'code' => 'administrador_senior',
+                ],
+                'is_platform_admin' => true,
+                'condominium' => $this->condominium(),
+                'roles' => [$this->role()],
+                'permissions' => ['condominiums.view', 'condominiums.create', 'roles.manage'],
                 'auth_session' => $this->authSession(),
             ],
             str_contains($operationKey, '/auth/sessions') => [$this->authSession()],

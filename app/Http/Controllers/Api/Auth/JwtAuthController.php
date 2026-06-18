@@ -104,8 +104,13 @@ class JwtAuthController extends Controller
         return ApiResponse::success(
             data: [
                 'user' => new UserResource($user->load('documentType')),
+                'platform_role' => $this->platformRole($user),
+                'is_platform_admin' => $user->isPlatformAdmin(),
                 'condominium' => $condominium ? new CondominiumResource($condominium) : null,
                 'roles' => RoleResource::collection($condominium ? $this->rolesForCondominium($user, $condominium) : collect()),
+                'permissions' => $condominium
+                    ? $user->permissionsForCondominium($condominium)->pluck('code')->values()
+                    : collect(),
                 'auth_session' => new AuthSessionResource($request->attributes->get('auth_session')),
             ],
             message: 'Usuario autenticado.',
@@ -181,6 +186,24 @@ class JwtAuthController extends Controller
             ->wherePivot('is_active', true)
             ->wherePivotNull('deleted_at')
             ->first();
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function platformRole(User $user): ?array
+    {
+        $role = $user->platformRole();
+
+        if (! $role) {
+            return null;
+        }
+
+        return [
+            'id' => $role->id,
+            'name' => $role->name === 'admin' ? 'Administrador Senior' : $role->name,
+            'code' => $role->code ?: 'administrador_senior',
+        ];
     }
 
     /**
