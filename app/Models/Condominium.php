@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -21,9 +22,9 @@ class Condominium extends Model
         'email',
         'phone',
         'address',
-        'city',
-        'province',
-        'country',
+        'country_code',
+        'province_id',
+        'city_id',
         'total_units',
         'is_active',
     ];
@@ -32,8 +33,25 @@ class Condominium extends Model
     {
         return [
             'total_units' => 'integer',
+            'province_id' => 'integer',
+            'city_id' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'country_code', 'code');
+    }
+
+    public function province(): BelongsTo
+    {
+        return $this->belongsTo(Province::class);
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
     }
 
     public function users(): BelongsToMany

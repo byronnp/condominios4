@@ -16,10 +16,14 @@ Completed phases:
 - Phase 4: condominiums, users by condominium, roles, permissions, two-level menus, boards/directives with dates, condominium payment methods, seed data, and tests.
 - Phase 5: blocks, units/houses, parking assignment through unit data, related people, owners, co-owners, tenants, residents, billing profiles, access invitations, user access enablement, unit aliquots, seed data, and tests.
 - Phase 6: economic administration, billing settings by condominium, monthly fees, extraordinary fees, late fee foundations, advance payments, credit balances, payments, allocations, unit account movements, bank opening balances, bank movements, statement imports, reconciliations, expenses, treasury handovers, payment order foundations, seed data, and tests.
+- Phase 7: daily operation, visits, visitor registration by owner/admin/security, visit authorization, entry/exit logs, visit status, common areas, reservations, availability validation, incidents, maintenances, maintenance tasks, seed data, and tests.
+
+Additional completed modules:
+
+- Locations: normalized `countries`, `provinces`, and `cities` tables, location seed data, public location APIs, Swagger/OpenAPI documentation, and tests. Use this module for geographic selections instead of generic catalogs.
 
 Upcoming phases:
 
-- Phase 7: daily operation. Implement visits, visitor registration by owner/admin/security, visit authorization, entry/exit logs, visit status, common areas, reservations, availability validation, incidents, maintenances, and maintenance tasks. Expected tables include `visitors`, `visits`, `visit_logs`, `common_areas`, `common_area_reservations`, `incidents`, `maintenances`, and `maintenance_tasks`.
 - Phase 8: internal audit. Register activity by session, user, condominium, endpoint, HTTP method, IP, user agent, action, affected model, affected record, before/after values, token/session events, invitation events, and relevant economic events. Expected tables include `audit_logs` and optionally `audit_log_changes` when field-level change storage is needed.
 - Phase 9: notifications and email. Implement notification templates, internal notifications, delivery records, Redis-backed jobs, email invitations, account access emails, login notifications, payment reminders, visit alerts, reservation alerts, and failed delivery tracking. Expected tables include `notification_templates`, `notifications`, `notification_deliveries`, and `email_logs`.
 - Phase 10: condominium modules. Implement system modules and per-condominium module activation for enabling or disabling functionality. Keep modules independent from menus and permissions: modules decide whether a feature is available; menus decide navigation; permissions decide allowed actions. Expected tables include `system_modules` and `condominium_modules`.
@@ -46,6 +50,8 @@ Whenever API behavior changes, update the OpenAPI/Swagger documentation in the s
 Follow Laravel conventions and PSR-12 formatting through Pint. Use 4-space indentation for PHP. Name controllers by module and action scope, for example `CondominiumController`, `RoleController`, and `MenuController`.
 
 Use English technical identifiers for code, tables, routes, and permission codes, while user-facing database seed names may be Spanish. Permission codes use `module.action`, for example `roles.manage` or `boards.view`. API responses should use `App\Support\Api\ApiResponse`.
+
+For normalized location data, use `countries.code` as the country identifier and foreign keys for province/city references. Condominiums store location through `country_code`, `province_id`, and `city_id`; do not reintroduce free-text `country`, `province`, or `city` columns in `condominiums`. Validate that `province_id` belongs to `country_code` and that `city_id` belongs to `province_id`.
 
 ## Request Validation & Rules
 

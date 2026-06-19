@@ -144,9 +144,9 @@ class OpenApiExampleEnricher
                 'email' => 'administracion@example.com',
                 'phone' => '0999999999',
                 'address' => 'Av. Principal N1-23',
-                'city' => 'Quito',
-                'province' => 'Pichincha',
-                'country' => 'EC',
+                'country_code' => 'EC',
+                'province_id' => 1,
+                'city_id' => 1,
                 'total_units' => 24,
             ],
             'POST /api/condominiums/{condominium}/boards' => [
@@ -328,6 +328,10 @@ class OpenApiExampleEnricher
             str_contains($operationKey, '/catalogs') => str_contains($operationKey, '/catalogs/{catalog}')
                 ? $this->catalog()
                 : [$this->catalog()],
+            str_contains($operationKey, '/countries/{country}/provinces') => [$this->province()],
+            str_contains($operationKey, '/countries/{country}') => $this->country(),
+            str_contains($operationKey, '/countries') => [$this->country()],
+            str_contains($operationKey, '/provinces/{province}/cities') => [$this->city()],
             str_contains($operationKey, '/health') => [
                 'status' => 'ok',
                 'service' => 'condominios-api',
@@ -443,6 +447,41 @@ class OpenApiExampleEnricher
         ];
     }
 
+    private function country(): array
+    {
+        return [
+            'id' => 1,
+            'code' => 'EC',
+            'iso3' => 'ECU',
+            'name' => 'Ecuador',
+            'phone_code' => '+593',
+            'currency_code' => 'USD',
+            'is_active' => true,
+        ];
+    }
+
+    private function province(): array
+    {
+        return [
+            'id' => 1,
+            'country_id' => 1,
+            'code' => 'EC-P',
+            'name' => 'Pichincha',
+            'is_active' => true,
+        ];
+    }
+
+    private function city(): array
+    {
+        return [
+            'id' => 1,
+            'province_id' => 1,
+            'code' => 'EC-P-QUITO',
+            'name' => 'Quito',
+            'is_active' => true,
+        ];
+    }
+
     private function condominium(): array
     {
         return [
@@ -453,9 +492,9 @@ class OpenApiExampleEnricher
             'email' => 'administracion@loscedros.ec',
             'phone' => '0999999999',
             'address' => 'Av. Amazonas N34-120 y Atahualpa',
-            'city' => 'Quito',
-            'province' => 'Pichincha',
-            'country' => 'EC',
+            'country_code' => 'EC',
+            'province_id' => 1,
+            'city_id' => 1,
             'total_units' => 24,
             'is_active' => true,
         ];

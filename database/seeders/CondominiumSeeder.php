@@ -3,6 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\Condominium;
+use App\Models\City;
+use App\Models\Country;
+use App\Models\Province;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -11,6 +14,10 @@ class CondominiumSeeder extends Seeder
 {
     public function run(): void
     {
+        $country = Country::where('code', 'EC')->first();
+        $province = Province::where('code', 'EC-P')->first();
+        $city = City::where('code', 'EC-P-QUITO')->first();
+
         $condominium = Condominium::updateOrCreate([
             'slug' => 'condominio-los-cedros',
         ], [
@@ -19,9 +26,9 @@ class CondominiumSeeder extends Seeder
             'email' => 'administracion@loscedros.ec',
             'phone' => '0999999999',
             'address' => 'Av. Amazonas N34-120 y Atahualpa',
-            'city' => 'Quito',
-            'province' => 'Pichincha',
-            'country' => 'EC',
+            'country_code' => $country?->code ?? 'EC',
+            'province_id' => $province?->id,
+            'city_id' => $city?->id,
             'total_units' => 24,
             'is_active' => true,
         ]);

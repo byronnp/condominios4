@@ -17,6 +17,7 @@ use OpenApi\Attributes as OA;
         new OA\Tag(name: 'Sistema', description: 'Endpoints técnicos de la API'),
         new OA\Tag(name: 'Autenticación', description: 'Registro, login y sesiones'),
         new OA\Tag(name: 'Catálogos', description: 'Catálogos generales del sistema'),
+        new OA\Tag(name: 'Ubicaciones', description: 'Países, provincias y ciudades'),
         new OA\Tag(name: 'Condominios', description: 'Administración multi-condominio'),
         new OA\Tag(name: 'Roles y permisos', description: 'Control de acceso'),
         new OA\Tag(name: 'Economía', description: 'Administración económica del condominio'),

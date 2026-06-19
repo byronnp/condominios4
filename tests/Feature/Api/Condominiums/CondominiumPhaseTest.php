@@ -4,6 +4,7 @@ namespace Tests\Feature\Api\Condominiums;
 
 use App\Models\Condominium;
 use App\Models\Permission;
+use App\Models\Province;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -87,6 +88,62 @@ class CondominiumPhaseTest extends TestCase
         ])
             ->assertCreated()
             ->assertJsonPath('data.code', 'incidents.approve');
+    }
+
+    public function test_condominium_can_be_created_with_normalized_location(): void
+    {
+        $token = $this->loginToken();
+        $province = Province::where('code', 'EC-P')->firstOrFail();
+        $city = $province->cities()->where('code', 'EC-P-QUITO')->firstOrFail();
+
+        $response = $this->postJson('/api/condominiums', [
+            'name' => 'Condominio Location Test',
+            'ruc' => '1791234567001',
+            'email' => 'location.test@example.com',
+            'phone' => '0991234567',
+            'address' => 'Av. Test N1-23',
+            'country_code' => 'EC',
+            'province_id' => $province->id,
+            'city_id' => $city->id,
+            'total_units' => 12,
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('data.country_code', 'EC')
+            ->assertJsonPath('data.province_id', $province->id)
+            ->assertJsonPath('data.city_id', $city->id);
+
+        $this->assertDatabaseHas('condominiums', [
+            'slug' => 'condominio-location-test',
+            'country_code' => 'EC',
+            'province_id' => $province->id,
+            'city_id' => $city->id,
+        ]);
+    }
+
+    public function test_condominium_location_must_keep_province_and_city_consistent(): void
+    {
+        $token = $this->loginToken();
+        $pichincha = Province::where('code', 'EC-P')->firstOrFail();
+        $guayasCity = Province::where('code', 'EC-G')->firstOrFail()
+            ->cities()
+            ->where('code', 'EC-G-GUAYAQUIL')
+            ->firstOrFail();
+
+        $this->postJson('/api/condominiums', [
+            'name' => 'Condominio Location Invalid',
+            'address' => 'Av. Test N1-23',
+            'country_code' => 'EC',
+            'province_id' => $pichincha->id,
+            'city_id' => $guayasCity->id,
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.city_id.0', 'La ciudad no pertenece a la provincia seleccionada.');
     }
 
     private function loginToken(): string

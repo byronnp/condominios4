@@ -17,6 +17,7 @@ class CondominiumController extends Controller
     public function index(): JsonResponse
     {
         $condominiums = Condominium::query()
+            ->with(['country', 'province', 'city'])
             ->latest()
             ->get();
 
@@ -29,7 +30,7 @@ class CondominiumController extends Controller
         $data = $request->validated();
 
         $data['slug'] ??= Str::slug($data['name']);
-        $data['country'] ??= 'EC';
+        $data['country_code'] ??= 'EC';
         $data['total_units'] ??= 0;
         $data['is_active'] ??= true;
 
@@ -42,7 +43,7 @@ class CondominiumController extends Controller
     public function show(Condominium $condominium): JsonResponse
     {
         return ApiResponse::success(
-            new CondominiumResource($condominium->load(['roles.permissions', 'boards.members.user', 'paymentMethods.paymentMethodType'])),
+            new CondominiumResource($condominium->load(['country', 'province', 'city', 'roles.permissions', 'boards.members.user', 'paymentMethods.paymentMethodType'])),
             'Condominio encontrado.'
         );
     }

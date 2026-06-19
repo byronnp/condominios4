@@ -2,6 +2,7 @@
 
 require __DIR__.'/api/system.php';
 require __DIR__.'/api/catalogs.php';
+require __DIR__.'/api/locations.php';
 require __DIR__.'/api/auth.php';
 require __DIR__.'/api/condominiums.php';
 require __DIR__.'/api/roles.php';
