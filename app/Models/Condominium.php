@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Condominium extends Model
@@ -19,12 +20,20 @@ class Condominium extends Model
         'name',
         'slug',
         'ruc',
+        'condominium_type_id',
+        'description',
         'email',
         'phone',
         'address',
+        'address_reference',
         'country_code',
         'province_id',
         'city_id',
+        'latitude',
+        'longitude',
+        'towers_count',
+        'houses_count',
+        'logo_path',
         'total_units',
         'is_active',
     ];
@@ -35,8 +44,18 @@ class Condominium extends Model
             'total_units' => 'integer',
             'province_id' => 'integer',
             'city_id' => 'integer',
+            'condominium_type_id' => 'integer',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
+            'towers_count' => 'integer',
+            'houses_count' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(CatalogItem::class, 'condominium_type_id');
     }
 
     public function country(): BelongsTo
@@ -79,6 +98,23 @@ class Condominium extends Model
     public function catalogItems(): HasMany
     {
         return $this->hasMany(CondominiumCatalogItem::class);
+    }
+
+    public function features(): BelongsToMany
+    {
+        return $this->belongsToMany(CatalogItem::class, 'condominium_features')
+            ->withTimestamps()
+            ->wherePivotNull('deleted_at');
+    }
+
+    public function billingSettings(): HasMany
+    {
+        return $this->hasMany(CondominiumBillingSetting::class);
+    }
+
+    public function activeBillingSetting(): HasOne
+    {
+        return $this->hasOne(CondominiumBillingSetting::class)->where('is_active', true);
     }
 
     public function blocks(): HasMany

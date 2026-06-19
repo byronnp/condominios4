@@ -82,7 +82,7 @@ class SwaggerDocumentationTest extends TestCase
 
                 if (
                     isset($operation['requestBody'])
-                    && ! isset($operation['requestBody']['content']['application/json']['example'])
+                    && ! collect($operation['requestBody']['content'] ?? [])->contains(fn (array $content): bool => isset($content['example']))
                 ) {
                     $requestBodiesWithoutExamples[] = $operationKey;
                 }

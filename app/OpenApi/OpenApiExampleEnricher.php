@@ -54,10 +54,14 @@ class OpenApiExampleEnricher
     private function withRequestExample(array $requestBody, array $example): array
     {
         $requestBody['required'] ??= true;
-        $requestBody['content']['application/json']['schema'] ??= [
+        $contentType = isset($requestBody['content']['multipart/form-data'])
+            ? 'multipart/form-data'
+            : 'application/json';
+
+        $requestBody['content'][$contentType]['schema'] ??= [
             'type' => 'object',
         ];
-        $requestBody['content']['application/json']['example'] = $example;
+        $requestBody['content'][$contentType]['example'] = $example;
 
         return $requestBody;
     }
@@ -139,15 +143,30 @@ class OpenApiExampleEnricher
             'POST /api/auth/logout' => ['refresh_token' => 'refresh-token'],
             'POST /api/logout' => ['refresh_token' => 'refresh-token'],
             'POST /api/condominiums' => [
-                'name' => 'Condominio Demo',
-                'ruc' => '1799999999001',
-                'email' => 'administracion@example.com',
-                'phone' => '0999999999',
-                'address' => 'Av. Principal N1-23',
+                'name' => 'Condominio Vista Verde',
+                'ruc' => '0999999999001',
+                'type' => 'Residencial',
+                'description' => 'Condominio residencial con áreas comunes y seguridad privada.',
+                'status' => 'Activo',
                 'country_code' => 'EC',
-                'province_id' => 1,
-                'city_id' => 1,
-                'total_units' => 24,
+                'province_id' => 9,
+                'city_id' => 101,
+                'direction' => 'Av. Principal 123 y Calle Secundaria',
+                'reference' => 'Frente al parque central',
+                'latitude' => -2.170998,
+                'longitude' => -79.922359,
+                'currency' => 'USD',
+                'towers' => 4,
+                'houses' => 120,
+                'characteristics' => ['Piscina', 'Gimnasio', 'Seguridad 24/7', 'Parqueadero de visitas'],
+                'admin_name' => 'Carlos',
+                'admin_last_name' => 'Ramírez',
+                'admin_document_type' => 'Cédula',
+                'admin_id_number' => '0912345678',
+                'admin_email' => 'carlos.ramirez@example.com',
+                'admin_phone' => '+593 99 123 4567',
+                'admin_status' => 'Activo',
+                'logo' => 'logo.png',
             ],
             'POST /api/condominiums/{condominium}/boards' => [
                 'name' => 'Directiva 2026',
@@ -489,13 +508,44 @@ class OpenApiExampleEnricher
             'name' => 'Condominio Los Cedros',
             'slug' => 'condominio-los-cedros',
             'ruc' => '1799999999001',
+            'type' => [
+                'id' => 1,
+                'code' => 'residencial',
+                'name' => 'Residencial',
+            ],
+            'description' => 'Condominio residencial con áreas comunes y seguridad privada.',
             'email' => 'administracion@loscedros.ec',
             'phone' => '0999999999',
             'address' => 'Av. Amazonas N34-120 y Atahualpa',
+            'address_reference' => 'Frente al parque central',
             'country_code' => 'EC',
             'province_id' => 1,
             'city_id' => 1,
+            'country' => $this->country(),
+            'province' => $this->province(),
+            'city' => $this->city(),
+            'latitude' => -2.170998,
+            'longitude' => -79.922359,
+            'currency' => 'USD',
+            'towers_count' => 4,
+            'houses_count' => 120,
             'total_units' => 24,
+            'features' => [
+                ['id' => 1, 'code' => 'piscina', 'name' => 'Piscina'],
+                ['id' => 2, 'code' => 'gimnasio', 'name' => 'Gimnasio'],
+            ],
+            'administrator' => [
+                'id' => 1,
+                'name' => 'Carlos Ramírez',
+                'email' => 'carlos.ramirez@example.com',
+                'document_type' => $this->catalogItem(),
+                'document_number' => '0912345678',
+                'phone' => '+593 99 123 4567',
+                'is_access_enabled' => true,
+                'is_active' => true,
+            ],
+            'logo_path' => 'condominiums/logos/logo.png',
+            'logo_url' => 'https://cdn.example.com/condominiums/logos/logo.png',
             'is_active' => true,
         ];
     }
