@@ -158,7 +158,7 @@ class OpenApiExampleEnricher
                 'currency' => 'USD',
                 'towers' => 4,
                 'houses' => 120,
-                'characteristics' => ['Piscina', 'Gimnasio', 'Seguridad 24/7', 'Parqueadero de visitas'],
+                'characteristics' => [1, 2, 3],
                 'admin_name' => 'Carlos',
                 'admin_last_name' => 'Ramírez',
                 'admin_document_type' => 'Cédula',

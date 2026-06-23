@@ -5,6 +5,7 @@ namespace App\Http\Requests\Api\Condominiums;
 use App\Models\CatalogItem;
 use App\Models\City;
 use App\Models\Province;
+use App\Rules\ValidCatalogItem;
 use App\Rules\ValidCatalogItemLabel;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -41,7 +42,7 @@ class CondominiumStoreRequest extends FormRequest
             'towers' => ['nullable', 'integer', 'min:0'],
             'houses' => ['nullable', 'integer', 'min:0'],
             'characteristics' => ['nullable', 'array'],
-            'characteristics.*' => ['string', 'max:255', new ValidCatalogItemLabel('condominium_features')],
+            'characteristics.*' => ['integer', new ValidCatalogItem('condominium_features')],
             'admin_name' => ['nullable', 'required_with:admin_last_name,admin_document_type,admin_id_number,admin_email,admin_phone,admin_status', 'string', 'max:255'],
             'admin_last_name' => ['nullable', 'required_with:admin_name,admin_document_type,admin_id_number,admin_email,admin_phone,admin_status', 'string', 'max:255'],
             'admin_document_type' => ['nullable', 'required_with:admin_name,admin_last_name,admin_id_number,admin_email,admin_phone,admin_status', 'string', 'max:255', new ValidCatalogItemLabel('document_types')],
@@ -49,7 +50,7 @@ class CondominiumStoreRequest extends FormRequest
             'admin_email' => ['nullable', 'required_with:admin_name,admin_last_name,admin_document_type,admin_id_number,admin_phone,admin_status', 'email', 'max:255'],
             'admin_phone' => ['nullable', 'string', 'max:50'],
             'admin_status' => ['nullable', 'required_with:admin_name,admin_last_name,admin_document_type,admin_id_number,admin_email,admin_phone', 'string', Rule::in(['Activo', 'Inactivo', 'activo', 'inactivo'])],
-            'logo' => ['nullable', 'image', 'max:2048'],
+            'logo' => ['nullable', 'image', 'max:5120'],
             'total_units' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
         ];
@@ -94,8 +95,7 @@ class CondominiumStoreRequest extends FormRequest
     public function featureIds(): array
     {
         return collect($this->validated('characteristics', []))
-            ->map(fn (string $label): ?int => $this->catalogItemId('condominium_features', $label))
-            ->filter()
+            ->map(fn (int|string $featureId): int => (int) $featureId)
             ->values()
             ->all();
     }

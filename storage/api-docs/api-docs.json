@@ -1504,15 +1504,15 @@
                                         "nullable": true
                                     },
                                     "characteristics": {
+                                        "description": "IDs de items activos del catálogo condominium_features.",
                                         "type": "array",
                                         "items": {
-                                            "type": "string"
+                                            "type": "integer"
                                         },
                                         "example": [
-                                            "Piscina",
-                                            "Gimnasio",
-                                            "Seguridad 24/7",
-                                            "Parqueadero de visitas"
+                                            1,
+                                            2,
+                                            3
                                         ],
                                         "nullable": true
                                     },
@@ -1557,6 +1557,7 @@
                                         ]
                                     },
                                     "logo": {
+                                        "description": "Imagen del logo. Tamaño máximo: 5 MB.",
                                         "type": "string",
                                         "format": "binary",
                                         "nullable": true
@@ -1581,10 +1582,9 @@
                                 "towers": 4,
                                 "houses": 120,
                                 "characteristics": [
-                                    "Piscina",
-                                    "Gimnasio",
-                                    "Seguridad 24/7",
-                                    "Parqueadero de visitas"
+                                    1,
+                                    2,
+                                    3
                                 ],
                                 "admin_name": "Carlos",
                                 "admin_last_name": "Ramírez",

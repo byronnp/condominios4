@@ -61,7 +61,7 @@ class CondominiumResource extends JsonResource
                 fn () => $this->administrator(),
             ),
             'logo_path' => $this->logo_path,
-            'logo_url' => $this->logo_path ? Storage::disk('s3')->url($this->logo_path) : null,
+            'logo_url' => $this->logoUrl(),
             'is_active' => $this->is_active,
         ];
 
@@ -70,6 +70,21 @@ class CondominiumResource extends JsonResource
         }
 
         return $data;
+    }
+
+    private function logoUrl(): ?string
+    {
+        if (! $this->logo_path) {
+            return null;
+        }
+
+        $baseUrl = config('filesystems.logo_url');
+
+        if ($baseUrl) {
+            return rtrim($baseUrl, '/').'/'.ltrim($this->logo_path, '/');
+        }
+
+        return Storage::disk(config('filesystems.logo_disk', 'public'))->url($this->logo_path);
     }
 
     /**

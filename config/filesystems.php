@@ -15,6 +15,10 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    'logo_disk' => env('LOGO_FILESYSTEM_DISK', env('FILESYSTEM_DISK', 'public')),
+
+    'logo_url' => env('LOGO_FILESYSTEM_URL'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
@@ -53,10 +57,10 @@ return [
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION'),
             'bucket' => env('AWS_BUCKET'),
-            'url' => env('AWS_URL'),
+            'url' => env('AWS_INTERNAL_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-            'throw' => false,
+            'throw' => env('AWS_THROW', true),
             'report' => false,
         ],
 

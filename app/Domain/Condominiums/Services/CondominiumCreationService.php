@@ -10,7 +10,9 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Throwable;
 
 class CondominiumCreationService
@@ -31,7 +33,21 @@ class CondominiumCreationService
 
         try {
             if ($logo !== null) {
-                $logoPath = $logo->store('condominiums/logos', 's3');
+                $logoPath = $logo->hashName('condominiums/logos');
+                $stream = $this->logoStream($logo);
+
+                try {
+                    $stored = Storage::disk($this->logoDisk())->put($logoPath, $stream);
+                } finally {
+                    if (is_resource($stream)) {
+                        fclose($stream);
+                    }
+                }
+
+                if ($stored !== true) {
+                    throw new RuntimeException('No se pudo guardar el logo del condominio.');
+                }
+
                 $condominiumData['logo_path'] = $logoPath;
             }
 
@@ -58,11 +74,37 @@ class CondominiumCreationService
             });
         } catch (Throwable $exception) {
             if ($logoPath !== null) {
-                Storage::disk('s3')->delete($logoPath);
+                try {
+                    Storage::disk($this->logoDisk())->delete($logoPath);
+                } catch (Throwable $cleanupException) {
+                    Log::warning('No se pudo limpiar el logo del condominio luego de fallar la creación.', [
+                        'logo_path' => $logoPath,
+                        'exception' => $cleanupException->getMessage(),
+                    ]);
+                }
             }
 
             throw $exception;
         }
+    }
+
+    private function logoDisk(): string
+    {
+        return config('filesystems.logo_disk', 'public');
+    }
+
+    /**
+     * @return resource
+     */
+    private function logoStream(UploadedFile $logo): mixed
+    {
+        $stream = fopen($logo->getRealPath(), 'r');
+
+        if ($stream === false) {
+            throw new RuntimeException('No se pudo leer el logo del condominio.');
+        }
+
+        return $stream;
     }
 
     /**

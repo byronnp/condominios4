@@ -56,7 +56,7 @@ class CondominiumController extends Controller
                         new OA\Property(property: 'currency', type: 'string', nullable: true, example: 'USD'),
                         new OA\Property(property: 'towers', type: 'integer', nullable: true, example: 4),
                         new OA\Property(property: 'houses', type: 'integer', nullable: true, example: 120),
-                        new OA\Property(property: 'characteristics', type: 'array', nullable: true, items: new OA\Items(type: 'string'), example: ['Piscina', 'Gimnasio', 'Seguridad 24/7', 'Parqueadero de visitas']),
+                        new OA\Property(property: 'characteristics', description: 'IDs de items activos del catálogo condominium_features.', type: 'array', nullable: true, items: new OA\Items(type: 'integer'), example: [1, 2, 3]),
                         new OA\Property(property: 'admin_name', type: 'string', nullable: true, example: 'Carlos'),
                         new OA\Property(property: 'admin_last_name', type: 'string', nullable: true, example: 'Ramírez'),
                         new OA\Property(property: 'admin_document_type', type: 'string', nullable: true, example: 'Cédula'),
@@ -64,7 +64,7 @@ class CondominiumController extends Controller
                         new OA\Property(property: 'admin_email', type: 'string', format: 'email', nullable: true, example: 'carlos.ramirez@example.com'),
                         new OA\Property(property: 'admin_phone', type: 'string', nullable: true, example: '+593 99 123 4567'),
                         new OA\Property(property: 'admin_status', type: 'string', enum: ['Activo', 'Inactivo'], nullable: true, example: 'Activo'),
-                        new OA\Property(property: 'logo', type: 'string', format: 'binary', nullable: true),
+                        new OA\Property(property: 'logo', description: 'Imagen del logo. Tamaño máximo: 5 MB.', type: 'string', format: 'binary', nullable: true),
                     ],
                     type: 'object'
                 )

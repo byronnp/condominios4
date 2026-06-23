@@ -140,7 +140,9 @@ class CondominiumPhaseTest extends TestCase
 
     public function test_condominium_form_payload_is_normalized_before_creation(): void
     {
-        Storage::fake('s3');
+        $logoDisk = config('filesystems.logo_disk', 'public');
+
+        Storage::fake($logoDisk);
 
         $token = $this->loginToken();
         $province = Province::where('code', 'EC-G')->firstOrFail();
@@ -148,6 +150,10 @@ class CondominiumPhaseTest extends TestCase
         $type = CatalogItem::whereHas('catalog', fn ($query) => $query->where('code', 'condominium_types'))
             ->where('code', 'residencial')
             ->firstOrFail();
+        $featureIds = CatalogItem::whereHas('catalog', fn ($query) => $query->where('code', 'condominium_features'))
+            ->whereIn('code', ['piscina', 'gimnasio', 'seguridad_24_7', 'parqueadero_visitas'])
+            ->pluck('id')
+            ->all();
         $documentType = CatalogItem::whereHas('catalog', fn ($query) => $query->where('code', 'document_types'))
             ->where('code', 'cedula')
             ->firstOrFail();
@@ -168,7 +174,7 @@ class CondominiumPhaseTest extends TestCase
             'currency' => 'USD',
             'towers' => 4,
             'houses' => 120,
-            'characteristics' => ['Piscina', 'Gimnasio', 'Seguridad 24/7', 'Parqueadero de visitas'],
+            'characteristics' => $featureIds,
             'admin_name' => 'Carlos',
             'admin_last_name' => 'Ramírez',
             'admin_document_type' => 'Cédula',
@@ -212,7 +218,7 @@ class CondominiumPhaseTest extends TestCase
         $condominium = Condominium::where('slug', 'condominio-vista-verde')->firstOrFail();
 
         $this->assertNotNull($condominium->logo_path);
-        Storage::disk('s3')->assertExists($condominium->logo_path);
+        Storage::disk($logoDisk)->assertExists($condominium->logo_path);
 
         $this->assertDatabaseHas('condominium_billing_settings', [
             'condominium_id' => $condominium->id,
@@ -221,6 +227,13 @@ class CondominiumPhaseTest extends TestCase
         ]);
 
         $this->assertCount(4, $condominium->features()->get());
+        foreach ($featureIds as $featureId) {
+            $this->assertDatabaseHas('condominium_features', [
+                'condominium_id' => $condominium->id,
+                'catalog_item_id' => $featureId,
+            ]);
+        }
+
         $this->assertDatabaseHas('users', [
             'name' => 'Carlos Ramírez',
             'email' => 'carlos.ramirez@example.com',
@@ -270,7 +283,7 @@ class CondominiumPhaseTest extends TestCase
                 'type' => 'Tipo inexistente',
             ],
             'characteristics.0' => [
-                'characteristics' => ['Característica inexistente'],
+                'characteristics' => [999999],
             ],
             'admin_document_type' => [
                 'admin_name' => 'Carlos',
@@ -325,9 +338,11 @@ class CondominiumPhaseTest extends TestCase
             ->assertJsonValidationErrors('ruc');
     }
 
-    public function test_condominium_creation_removes_s3_logo_when_database_transaction_fails(): void
+    public function test_condominium_creation_removes_logo_when_database_transaction_fails(): void
     {
-        Storage::fake('s3');
+        $logoDisk = config('filesystems.logo_disk', 'public');
+
+        Storage::fake($logoDisk);
 
         try {
             app(CondominiumCreationService::class)->create([
@@ -341,7 +356,7 @@ class CondominiumPhaseTest extends TestCase
 
             $this->fail('Se esperaba una excepción por slug duplicado.');
         } catch (QueryException) {
-            $this->assertSame([], Storage::disk('s3')->allFiles('condominiums/logos'));
+            $this->assertSame([], Storage::disk($logoDisk)->allFiles('condominiums/logos'));
         }
     }
 
