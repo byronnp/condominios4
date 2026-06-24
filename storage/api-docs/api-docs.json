@@ -12,6 +12,714 @@
         }
     ],
     "paths": {
+        "/api/administrators": {
+            "get": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Listar administradores",
+                "operationId": "administratorsIndex",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "Carlos"
+                    },
+                    {
+                        "name": "condominium_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive"
+                            ]
+                        },
+                        "example": "active"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        },
+                        "example": 20
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Administradores encontrados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": null,
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Crear administrador",
+                "operationId": "administratorsStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "country",
+                                    "document_type_id",
+                                    "document_number",
+                                    "condominium_ids"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Carlos Ramírez"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "carlos.ramirez@example.com"
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "example": "EC"
+                                    },
+                                    "document_type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "document_number": {
+                                        "type": "string",
+                                        "example": "0912345678"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0991234567",
+                                        "nullable": true
+                                    },
+                                    "secondary_phone": {
+                                        "type": "string",
+                                        "example": "042345678",
+                                        "nullable": true
+                                    },
+                                    "is_access_enabled": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "condominium_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Carlos Ramírez",
+                                "email": "carlos.ramirez@example.com",
+                                "country": "EC",
+                                "document_type_id": 1,
+                                "document_number": "0912345678",
+                                "phone": "0991234567",
+                                "secondary_phone": "042345678",
+                                "is_access_enabled": false,
+                                "condominium_ids": [
+                                    1
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Administrador creado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": null,
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/administrators/{administrator}": {
+            "get": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Consultar administrador",
+                "operationId": "administratorsShow",
+                "responses": {
+                    "200": {
+                        "description": "Administrador encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": null,
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Actualizar administrador",
+                "operationId": "administratorsUpdate",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Carlos Ramírez"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "carlos.ramirez@example.com"
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "example": "EC"
+                                    },
+                                    "document_type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "document_number": {
+                                        "type": "string",
+                                        "example": "0912345678"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0991234567",
+                                        "nullable": true
+                                    },
+                                    "secondary_phone": {
+                                        "type": "string",
+                                        "example": "042345678",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Carlos Ramírez",
+                                "email": "carlos.ramirez@example.com",
+                                "country": "EC",
+                                "document_type_id": 1,
+                                "document_number": "0912345678",
+                                "phone": "0991234567",
+                                "secondary_phone": "042345678"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Administrador actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": null,
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Desactivar administrador y retirar sus asignaciones",
+                "operationId": "administratorsDestroy",
+                "responses": {
+                    "200": {
+                        "description": "Administrador eliminado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": null,
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/administrators/{administrator}/status": {
+            "patch": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Activar o inactivar acceso de administrador",
+                "operationId": "administratorsUpdateStatus",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "is_access_enabled"
+                                ],
+                                "properties": {
+                                    "is_access_enabled": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "is_access_enabled": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Estado actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": null,
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/administrators/{administrator}/condominiums": {
+            "post": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Asignar administrador a condominio",
+                "operationId": "administratorsAssignCondominium",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "condominium_id"
+                                ],
+                                "properties": {
+                                    "condominium_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "condominium_id": 1
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Administrador asignado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 1,
+                                        "name": "Condominio Los Cedros",
+                                        "slug": "condominio-los-cedros",
+                                        "ruc": "1799999999001",
+                                        "type": {
+                                            "id": 1,
+                                            "code": "residencial",
+                                            "name": "Residencial"
+                                        },
+                                        "description": "Condominio residencial con áreas comunes y seguridad privada.",
+                                        "email": "administracion@loscedros.ec",
+                                        "phone": "0999999999",
+                                        "address": "Av. Amazonas N34-120 y Atahualpa",
+                                        "address_reference": "Frente al parque central",
+                                        "country_code": "EC",
+                                        "province_id": 1,
+                                        "city_id": 1,
+                                        "country": {
+                                            "id": 1,
+                                            "code": "EC",
+                                            "iso3": "ECU",
+                                            "name": "Ecuador",
+                                            "phone_code": "+593",
+                                            "currency_code": "USD",
+                                            "is_active": true
+                                        },
+                                        "province": {
+                                            "id": 1,
+                                            "country_id": 1,
+                                            "code": "EC-P",
+                                            "name": "Pichincha",
+                                            "is_active": true
+                                        },
+                                        "city": {
+                                            "id": 1,
+                                            "province_id": 1,
+                                            "code": "EC-P-QUITO",
+                                            "name": "Quito",
+                                            "is_active": true
+                                        },
+                                        "latitude": -2.170998,
+                                        "longitude": -79.922359,
+                                        "currency": "USD",
+                                        "towers_count": 4,
+                                        "houses_count": 120,
+                                        "total_units": 24,
+                                        "features": [
+                                            {
+                                                "id": 1,
+                                                "code": "piscina",
+                                                "name": "Piscina"
+                                            },
+                                            {
+                                                "id": 2,
+                                                "code": "gimnasio",
+                                                "name": "Gimnasio"
+                                            }
+                                        ],
+                                        "administrator": {
+                                            "id": 1,
+                                            "name": "Carlos Ramírez",
+                                            "email": "carlos.ramirez@example.com",
+                                            "document_type": {
+                                                "id": 1,
+                                                "catalog_id": 1,
+                                                "code": "cedula",
+                                                "name": "Cédula",
+                                                "description": "Documento de identidad",
+                                                "sort_order": 1,
+                                                "is_active": true
+                                            },
+                                            "document_number": "0912345678",
+                                            "phone": "+593 99 123 4567",
+                                            "is_access_enabled": true,
+                                            "is_active": true
+                                        },
+                                        "logo_path": "condominiums/logos/logo.png",
+                                        "logo_url": "https://cdn.example.com/condominiums/logos/logo.png",
+                                        "is_active": true
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/administrators/{administrator}/condominiums/{condominium}": {
+            "delete": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Desvincular administrador de condominio",
+                "operationId": "administratorsRemoveCondominium",
+                "responses": {
+                    "200": {
+                        "description": "Administrador desvinculado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 1,
+                                        "name": "Condominio Los Cedros",
+                                        "slug": "condominio-los-cedros",
+                                        "ruc": "1799999999001",
+                                        "type": {
+                                            "id": 1,
+                                            "code": "residencial",
+                                            "name": "Residencial"
+                                        },
+                                        "description": "Condominio residencial con áreas comunes y seguridad privada.",
+                                        "email": "administracion@loscedros.ec",
+                                        "phone": "0999999999",
+                                        "address": "Av. Amazonas N34-120 y Atahualpa",
+                                        "address_reference": "Frente al parque central",
+                                        "country_code": "EC",
+                                        "province_id": 1,
+                                        "city_id": 1,
+                                        "country": {
+                                            "id": 1,
+                                            "code": "EC",
+                                            "iso3": "ECU",
+                                            "name": "Ecuador",
+                                            "phone_code": "+593",
+                                            "currency_code": "USD",
+                                            "is_active": true
+                                        },
+                                        "province": {
+                                            "id": 1,
+                                            "country_id": 1,
+                                            "code": "EC-P",
+                                            "name": "Pichincha",
+                                            "is_active": true
+                                        },
+                                        "city": {
+                                            "id": 1,
+                                            "province_id": 1,
+                                            "code": "EC-P-QUITO",
+                                            "name": "Quito",
+                                            "is_active": true
+                                        },
+                                        "latitude": -2.170998,
+                                        "longitude": -79.922359,
+                                        "currency": "USD",
+                                        "towers_count": 4,
+                                        "houses_count": 120,
+                                        "total_units": 24,
+                                        "features": [
+                                            {
+                                                "id": 1,
+                                                "code": "piscina",
+                                                "name": "Piscina"
+                                            },
+                                            {
+                                                "id": 2,
+                                                "code": "gimnasio",
+                                                "name": "Gimnasio"
+                                            }
+                                        ],
+                                        "administrator": {
+                                            "id": 1,
+                                            "name": "Carlos Ramírez",
+                                            "email": "carlos.ramirez@example.com",
+                                            "document_type": {
+                                                "id": 1,
+                                                "catalog_id": 1,
+                                                "code": "cedula",
+                                                "name": "Cédula",
+                                                "description": "Documento de identidad",
+                                                "sort_order": 1,
+                                                "is_active": true
+                                            },
+                                            "document_number": "0912345678",
+                                            "phone": "+593 99 123 4567",
+                                            "is_access_enabled": true,
+                                            "is_active": true
+                                        },
+                                        "logo_path": "condominiums/logos/logo.png",
+                                        "logo_url": "https://cdn.example.com/condominiums/logos/logo.png",
+                                        "is_active": true
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/auth/register": {
             "post": {
                 "tags": [
@@ -9363,6 +10071,10 @@
         {
             "name": "Condominios",
             "description": "Administración multi-condominio"
+        },
+        {
+            "name": "Administradores",
+            "description": "Gestión de administradores por condominio"
         },
         {
             "name": "Economía",
