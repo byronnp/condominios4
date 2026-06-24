@@ -61,11 +61,8 @@ class MenuSeeder extends Seeder
         return [
             ['name' => 'Resumen general', 'code' => 'dashboard', 'path' => '/dashboard', 'icon' => 'layout-dashboard', 'sort_order' => 1, 'permissions' => [], 'parent_code' => null, ...$principal],
             ['name' => 'Condominios', 'code' => 'condominios', 'path' => '/condominios', 'icon' => 'building', 'sort_order' => 2, 'permissions' => ['condominiums.view'], 'parent_code' => null, ...$principal],
-            ['name' => 'Nuevo condominio', 'code' => 'condominios_nuevo', 'path' => '/condominios/nuevo', 'icon' => 'building-2', 'sort_order' => 3, 'permissions' => ['condominiums.create'], 'parent_code' => null, ...$principal],
             ['name' => 'Administradores', 'code' => 'administradores', 'path' => '/administradores', 'icon' => 'users', 'sort_order' => 4, 'permissions' => ['users.view'], 'parent_code' => null, ...$principal],
-            ['name' => 'Nuevo administrador', 'code' => 'administradores_nuevo', 'path' => '/administradores/nuevo', 'icon' => 'user-plus', 'sort_order' => 5, 'permissions' => ['users.create'], 'parent_code' => null, ...$principal],
             ['name' => 'Unidades', 'code' => 'unidades', 'path' => '/unidades', 'icon' => 'home', 'sort_order' => 6, 'permissions' => ['units.view'], 'parent_code' => null, ...$principal],
-            ['name' => 'Nueva unidad', 'code' => 'unidades_nueva', 'path' => '/unidades/nueva', 'icon' => 'home-plus', 'sort_order' => 7, 'permissions' => ['units.manage'], 'parent_code' => null, ...$principal],
             ['name' => 'Propietarios', 'code' => 'propietarios', 'path' => '/propietarios', 'icon' => 'user-round-check', 'sort_order' => 8, 'permissions' => ['unit_users.view'], 'parent_code' => null, ...$principal],
             ['name' => 'Residentes', 'code' => 'residentes', 'path' => '/residentes', 'icon' => 'users-round', 'sort_order' => 9, 'permissions' => ['unit_users.view'], 'parent_code' => null, ...$principal],
             ['name' => 'Pagos y cobros', 'code' => 'pagos', 'path' => '/pagos', 'icon' => 'wallet-cards', 'sort_order' => 10, 'permissions' => ['payments.view'], 'parent_code' => null, ...$principal],

@@ -13,17 +13,17 @@ services:
     env_file:
       - .env
     environment:
-      DB_HOST: host.docker.internal
-      DB_CONNECTION: mysql
-      DB_PORT: 3306
-      APP_URL: http://localhost:8001
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      DB_HOST: ${DB_HOST}
+      DB_CONNECTION: ${DB_CONNECTION}
+      DB_PORT: ${DB_PORT}
+      APP_URL: ${APP_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
       LOGO_FILESYSTEM_DISK: ${FILESYSTEM_DISK}
-      LOGO_FILESYSTEM_URL: ${AWS_URL}
+      LOGO_FILESYSTEM_URL: ${LOGO_FILESYSTEM_URL}
       AWS_ENDPOINT: ${AWS_ENDPOINT}
       AWS_INTERNAL_URL: ${AWS_INTERNAL_URL}
-      AWS_URL: ""
+      AWS_URL: ${AWS_URL}
     working_dir: /var/www/html
     command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
     depends_on:

@@ -168,6 +168,13 @@ class OpenApiExampleEnricher
                 'admin_status' => 'Activo',
                 'logo' => 'logo.png',
             ],
+            'PUT /api/condominiums/{condominium}' => [
+                'name' => 'Condominio Vista Verde Renovado',
+                'address' => 'Av. Principal 456 y Calle Secundaria',
+                'reference' => 'Frente al parque renovado',
+                'characteristics' => [1, 2, 3],
+                'currency' => 'USD',
+            ],
             'POST /api/condominiums/{condominium}/boards' => [
                 'name' => 'Directiva 2026',
                 'starts_on' => '2026-01-01',

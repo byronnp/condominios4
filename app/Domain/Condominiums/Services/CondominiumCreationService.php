@@ -33,21 +33,7 @@ class CondominiumCreationService
 
         try {
             if ($logo !== null) {
-                $logoPath = $logo->hashName('condominiums/logos');
-                $stream = $this->logoStream($logo);
-
-                try {
-                    $stored = Storage::disk($this->logoDisk())->put($logoPath, $stream);
-                } finally {
-                    if (is_resource($stream)) {
-                        fclose($stream);
-                    }
-                }
-
-                if ($stored !== true) {
-                    throw new RuntimeException('No se pudo guardar el logo del condominio.');
-                }
-
+                $logoPath = $this->storeLogo($logo);
                 $condominiumData['logo_path'] = $logoPath;
             }
 
@@ -88,9 +74,128 @@ class CondominiumCreationService
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $condominiumData
+     * @param  array<int, int>|null  $featureIds
+     * @param  array<string, mixed>|null  $administratorData
+     */
+    public function update(
+        Condominium $condominium,
+        array $condominiumData,
+        ?array $featureIds = null,
+        ?string $currency = null,
+        ?array $administratorData = null,
+        ?UploadedFile $logo = null,
+    ): Condominium {
+        $logoPath = null;
+        $previousLogoPath = $condominium->logo_path;
+
+        try {
+            if ($logo !== null) {
+                $logoPath = $this->storeLogo($logo);
+                $condominiumData['logo_path'] = $logoPath;
+            }
+
+            $condominium = DB::transaction(function () use ($condominium, $condominiumData, $featureIds, $currency, $administratorData): Condominium {
+                $condominium->fill($condominiumData)->save();
+
+                if ($featureIds !== null) {
+                    $this->replaceFeatures($condominium, $featureIds);
+                }
+
+                if ($currency !== null) {
+                    $this->updateBillingSetting($condominium, $currency);
+                }
+
+                if ($administratorData !== null) {
+                    $this->attachAdministrator($condominium, $administratorData);
+                }
+
+                return $condominium->fresh([
+                    'type',
+                    'country',
+                    'province',
+                    'city',
+                    'features',
+                    'activeBillingSetting',
+                    'users.documentType',
+                    'roles',
+                ]);
+            });
+
+            if ($logoPath !== null && $previousLogoPath !== null && $previousLogoPath !== $logoPath) {
+                try {
+                    Storage::disk($this->logoDisk())->delete($previousLogoPath);
+                } catch (Throwable $cleanupException) {
+                    Log::warning('No se pudo limpiar el logo anterior del condominio luego de actualizar.', [
+                        'logo_path' => $previousLogoPath,
+                        'exception' => $cleanupException->getMessage(),
+                    ]);
+                }
+            }
+
+            return $condominium;
+        } catch (Throwable $exception) {
+            if ($logoPath !== null) {
+                try {
+                    Storage::disk($this->logoDisk())->delete($logoPath);
+                } catch (Throwable $cleanupException) {
+                    Log::warning('No se pudo limpiar el logo del condominio luego de fallar la actualización.', [
+                        'logo_path' => $logoPath,
+                        'exception' => $cleanupException->getMessage(),
+                    ]);
+                }
+            }
+
+            throw $exception;
+        }
+    }
+
+    public function delete(Condominium $condominium): void
+    {
+        $logoPath = $condominium->logo_path;
+
+        DB::transaction(function () use ($condominium): void {
+            $condominium->delete();
+        });
+
+        if ($logoPath === null) {
+            return;
+        }
+
+        try {
+            Storage::disk($this->logoDisk())->delete($logoPath);
+        } catch (Throwable $exception) {
+            Log::warning('No se pudo eliminar el logo del condominio luego de borrar el registro.', [
+                'logo_path' => $logoPath,
+                'exception' => $exception->getMessage(),
+            ]);
+        }
+    }
+
     private function logoDisk(): string
     {
         return config('filesystems.logo_disk', 'public');
+    }
+
+    private function storeLogo(UploadedFile $logo): string
+    {
+        $logoPath = $logo->hashName('condominiums/logos');
+        $stream = $this->logoStream($logo);
+
+        try {
+            $stored = Storage::disk($this->logoDisk())->put($logoPath, $stream);
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }
+
+        if ($stored !== true) {
+            throw new RuntimeException('No se pudo guardar el logo del condominio.');
+        }
+
+        return $logoPath;
     }
 
     /**
@@ -128,6 +233,29 @@ class CondominiumCreationService
         }
     }
 
+    /**
+     * @param  array<int, int>  $featureIds
+     */
+    private function replaceFeatures(Condominium $condominium, array $featureIds): void
+    {
+        $featureIds = array_values(array_unique($featureIds));
+
+        if ($featureIds === []) {
+            CondominiumFeature::query()
+                ->where('condominium_id', $condominium->id)
+                ->delete();
+
+            return;
+        }
+
+        CondominiumFeature::query()
+            ->where('condominium_id', $condominium->id)
+            ->whereNotIn('catalog_item_id', $featureIds)
+            ->delete();
+
+        $this->syncFeatures($condominium, $featureIds);
+    }
+
     private function createBillingSetting(Condominium $condominium, ?string $currency): void
     {
         CondominiumBillingSetting::create([
@@ -135,6 +263,23 @@ class CondominiumCreationService
             'currency' => $currency ?? 'USD',
             'is_active' => true,
         ]);
+    }
+
+    private function updateBillingSetting(Condominium $condominium, ?string $currency): void
+    {
+        if ($currency === null) {
+            return;
+        }
+
+        $billingSetting = $condominium->activeBillingSetting ?? new CondominiumBillingSetting([
+            'condominium_id' => $condominium->id,
+            'is_active' => true,
+        ]);
+
+        $billingSetting->fill([
+            'currency' => $currency,
+            'is_active' => true,
+        ])->save();
     }
 
     /**

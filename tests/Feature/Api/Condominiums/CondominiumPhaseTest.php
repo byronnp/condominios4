@@ -252,6 +252,86 @@ class CondominiumPhaseTest extends TestCase
         ]);
     }
 
+    public function test_condominium_can_be_updated_with_partial_payload_and_logo(): void
+    {
+        $logoDisk = config('filesystems.logo_disk', 'public');
+
+        Storage::fake($logoDisk);
+
+        $token = $this->loginToken();
+        $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
+        $featureIds = CatalogItem::whereHas('catalog', fn ($query) => $query->where('code', 'condominium_features'))
+            ->whereIn('code', ['gimnasio', 'seguridad_24_7'])
+            ->pluck('id')
+            ->all();
+
+        $response = $this->post("/api/condominiums/{$condominium->id}", [
+            '_method' => 'PUT',
+            'name' => 'Condominio Los Cedros Renovado',
+            'address' => 'Av. Renovada 123',
+            'reference' => 'Frente al parque renovado',
+            'currency' => 'EUR',
+            'characteristics' => $featureIds,
+            'logo' => UploadedFile::fake()->create('logo.png', 12, 'image/png'),
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Condominio Los Cedros Renovado')
+            ->assertJsonPath('data.address', 'Av. Renovada 123')
+            ->assertJsonPath('data.currency', 'EUR')
+            ->assertJsonCount(2, 'data.features');
+
+        $condominium->refresh()->load('activeBillingSetting');
+
+        $this->assertSame('Condominio Los Cedros Renovado', $condominium->name);
+        $this->assertSame('Av. Renovada 123', $condominium->address);
+        $this->assertSame('Frente al parque renovado', $condominium->address_reference);
+        $this->assertSame('EUR', $condominium->activeBillingSetting?->currency);
+        $this->assertCount(2, $condominium->features()->get());
+        Storage::disk($logoDisk)->assertExists($condominium->logo_path);
+    }
+
+    public function test_condominium_can_be_deleted_and_logo_is_removed(): void
+    {
+        $logoDisk = config('filesystems.logo_disk', 'public');
+
+        Storage::fake($logoDisk);
+
+        $token = $this->loginToken();
+        $province = Province::where('code', 'EC-G')->firstOrFail();
+        $city = $province->cities()->where('code', 'EC-G-GUAYAQUIL')->firstOrFail();
+
+        $createResponse = $this->post('/api/condominiums', [
+            'name' => 'Condominio Para Borrar',
+            'address' => 'Av. Borrado 123',
+            'country_code' => 'EC',
+            'province_id' => $province->id,
+            'city_id' => $city->id,
+            'logo' => UploadedFile::fake()->create('logo.png', 12, 'image/png'),
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ])
+            ->assertCreated();
+
+        $condominiumId = $createResponse->json('data.id');
+        $logoPath = $createResponse->json('data.logo_path');
+
+        $this->deleteJson("/api/condominiums/{$condominiumId}", [], [
+            'Authorization' => "Bearer {$token}",
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertSoftDeleted('condominiums', ['id' => $condominiumId]);
+        Storage::disk($logoDisk)->assertMissing($logoPath);
+        $this->getJson("/api/condominiums/{$condominiumId}", [
+            'Authorization' => "Bearer {$token}",
+        ])->assertNotFound();
+    }
+
     public function test_condominium_location_must_keep_province_and_city_consistent(): void
     {
         $token = $this->loginToken();

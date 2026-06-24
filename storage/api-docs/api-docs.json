@@ -1851,6 +1851,449 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "put": {
+                "tags": [
+                    "Condominios"
+                ],
+                "summary": "Actualizar condominio",
+                "operationId": "condominiumsUpdate",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Condominio Vista Verde Renovado",
+                                        "nullable": true
+                                    },
+                                    "ruc": {
+                                        "type": "string",
+                                        "example": "0999999999001",
+                                        "nullable": true
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "example": "Residencial",
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Condominio actualizado con nuevos servicios.",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "Activo",
+                                        "nullable": true,
+                                        "enum": [
+                                            "Activo",
+                                            "Inactivo"
+                                        ]
+                                    },
+                                    "country_code": {
+                                        "type": "string",
+                                        "example": "EC",
+                                        "nullable": true
+                                    },
+                                    "province_id": {
+                                        "type": "integer",
+                                        "example": 9,
+                                        "nullable": true
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 101,
+                                        "nullable": true
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Av. Principal 456 y Calle Secundaria",
+                                        "nullable": true
+                                    },
+                                    "direction": {
+                                        "type": "string",
+                                        "example": "Av. Principal 456 y Calle Secundaria",
+                                        "nullable": true
+                                    },
+                                    "reference": {
+                                        "type": "string",
+                                        "example": "Frente al parque renovado",
+                                        "nullable": true
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": -2.170998,
+                                        "nullable": true
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": -79.922359,
+                                        "nullable": true
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "example": "USD",
+                                        "nullable": true
+                                    },
+                                    "towers": {
+                                        "type": "integer",
+                                        "example": 4,
+                                        "nullable": true
+                                    },
+                                    "houses": {
+                                        "type": "integer",
+                                        "example": 120,
+                                        "nullable": true
+                                    },
+                                    "characteristics": {
+                                        "description": "IDs de items activos del catálogo condominium_features.",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "admin_name": {
+                                        "type": "string",
+                                        "example": "Carlos",
+                                        "nullable": true
+                                    },
+                                    "admin_last_name": {
+                                        "type": "string",
+                                        "example": "Ramírez",
+                                        "nullable": true
+                                    },
+                                    "admin_document_type": {
+                                        "type": "string",
+                                        "example": "Cédula",
+                                        "nullable": true
+                                    },
+                                    "admin_id_number": {
+                                        "type": "string",
+                                        "example": "0912345678",
+                                        "nullable": true
+                                    },
+                                    "admin_email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "carlos.ramirez@example.com",
+                                        "nullable": true
+                                    },
+                                    "admin_phone": {
+                                        "type": "string",
+                                        "example": "+593 99 123 4567",
+                                        "nullable": true
+                                    },
+                                    "admin_status": {
+                                        "type": "string",
+                                        "example": "Activo",
+                                        "nullable": true,
+                                        "enum": [
+                                            "Activo",
+                                            "Inactivo"
+                                        ]
+                                    },
+                                    "logo": {
+                                        "description": "Imagen del logo. Tamaño máximo: 5 MB.",
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Condominio Vista Verde Renovado",
+                                "address": "Av. Principal 456 y Calle Secundaria",
+                                "reference": "Frente al parque renovado",
+                                "characteristics": [
+                                    1,
+                                    2,
+                                    3
+                                ],
+                                "currency": "USD"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Condominio actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 1,
+                                        "name": "Condominio Los Cedros",
+                                        "slug": "condominio-los-cedros",
+                                        "ruc": "1799999999001",
+                                        "type": {
+                                            "id": 1,
+                                            "code": "residencial",
+                                            "name": "Residencial"
+                                        },
+                                        "description": "Condominio residencial con áreas comunes y seguridad privada.",
+                                        "email": "administracion@loscedros.ec",
+                                        "phone": "0999999999",
+                                        "address": "Av. Amazonas N34-120 y Atahualpa",
+                                        "address_reference": "Frente al parque central",
+                                        "country_code": "EC",
+                                        "province_id": 1,
+                                        "city_id": 1,
+                                        "country": {
+                                            "id": 1,
+                                            "code": "EC",
+                                            "iso3": "ECU",
+                                            "name": "Ecuador",
+                                            "phone_code": "+593",
+                                            "currency_code": "USD",
+                                            "is_active": true
+                                        },
+                                        "province": {
+                                            "id": 1,
+                                            "country_id": 1,
+                                            "code": "EC-P",
+                                            "name": "Pichincha",
+                                            "is_active": true
+                                        },
+                                        "city": {
+                                            "id": 1,
+                                            "province_id": 1,
+                                            "code": "EC-P-QUITO",
+                                            "name": "Quito",
+                                            "is_active": true
+                                        },
+                                        "latitude": -2.170998,
+                                        "longitude": -79.922359,
+                                        "currency": "USD",
+                                        "towers_count": 4,
+                                        "houses_count": 120,
+                                        "total_units": 24,
+                                        "features": [
+                                            {
+                                                "id": 1,
+                                                "code": "piscina",
+                                                "name": "Piscina"
+                                            },
+                                            {
+                                                "id": 2,
+                                                "code": "gimnasio",
+                                                "name": "Gimnasio"
+                                            }
+                                        ],
+                                        "administrator": {
+                                            "id": 1,
+                                            "name": "Carlos Ramírez",
+                                            "email": "carlos.ramirez@example.com",
+                                            "document_type": {
+                                                "id": 1,
+                                                "catalog_id": 1,
+                                                "code": "cedula",
+                                                "name": "Cédula",
+                                                "description": "Documento de identidad",
+                                                "sort_order": 1,
+                                                "is_active": true
+                                            },
+                                            "document_number": "0912345678",
+                                            "phone": "+593 99 123 4567",
+                                            "is_access_enabled": true,
+                                            "is_active": true
+                                        },
+                                        "logo_path": "condominiums/logos/logo.png",
+                                        "logo_url": "https://cdn.example.com/condominiums/logos/logo.png",
+                                        "is_active": true
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Condominios"
+                ],
+                "summary": "Eliminar condominio",
+                "operationId": "condominiumsDestroy",
+                "responses": {
+                    "200": {
+                        "description": "Condominio eliminado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 1,
+                                        "name": "Condominio Los Cedros",
+                                        "slug": "condominio-los-cedros",
+                                        "ruc": "1799999999001",
+                                        "type": {
+                                            "id": 1,
+                                            "code": "residencial",
+                                            "name": "Residencial"
+                                        },
+                                        "description": "Condominio residencial con áreas comunes y seguridad privada.",
+                                        "email": "administracion@loscedros.ec",
+                                        "phone": "0999999999",
+                                        "address": "Av. Amazonas N34-120 y Atahualpa",
+                                        "address_reference": "Frente al parque central",
+                                        "country_code": "EC",
+                                        "province_id": 1,
+                                        "city_id": 1,
+                                        "country": {
+                                            "id": 1,
+                                            "code": "EC",
+                                            "iso3": "ECU",
+                                            "name": "Ecuador",
+                                            "phone_code": "+593",
+                                            "currency_code": "USD",
+                                            "is_active": true
+                                        },
+                                        "province": {
+                                            "id": 1,
+                                            "country_id": 1,
+                                            "code": "EC-P",
+                                            "name": "Pichincha",
+                                            "is_active": true
+                                        },
+                                        "city": {
+                                            "id": 1,
+                                            "province_id": 1,
+                                            "code": "EC-P-QUITO",
+                                            "name": "Quito",
+                                            "is_active": true
+                                        },
+                                        "latitude": -2.170998,
+                                        "longitude": -79.922359,
+                                        "currency": "USD",
+                                        "towers_count": 4,
+                                        "houses_count": 120,
+                                        "total_units": 24,
+                                        "features": [
+                                            {
+                                                "id": 1,
+                                                "code": "piscina",
+                                                "name": "Piscina"
+                                            },
+                                            {
+                                                "id": 2,
+                                                "code": "gimnasio",
+                                                "name": "Gimnasio"
+                                            }
+                                        ],
+                                        "administrator": {
+                                            "id": 1,
+                                            "name": "Carlos Ramírez",
+                                            "email": "carlos.ramirez@example.com",
+                                            "document_type": {
+                                                "id": 1,
+                                                "catalog_id": 1,
+                                                "code": "cedula",
+                                                "name": "Cédula",
+                                                "description": "Documento de identidad",
+                                                "sort_order": 1,
+                                                "is_active": true
+                                            },
+                                            "document_number": "0912345678",
+                                            "phone": "+593 99 123 4567",
+                                            "is_access_enabled": true,
+                                            "is_active": true
+                                        },
+                                        "logo_path": "condominiums/logos/logo.png",
+                                        "logo_url": "https://cdn.example.com/condominiums/logos/logo.png",
+                                        "is_active": true
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/condominiums/{condominium}/payment-methods": {

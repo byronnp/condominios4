@@ -84,3 +84,5 @@ Pull requests should include a concise summary, affected modules, migration/seed
 ## Security & Configuration Tips
 
 Do not commit real secrets. JWT configuration belongs in `.env`, especially `JWT_SECRET`, token TTL values, and database credentials. Keep seed credentials limited to local development data only.
+
+When `docker-compose.yml` needs runtime values, source them from `.env` with interpolation instead of hardcoding them in the compose file. Keep the public URL for uploaded files separate from the internal S3 endpoint used by the Laravel container.
