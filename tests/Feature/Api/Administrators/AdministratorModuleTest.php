@@ -45,6 +45,8 @@ class AdministratorModuleTest extends TestCase
                     '*' => [
                         'id',
                         'name',
+                        'first_name',
+                        'last_name',
                         'email',
                         'document_type',
                         'is_access_enabled',
@@ -61,7 +63,8 @@ class AdministratorModuleTest extends TestCase
         $documentType = $this->documentType();
 
         $response = $this->postJson('/api/administrators', [
-            'name' => 'Carlos Ramírez',
+            'first_name' => 'Carlos',
+            'last_name' => 'Ramírez',
             'email' => 'carlos.ramirez@example.com',
             'country' => 'EC',
             'document_type_id' => $documentType->id,
@@ -71,6 +74,9 @@ class AdministratorModuleTest extends TestCase
             'condominium_ids' => [$condominium->id],
         ], $this->headers())
             ->assertCreated()
+            ->assertJsonPath('data.name', 'Carlos Ramírez')
+            ->assertJsonPath('data.first_name', 'Carlos')
+            ->assertJsonPath('data.last_name', 'Ramírez')
             ->assertJsonPath('data.email', 'carlos.ramirez@example.com')
             ->assertJsonPath('data.is_access_enabled', false)
             ->assertJsonPath('data.condominiums.0.id', $condominium->id);
@@ -87,11 +93,12 @@ class AdministratorModuleTest extends TestCase
         $this->assertAdministratorRoleAssignment($administratorId, $condominium->id);
 
         $this->putJson("/api/administrators/{$administratorId}", [
-            'name' => 'Carlos Andrés Ramírez',
+            'first_name' => 'Carlos Andrés',
             'phone' => '0987654321',
         ], $this->headers())
             ->assertOk()
             ->assertJsonPath('data.name', 'Carlos Andrés Ramírez')
+            ->assertJsonPath('data.first_name', 'Carlos Andrés')
             ->assertJsonPath('data.phone', '0987654321');
 
         $this->patchJson("/api/administrators/{$administratorId}/status", [

@@ -37,6 +37,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'byron_np@hotmail.com',
         ], [
             'name' => 'BYRON VINICIO PILATAXI ALMACHI',
+            'first_name' => 'BYRON VINICIO',
+            'last_name' => 'PILATAXI ALMACHI',
             'password' => 'admin123',
             'country' => 'EC',
             'document_type_id' => $documentType->id,
@@ -64,6 +66,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'byronnp@gmail.com',
         ], [
             'name' => 'ADMINISTRADOR CONDOMINIO',
+            'first_name' => 'ADMINISTRADOR',
+            'last_name' => 'CONDOMINIO',
             'password' => 'admin123',
             'country' => 'EC',
             'document_type_id' => $documentType->id,
@@ -83,6 +87,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'swagger.admin@example.com',
         ], [
             'name' => 'SWAGGER ADMIN',
+            'first_name' => 'SWAGGER',
+            'last_name' => 'ADMIN',
             'password' => 'Swagger123!',
             'country' => 'EC',
             'document_type_id' => $documentType->id,

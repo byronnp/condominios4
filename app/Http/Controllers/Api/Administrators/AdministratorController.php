@@ -57,6 +57,8 @@ class AdministratorController extends Controller
             ->when($data['search'] ?? null, function (Builder $query, string $search): void {
                 $query->where(function (Builder $query) use ($search): void {
                     $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
                         ->orWhere('document_number', 'like', "%{$search}%");
                 });
@@ -89,9 +91,11 @@ class AdministratorController extends Controller
         tags: ['Administradores'],
         security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
-            required: ['name', 'email', 'country', 'document_type_id', 'document_number', 'condominium_ids'],
+            required: ['email', 'country', 'document_type_id', 'document_number', 'condominium_ids'],
             properties: [
-                new OA\Property(property: 'name', type: 'string', example: 'Carlos Ramírez'),
+                new OA\Property(property: 'name', description: 'Nombre completo compatible. Puede enviarse en lugar de first_name.', type: 'string', nullable: true, example: 'Carlos Ramírez'),
+                new OA\Property(property: 'first_name', description: 'Nombres. Obligatorio cuando no se envía name.', type: 'string', nullable: true, example: 'Carlos'),
+                new OA\Property(property: 'last_name', type: 'string', nullable: true, example: 'Ramírez'),
                 new OA\Property(property: 'email', type: 'string', format: 'email', example: 'carlos.ramirez@example.com'),
                 new OA\Property(property: 'country', type: 'string', example: 'EC'),
                 new OA\Property(property: 'document_type_id', type: 'integer', example: 1),
@@ -135,6 +139,8 @@ class AdministratorController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
             properties: [
                 new OA\Property(property: 'name', type: 'string', example: 'Carlos Ramírez'),
+                new OA\Property(property: 'first_name', type: 'string', example: 'Carlos'),
+                new OA\Property(property: 'last_name', type: 'string', nullable: true, example: 'Ramírez'),
                 new OA\Property(property: 'email', type: 'string', format: 'email', example: 'carlos.ramirez@example.com'),
                 new OA\Property(property: 'country', type: 'string', example: 'EC'),
                 new OA\Property(property: 'document_type_id', type: 'integer', example: 1),

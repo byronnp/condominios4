@@ -17,12 +17,31 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-#[Fillable(['name', 'email', 'password', 'country', 'document_type_id', 'document_number', 'phone', 'secondary_phone', 'is_access_enabled'])]
+#[Fillable(['name', 'first_name', 'last_name', 'email', 'password', 'country', 'document_type_id', 'document_number', 'phone', 'secondary_phone', 'is_access_enabled'])]
 #[Hidden(['password', 'remember_token', 'api_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saving(function (User $user): void {
+            if ($user->isDirty(['first_name', 'last_name'])) {
+                $user->name = trim(implode(' ', array_filter([
+                    $user->first_name,
+                    $user->last_name,
+                ], fn (?string $value): bool => filled($value))));
+
+                return;
+            }
+
+            if ($user->isDirty('name')) {
+                $user->first_name = $user->name;
+                $user->last_name = null;
+            }
+        });
+    }
 
     /**
      * Get the attributes that should be cast.

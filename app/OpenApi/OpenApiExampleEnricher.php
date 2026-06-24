@@ -124,7 +124,8 @@ class OpenApiExampleEnricher
         ];
 
         $register = [
-            'name' => 'Usuario Demo',
+            'first_name' => 'Usuario',
+            'last_name' => 'Demo',
             'email' => 'usuario.demo@example.com',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
@@ -144,20 +145,25 @@ class OpenApiExampleEnricher
             'POST /api/logout' => ['refresh_token' => 'refresh-token'],
             'POST /api/condominiums' => [
                 'name' => 'Condominio Vista Verde',
+                'slug' => 'condominio-vista-verde',
                 'ruc' => '0999999999001',
                 'type' => 'Residencial',
                 'description' => 'Condominio residencial con áreas comunes y seguridad privada.',
                 'status' => 'Activo',
+                'email' => 'administracion@vistaverde.example.com',
+                'phone' => '+593 4 555 0101',
                 'country_code' => 'EC',
                 'province_id' => 9,
                 'city_id' => 101,
-                'direction' => 'Av. Principal 123 y Calle Secundaria',
+                'address' => 'Av. Principal 123 y Calle Secundaria',
                 'reference' => 'Frente al parque central',
                 'latitude' => -2.170998,
                 'longitude' => -79.922359,
                 'currency' => 'USD',
                 'towers' => 4,
                 'houses' => 120,
+                'total_units' => 120,
+                'is_active' => true,
                 'characteristics' => [1, 2, 3],
                 'admin_name' => 'Carlos',
                 'admin_last_name' => 'Ramírez',
@@ -242,7 +248,8 @@ class OpenApiExampleEnricher
                 ],
             ],
             'POST /api/condominiums/{condominium}/units/{unit}/users' => [
-                'name' => 'Persona Demo',
+                'first_name' => 'Persona',
+                'last_name' => 'Demo',
                 'country' => 'EC',
                 'document_type_id' => 1,
                 'document_number' => '1722222222',
@@ -395,6 +402,9 @@ class OpenApiExampleEnricher
             str_contains($operationKey, '/menus') || str_contains($operationKey, '/auth/menu') => [$this->menu()],
             str_contains($operationKey, '/permissions') => $this->collectionOrItem($operationKey, $this->permission()),
             str_contains($operationKey, '/roles') => $this->collectionOrItem($operationKey, $this->role()),
+            str_contains($operationKey, '/condominiums/options') => [
+                ['key' => 1, 'value' => 'Condominio Los Cedros'],
+            ],
             str_contains($operationKey, '/condominiums/{condominium}') => $this->condominium(),
             str_contains($operationKey, '/condominiums') => $this->collectionOrItem($operationKey, $this->condominium()),
             default => null,
@@ -426,6 +436,8 @@ class OpenApiExampleEnricher
         return [
             'id' => 1,
             'name' => 'SWAGGER ADMIN',
+            'first_name' => 'SWAGGER',
+            'last_name' => 'ADMIN',
             'email' => 'swagger.admin@example.com',
             'country' => 'EC',
             'document_type' => $this->catalogItem(),
@@ -544,6 +556,8 @@ class OpenApiExampleEnricher
             'administrator' => [
                 'id' => 1,
                 'name' => 'Carlos Ramírez',
+                'first_name' => 'Carlos',
+                'last_name' => 'Ramírez',
                 'email' => 'carlos.ramirez@example.com',
                 'document_type' => $this->catalogItem(),
                 'document_number' => '0912345678',
@@ -569,7 +583,7 @@ class OpenApiExampleEnricher
 
     private function unitUser(): array
     {
-        return ['id' => 1, 'name' => 'SWAGGER ADMIN', 'email' => 'swagger.admin@example.com', 'relationship_code' => 'propietario', 'is_primary' => true, 'is_billing_responsible' => true, 'is_active' => true];
+        return ['id' => 1, 'name' => 'SWAGGER ADMIN', 'first_name' => 'SWAGGER', 'last_name' => 'ADMIN', 'email' => 'swagger.admin@example.com', 'relationship_code' => 'propietario', 'is_primary' => true, 'is_billing_responsible' => true, 'is_active' => true];
     }
 
     private function menu(): array

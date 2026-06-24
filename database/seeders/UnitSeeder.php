@@ -34,7 +34,7 @@ class UnitSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        $owner = User::where('email', 'byron_np@hotmail.com')->firstOrFail();
+        $owner = User::where('email', 'byronnp@gmail.com')->firstOrFail();
         $owner->update([
             'phone' => '0999999999',
             'is_access_enabled' => true,
@@ -42,16 +42,22 @@ class UnitSeeder extends Seeder
 
         $coOwner = $this->person('1712345678', [
             'name' => 'MARIA FERNANDA GOMEZ RUIZ',
+            'first_name' => 'MARIA FERNANDA',
+            'last_name' => 'GOMEZ RUIZ',
             'phone' => '0988888888',
         ], $documentTypes->get('cedula')->id);
 
         $tenant = $this->person('1723456789', [
             'name' => 'JUAN CARLOS PEREZ LOPEZ',
+            'first_name' => 'JUAN CARLOS',
+            'last_name' => 'PEREZ LOPEZ',
             'phone' => '0977777777',
         ], $documentTypes->get('cedula')->id);
 
         $authorized = $this->person('1734567890', [
             'name' => 'ANA LUCIA PEREZ MORA',
+            'first_name' => 'ANA LUCIA',
+            'last_name' => 'PEREZ MORA',
             'phone' => '0966666666',
         ], $documentTypes->get('cedula')->id);
 
@@ -148,6 +154,8 @@ class UnitSeeder extends Seeder
             'document_number' => $documentNumber,
         ], [
             'name' => $data['name'],
+            'first_name' => $data['first_name'] ?? $data['name'],
+            'last_name' => $data['last_name'] ?? null,
             'email' => null,
             'password' => null,
             'phone' => $data['phone'],

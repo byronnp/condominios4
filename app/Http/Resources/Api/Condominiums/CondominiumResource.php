@@ -130,6 +130,8 @@ class CondominiumResource extends JsonResource
         return [
             'id' => $administrator->id,
             'name' => $administrator->name,
+            'first_name' => $administrator->first_name,
+            'last_name' => $administrator->last_name,
             'email' => $administrator->email,
             'document_type' => $administrator->relationLoaded('documentType') && $administrator->documentType ? [
                 'id' => $administrator->documentType->id,

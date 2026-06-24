@@ -18,7 +18,7 @@ class OperationsSeeder extends Seeder
     public function run(): void
     {
         $condominium = Condominium::where('slug', 'condominio-los-cedros')->first();
-        $admin = User::where('email', 'byron_np@hotmail.com')->first();
+        $admin = User::where('email', 'byronnp@gmail.com')->first();
         $house = Unit::where('code', 'CASA-01')->first();
 
         if (! $condominium || ! $admin || ! $house) {

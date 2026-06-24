@@ -10,6 +10,7 @@ use App\Models\Country;
 use App\Models\Province;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CondominiumSeeder extends Seeder
@@ -49,7 +50,7 @@ class CondominiumSeeder extends Seeder
         $this->syncFeatures($condominium);
 
         User::query()
-            ->whereIn('email', ['byron_np@hotmail.com', 'byronnp@gmail.com', 'swagger.admin@example.com'])
+            ->whereIn('email', ['byronnp@gmail.com', 'swagger.admin@example.com'])
             ->get()
             ->each(function (User $admin) use ($condominium): void {
                 $condominium->users()->syncWithoutDetaching([
@@ -59,6 +60,23 @@ class CondominiumSeeder extends Seeder
                     ],
                 ]);
             });
+
+        $seniorAdmin = User::where('email', 'byron_np@hotmail.com')->first();
+
+        if ($seniorAdmin !== null) {
+            $condominiumUserIds = DB::table('condominium_user')
+                ->where('condominium_id', $condominium->id)
+                ->where('user_id', $seniorAdmin->id)
+                ->pluck('id');
+
+            DB::table('condominium_user_role')
+                ->whereIn('condominium_user_id', $condominiumUserIds)
+                ->delete();
+
+            DB::table('condominium_user')
+                ->whereIn('id', $condominiumUserIds)
+                ->delete();
+        }
 
         Condominium::query()
             ->whereNull('slug')

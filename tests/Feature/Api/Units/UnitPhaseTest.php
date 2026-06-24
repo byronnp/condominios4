@@ -39,7 +39,7 @@ class UnitPhaseTest extends TestCase
         $this->assertDatabaseHas('condominium_blocks', ['condominium_id' => $condominium->id, 'code' => 'TORRE-A']);
         $this->assertDatabaseHas('units', ['condominium_id' => $condominium->id, 'code' => 'P-12', 'parent_unit_id' => $house->id]);
         $this->assertDatabaseHas('unit_aliquots', ['unit_id' => $house->id, 'period_year' => 2026, 'period_month' => 6]);
-        $this->assertDatabaseHas('user_billing_profiles', ['business_name' => 'BYRON VINICIO PILATAXI ALMACHI']);
+        $this->assertDatabaseHas('user_billing_profiles', ['business_name' => 'ADMINISTRADOR CONDOMINIO']);
         $this->assertDatabaseHas('user_access_invitations', ['email' => 'ana.perez@example.com']);
         $this->assertDatabaseHas('permissions', ['code' => 'unit_users.manage_all']);
     }

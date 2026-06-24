@@ -31,7 +31,28 @@ class JwtAuthController extends Controller
         private readonly JwtTokenService $jwtTokenService,
     ) {}
 
-    #[OA\Post(path: '/api/auth/register', operationId: 'authRegister', summary: 'Registrar usuario', tags: ['Autenticación'], responses: [new OA\Response(response: 201, description: 'Usuario registrado'), new OA\Response(response: 422, description: 'Datos inválidos')])]
+    #[OA\Post(
+        path: '/api/auth/register',
+        operationId: 'authRegister',
+        summary: 'Registrar usuario',
+        tags: ['Autenticación'],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            required: ['email', 'password', 'password_confirmation', 'country', 'document_type_id', 'document_number'],
+            properties: [
+                new OA\Property(property: 'name', description: 'Nombre completo compatible. Puede enviarse en lugar de first_name.', type: 'string', nullable: true, example: 'Carlos Pérez'),
+                new OA\Property(property: 'first_name', description: 'Nombres. Obligatorio cuando no se envía name.', type: 'string', nullable: true, example: 'Carlos'),
+                new OA\Property(property: 'last_name', type: 'string', nullable: true, example: 'Pérez'),
+                new OA\Property(property: 'email', type: 'string', format: 'email', example: 'carlos@example.com'),
+                new OA\Property(property: 'password', type: 'string', format: 'password', example: 'Password123!'),
+                new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', example: 'Password123!'),
+                new OA\Property(property: 'country', type: 'string', example: 'EC'),
+                new OA\Property(property: 'document_type_id', type: 'integer', example: 1),
+                new OA\Property(property: 'document_number', type: 'string', example: '1711111111'),
+                new OA\Property(property: 'device_name', type: 'string', nullable: true, example: 'Swagger UI'),
+            ]
+        )),
+        responses: [new OA\Response(response: 201, description: 'Usuario registrado'), new OA\Response(response: 422, description: 'Datos inválidos')]
+    )]
     public function register(RegisterRequest $request): JsonResponse
     {
         $tokens = $this->authService->register($request->validated(), $request);

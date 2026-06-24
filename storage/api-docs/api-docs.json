@@ -121,7 +121,6 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "name",
                                     "email",
                                     "country",
                                     "document_type_id",
@@ -130,8 +129,21 @@
                                 ],
                                 "properties": {
                                     "name": {
+                                        "description": "Nombre completo compatible. Puede enviarse en lugar de first_name.",
                                         "type": "string",
-                                        "example": "Carlos Ramírez"
+                                        "example": "Carlos Ramírez",
+                                        "nullable": true
+                                    },
+                                    "first_name": {
+                                        "description": "Nombres. Obligatorio cuando no se envía name.",
+                                        "type": "string",
+                                        "example": "Carlos",
+                                        "nullable": true
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Ramírez",
+                                        "nullable": true
                                     },
                                     "email": {
                                         "type": "string",
@@ -178,6 +190,8 @@
                             },
                             "example": {
                                 "name": "Carlos Ramírez",
+                                "first_name": "Carlos",
+                                "last_name": "Ramírez",
                                 "email": "carlos.ramirez@example.com",
                                 "country": "EC",
                                 "document_type_id": 1,
@@ -302,6 +316,15 @@
                                         "type": "string",
                                         "example": "Carlos Ramírez"
                                     },
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "Carlos"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Ramírez",
+                                        "nullable": true
+                                    },
                                     "email": {
                                         "type": "string",
                                         "format": "email",
@@ -334,6 +357,8 @@
                             },
                             "example": {
                                 "name": "Carlos Ramírez",
+                                "first_name": "Carlos",
+                                "last_name": "Ramírez",
                                 "email": "carlos.ramirez@example.com",
                                 "country": "EC",
                                 "document_type_id": 1,
@@ -576,6 +601,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -688,6 +715,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -727,6 +756,86 @@
                 ],
                 "summary": "Registrar usuario",
                 "operationId": "authRegister",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password",
+                                    "password_confirmation",
+                                    "country",
+                                    "document_type_id",
+                                    "document_number"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Nombre completo compatible. Puede enviarse en lugar de first_name.",
+                                        "type": "string",
+                                        "example": "Carlos Pérez",
+                                        "nullable": true
+                                    },
+                                    "first_name": {
+                                        "description": "Nombres. Obligatorio cuando no se envía name.",
+                                        "type": "string",
+                                        "example": "Carlos",
+                                        "nullable": true
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Pérez",
+                                        "nullable": true
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "carlos@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "Password123!"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "Password123!"
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "example": "EC"
+                                    },
+                                    "document_type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "document_number": {
+                                        "type": "string",
+                                        "example": "1711111111"
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "example": "Swagger UI",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "first_name": "Usuario",
+                                "last_name": "Demo",
+                                "email": "usuario.demo@example.com",
+                                "password": "Password123!",
+                                "password_confirmation": "Password123!",
+                                "country": "EC",
+                                "document_type_id": 1,
+                                "document_number": "1711111111",
+                                "device_name": "Swagger UI"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
                         "description": "Usuario registrado",
@@ -769,26 +878,6 @@
                                     "code": "validation_failed",
                                     "meta": {}
                                 }
-                            }
-                        }
-                    }
-                },
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            },
-                            "example": {
-                                "name": "Usuario Demo",
-                                "email": "usuario.demo@example.com",
-                                "password": "Password123!",
-                                "password_confirmation": "Password123!",
-                                "country": "EC",
-                                "document_type_id": 1,
-                                "document_number": "1711111111",
-                                "device_name": "Swagger UI"
                             }
                         }
                     }
@@ -1041,6 +1130,8 @@
                                         "user": {
                                             "id": 1,
                                             "name": "SWAGGER ADMIN",
+                                            "first_name": "SWAGGER",
+                                            "last_name": "ADMIN",
                                             "email": "swagger.admin@example.com",
                                             "country": "EC",
                                             "document_type": {
@@ -1125,6 +1216,8 @@
                                             "administrator": {
                                                 "id": 1,
                                                 "name": "Carlos Ramírez",
+                                                "first_name": "Carlos",
+                                                "last_name": "Ramírez",
                                                 "email": "carlos.ramirez@example.com",
                                                 "document_type": {
                                                     "id": 1,
@@ -2084,6 +2177,8 @@
                                             "administrator": {
                                                 "id": 1,
                                                 "name": "Carlos Ramírez",
+                                                "first_name": "Carlos",
+                                                "last_name": "Ramírez",
                                                 "email": "carlos.ramirez@example.com",
                                                 "document_type": {
                                                     "id": 1,
@@ -2123,18 +2218,24 @@
                 "summary": "Crear condominio",
                 "operationId": "condominiumsStore",
                 "requestBody": {
+                    "description": "Enviar como multipart/form-data. Debe incluirse address o direction. El logo se almacena en el filesystem configurado para logos.",
                     "required": true,
                     "content": {
                         "multipart/form-data": {
                             "schema": {
                                 "required": [
-                                    "name",
-                                    "direction"
+                                    "name"
                                 ],
                                 "properties": {
                                     "name": {
                                         "type": "string",
                                         "example": "Condominio Vista Verde"
+                                    },
+                                    "slug": {
+                                        "description": "Identificador único. Si se omite, se genera desde name.",
+                                        "type": "string",
+                                        "example": "condominio-vista-verde",
+                                        "nullable": true
                                     },
                                     "ruc": {
                                         "type": "string",
@@ -2160,6 +2261,17 @@
                                             "Inactivo"
                                         ]
                                     },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "administracion@vistaverde.example.com",
+                                        "nullable": true
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+593 4 555 0101",
+                                        "nullable": true
+                                    },
                                     "country_code": {
                                         "type": "string",
                                         "example": "EC",
@@ -2175,9 +2287,17 @@
                                         "example": 101,
                                         "nullable": true
                                     },
-                                    "direction": {
+                                    "address": {
+                                        "description": "Dirección del condominio. Obligatoria si no se envía direction.",
                                         "type": "string",
-                                        "example": "Av. Principal 123 y Calle Secundaria"
+                                        "example": "Av. Principal 123 y Calle Secundaria",
+                                        "nullable": true
+                                    },
+                                    "direction": {
+                                        "description": "Alias compatible de address. Obligatoria si no se envía address.",
+                                        "type": "string",
+                                        "example": "Av. Principal 123 y Calle Secundaria",
+                                        "nullable": true
                                     },
                                     "reference": {
                                         "type": "string",
@@ -2209,6 +2329,17 @@
                                     "houses": {
                                         "type": "integer",
                                         "example": 120,
+                                        "nullable": true
+                                    },
+                                    "total_units": {
+                                        "type": "integer",
+                                        "example": 120,
+                                        "nullable": true,
+                                        "minimum": 0
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true,
                                         "nullable": true
                                     },
                                     "characteristics": {
@@ -2275,20 +2406,25 @@
                             },
                             "example": {
                                 "name": "Condominio Vista Verde",
+                                "slug": "condominio-vista-verde",
                                 "ruc": "0999999999001",
                                 "type": "Residencial",
                                 "description": "Condominio residencial con áreas comunes y seguridad privada.",
                                 "status": "Activo",
+                                "email": "administracion@vistaverde.example.com",
+                                "phone": "+593 4 555 0101",
                                 "country_code": "EC",
                                 "province_id": 9,
                                 "city_id": 101,
-                                "direction": "Av. Principal 123 y Calle Secundaria",
+                                "address": "Av. Principal 123 y Calle Secundaria",
                                 "reference": "Frente al parque central",
                                 "latitude": -2.170998,
                                 "longitude": -79.922359,
                                 "currency": "USD",
                                 "towers": 4,
                                 "houses": 120,
+                                "total_units": 120,
+                                "is_active": true,
                                 "characteristics": [
                                     1,
                                     2,
@@ -2379,6 +2515,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -2405,6 +2543,111 @@
                     },
                     "422": {
                         "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno, por ejemplo cuando no es posible almacenar el logo",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/options": {
+            "get": {
+                "tags": [
+                    "Condominios"
+                ],
+                "summary": "Listar opciones de condominios para combos",
+                "operationId": "condominiumsOptions",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Filtrar por nombre del condominio.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 255
+                        },
+                        "example": "Cedros"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Opciones de condominios encontradas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": [
+                                        {
+                                            "key": 1,
+                                            "value": "Condominio Los Cedros"
+                                        }
+                                    ],
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Parámetros inválidos",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2512,6 +2755,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -2567,6 +2812,7 @@
                 "summary": "Actualizar condominio",
                 "operationId": "condominiumsUpdate",
                 "requestBody": {
+                    "description": "Enviar como multipart/form-data. Todos los campos son opcionales; si se envía una dirección puede usarse address o direction.",
                     "required": true,
                     "content": {
                         "multipart/form-data": {
@@ -2575,6 +2821,11 @@
                                     "name": {
                                         "type": "string",
                                         "example": "Condominio Vista Verde Renovado",
+                                        "nullable": true
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "condominio-vista-verde-renovado",
                                         "nullable": true
                                     },
                                     "ruc": {
@@ -2600,6 +2851,17 @@
                                             "Activo",
                                             "Inactivo"
                                         ]
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "administracion@vistaverde.example.com",
+                                        "nullable": true
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+593 4 555 0101",
+                                        "nullable": true
                                     },
                                     "country_code": {
                                         "type": "string",
@@ -2656,6 +2918,17 @@
                                     "houses": {
                                         "type": "integer",
                                         "example": 120,
+                                        "nullable": true
+                                    },
+                                    "total_units": {
+                                        "type": "integer",
+                                        "example": 120,
+                                        "nullable": true,
+                                        "minimum": 0
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true,
                                         "nullable": true
                                     },
                                     "characteristics": {
@@ -2807,6 +3080,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -2854,6 +3129,23 @@
                     },
                     "404": {
                         "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno, por ejemplo cuando no es posible almacenar el logo",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2955,6 +3247,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -3497,6 +3791,8 @@
                                         "user": {
                                             "id": 1,
                                             "name": "SWAGGER ADMIN",
+                                            "first_name": "SWAGGER",
+                                            "last_name": "ADMIN",
                                             "email": "swagger.admin@example.com",
                                             "country": "EC",
                                             "document_type": {
@@ -3581,6 +3877,8 @@
                                             "administrator": {
                                                 "id": 1,
                                                 "name": "Carlos Ramírez",
+                                                "first_name": "Carlos",
+                                                "last_name": "Ramírez",
                                                 "email": "carlos.ramirez@example.com",
                                                 "document_type": {
                                                     "id": 1,
@@ -4303,6 +4601,8 @@
                                         {
                                             "id": 1,
                                             "name": "SWAGGER ADMIN",
+                                            "first_name": "SWAGGER",
+                                            "last_name": "ADMIN",
                                             "email": "swagger.admin@example.com",
                                             "relationship_code": "propietario",
                                             "is_primary": true,
@@ -4328,6 +4628,102 @@
                 ],
                 "summary": "Agregar persona a unidad",
                 "operationId": "unitUsersStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "country",
+                                    "document_type_id",
+                                    "document_number",
+                                    "relationship_type_id"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Nombre completo compatible. Puede enviarse en lugar de first_name.",
+                                        "type": "string",
+                                        "example": "María Gómez",
+                                        "nullable": true
+                                    },
+                                    "first_name": {
+                                        "description": "Nombres. Obligatorio cuando no se envía name.",
+                                        "type": "string",
+                                        "example": "María",
+                                        "nullable": true
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Gómez",
+                                        "nullable": true
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "example": "EC"
+                                    },
+                                    "document_type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "document_number": {
+                                        "type": "string",
+                                        "example": "1711111111"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0991112222",
+                                        "nullable": true
+                                    },
+                                    "secondary_phone": {
+                                        "type": "string",
+                                        "example": "022222222",
+                                        "nullable": true
+                                    },
+                                    "relationship_type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "started_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-06-24",
+                                        "nullable": true
+                                    },
+                                    "ended_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "is_primary": {
+                                        "type": "boolean",
+                                        "example": true,
+                                        "nullable": true
+                                    },
+                                    "is_billing_responsible": {
+                                        "type": "boolean",
+                                        "example": true,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "first_name": "Persona",
+                                "last_name": "Demo",
+                                "country": "EC",
+                                "document_type_id": 1,
+                                "document_number": "1722222222",
+                                "phone": "0988888888",
+                                "secondary_phone": null,
+                                "relationship_type_id": 1,
+                                "started_at": "2026-06-01",
+                                "ended_at": null,
+                                "is_primary": true,
+                                "is_billing_responsible": true
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
                         "description": "Persona agregada",
@@ -4343,6 +4739,8 @@
                                         "user": {
                                             "id": 1,
                                             "name": "SWAGGER ADMIN",
+                                            "first_name": "SWAGGER",
+                                            "last_name": "ADMIN",
                                             "email": "swagger.admin@example.com",
                                             "country": "EC",
                                             "document_type": {
@@ -4362,6 +4760,8 @@
                                         "unit_relation": {
                                             "id": 1,
                                             "name": "SWAGGER ADMIN",
+                                            "first_name": "SWAGGER",
+                                            "last_name": "ADMIN",
                                             "email": "swagger.admin@example.com",
                                             "relationship_code": "propietario",
                                             "is_primary": true,
@@ -4373,36 +4773,34 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
+                                    "meta": {}
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
                     {
                         "bearerAuth": []
                     }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            },
-                            "example": {
-                                "name": "Persona Demo",
-                                "country": "EC",
-                                "document_type_id": 1,
-                                "document_number": "1722222222",
-                                "phone": "0988888888",
-                                "secondary_phone": null,
-                                "relationship_type_id": 1,
-                                "started_at": "2026-06-01",
-                                "ended_at": null,
-                                "is_primary": true,
-                                "is_billing_responsible": true
-                            }
-                        }
-                    }
-                }
+                ]
             }
         },
         "/api/condominiums/{condominium}/units/{unit}/users/{user}/access-invitations": {
@@ -6474,6 +6872,8 @@
                                         "user": {
                                             "id": 1,
                                             "name": "SWAGGER ADMIN",
+                                            "first_name": "SWAGGER",
+                                            "last_name": "ADMIN",
                                             "email": "swagger.admin@example.com",
                                             "country": "EC",
                                             "document_type": {
@@ -6493,6 +6893,8 @@
                                         "unit_relation": {
                                             "id": 1,
                                             "name": "SWAGGER ADMIN",
+                                            "first_name": "SWAGGER",
+                                            "last_name": "ADMIN",
                                             "email": "swagger.admin@example.com",
                                             "relationship_code": "propietario",
                                             "is_primary": true,
@@ -6748,7 +7150,8 @@
                                 "type": "object"
                             },
                             "example": {
-                                "name": "Usuario Demo",
+                                "first_name": "Usuario",
+                                "last_name": "Demo",
                                 "email": "usuario.demo@example.com",
                                 "password": "Password123!",
                                 "password_confirmation": "Password123!",
@@ -6912,6 +7315,8 @@
                                         "user": {
                                             "id": 1,
                                             "name": "SWAGGER ADMIN",
+                                            "first_name": "SWAGGER",
+                                            "last_name": "ADMIN",
                                             "email": "swagger.admin@example.com",
                                             "country": "EC",
                                             "document_type": {
@@ -6996,6 +7401,8 @@
                                             "administrator": {
                                                 "id": 1,
                                                 "name": "Carlos Ramírez",
+                                                "first_name": "Carlos",
+                                                "last_name": "Ramírez",
                                                 "email": "carlos.ramirez@example.com",
                                                 "document_type": {
                                                     "id": 1,
@@ -7292,6 +7699,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -7454,6 +7863,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -7587,6 +7998,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -7751,6 +8164,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -7884,6 +8299,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -8040,6 +8457,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -8200,6 +8619,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -8333,6 +8754,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -8495,6 +8918,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -8628,6 +9053,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -8792,6 +9219,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -8925,6 +9354,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -9054,6 +9485,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -9183,6 +9616,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -9352,6 +9787,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -9485,6 +9922,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -9680,6 +10119,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -9854,6 +10295,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,
@@ -9987,6 +10430,8 @@
                                         "administrator": {
                                             "id": 1,
                                             "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
                                             "email": "carlos.ramirez@example.com",
                                             "document_type": {
                                                 "id": 1,

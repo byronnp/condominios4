@@ -12,7 +12,7 @@ class BoardSeeder extends Seeder
     public function run(): void
     {
         $condominium = Condominium::where('slug', 'condominio-los-cedros')->first();
-        $admin = User::where('email', 'byron_np@hotmail.com')->first();
+        $admin = User::where('email', 'byronnp@gmail.com')->first();
 
         if (! $condominium || ! $admin) {
             return;
@@ -36,5 +36,11 @@ class BoardSeeder extends Seeder
             'ended_at' => '2028-12-31',
             'is_active' => true,
         ]);
+
+        $seniorAdminId = User::where('email', 'byron_np@hotmail.com')->value('id');
+
+        if ($seniorAdminId !== null) {
+            $board->members()->where('user_id', $seniorAdminId)->delete();
+        }
     }
 }

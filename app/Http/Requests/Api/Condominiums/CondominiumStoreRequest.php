@@ -112,7 +112,8 @@ class CondominiumStoreRequest extends FormRequest
         }
 
         return [
-            'name' => trim($data['admin_name'].' '.$data['admin_last_name']),
+            'first_name' => $data['admin_name'],
+            'last_name' => $data['admin_last_name'],
             'email' => $data['admin_email'],
             'country' => $data['country_code'] ?? 'EC',
             'document_type_id' => $this->catalogItemId('document_types', $data['admin_document_type']),

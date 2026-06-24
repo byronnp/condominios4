@@ -336,7 +336,8 @@ class CondominiumCreationService
         }
 
         $user->fill([
-            'name' => $administratorData['name'],
+            'first_name' => $administratorData['first_name'],
+            'last_name' => $administratorData['last_name'] ?? null,
             'email' => $administratorData['email'],
             'country' => $administratorData['country'],
             'document_type_id' => $administratorData['document_type_id'],

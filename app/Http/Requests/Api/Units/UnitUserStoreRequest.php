@@ -15,7 +15,9 @@ class UnitUserStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['nullable', 'required_without:first_name', 'string', 'max:255'],
+            'first_name' => ['nullable', 'required_without:name', 'string', 'max:255'],
+            'last_name' => ['nullable', 'string', 'max:255'],
             'country' => ['required', 'string', 'size:2'],
             'document_type_id' => ['required', 'integer', new ValidCatalogItem('document_types')],
             'document_number' => ['required', 'string', 'max:30'],

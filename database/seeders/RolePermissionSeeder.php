@@ -56,7 +56,7 @@ class RolePermissionSeeder extends Seeder
             }
 
             User::query()
-                ->whereIn('email', ['byron_np@hotmail.com', 'byronnp@gmail.com', 'swagger.admin@example.com'])
+                ->whereIn('email', ['byronnp@gmail.com', 'swagger.admin@example.com'])
                 ->get()
                 ->each(function (User $adminUser) use ($condominium, $administrator): void {
                     $condominiumUser = DB::table('condominium_user')
@@ -76,6 +76,33 @@ class RolePermissionSeeder extends Seeder
                     }
                 });
         });
+
+        $this->removeSeniorAdminFromCondominiums();
+    }
+
+    private function removeSeniorAdminFromCondominiums(): void
+    {
+        $seniorAdminId = User::where('email', 'byron_np@hotmail.com')->value('id');
+
+        if ($seniorAdminId === null) {
+            return;
+        }
+
+        $condominiumUserIds = DB::table('condominium_user')
+            ->where('user_id', $seniorAdminId)
+            ->pluck('id');
+
+        if ($condominiumUserIds->isEmpty()) {
+            return;
+        }
+
+        DB::table('condominium_user_role')
+            ->whereIn('condominium_user_id', $condominiumUserIds)
+            ->delete();
+
+        DB::table('condominium_user')
+            ->whereIn('id', $condominiumUserIds)
+            ->delete();
     }
 
     private function roles(): array

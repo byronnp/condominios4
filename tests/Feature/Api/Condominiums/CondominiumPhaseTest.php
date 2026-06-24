@@ -7,6 +7,7 @@ use App\Models\CatalogItem;
 use App\Models\Condominium;
 use App\Models\Permission;
 use App\Models\Province;
+use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -49,6 +50,10 @@ class CondominiumPhaseTest extends TestCase
         $this->assertSame('USD', $condominium->activeBillingSetting?->currency);
         $this->assertContains('piscina', $condominium->features->pluck('code')->all());
         $this->assertDatabaseHas('roles', ['condominium_id' => $condominium->id, 'code' => 'administrador']);
+        $this->assertDatabaseMissing('condominium_user', [
+            'condominium_id' => $condominium->id,
+            'user_id' => User::where('email', 'byron_np@hotmail.com')->value('id'),
+        ]);
         $this->assertDatabaseHas('permissions', ['code' => 'roles.manage']);
         $this->assertDatabaseHas('menus', ['code' => 'dashboard', 'category_code' => 'principal']);
         $this->assertDatabaseHas('menus', ['code' => 'reportes', 'category_code' => 'herramientas']);
@@ -86,6 +91,48 @@ class CondominiumPhaseTest extends TestCase
             'role_id' => $roleResponse->json('data.id'),
             'permission_id' => $permission->id,
         ]);
+    }
+
+    public function test_platform_admin_can_list_condominium_options_for_combos(): void
+    {
+        $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
+
+        $this->getJson('/api/condominiums/options?search=Cedros', [
+            'Authorization' => 'Bearer '.$this->loginToken(),
+        ])
+            ->assertOk()
+            ->assertJsonPath('message', 'Opciones de condominios encontradas.')
+            ->assertJsonPath('data.0.key', $condominium->id)
+            ->assertJsonPath('data.0.value', 'Condominio Los Cedros')
+            ->assertJsonCount(2, 'data.0')
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_condominium_admin_only_receives_assigned_condominium_options(): void
+    {
+        $assignedCondominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
+
+        Condominium::create([
+            'name' => 'Condominio No Asignado',
+            'slug' => 'condominio-no-asignado',
+            'address' => 'Av. No Asignada 123',
+            'country_code' => 'EC',
+            'total_units' => 1,
+            'is_active' => true,
+        ]);
+
+        $login = $this->postJson('/api/auth/login', [
+            'email' => 'swagger.admin@example.com',
+            'password' => 'Swagger123!',
+        ])->assertOk();
+
+        $this->getJson('/api/condominiums/options', [
+            'Authorization' => 'Bearer '.$login->json('data.access_token'),
+        ])
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.key', $assignedCondominium->id)
+            ->assertJsonPath('data.0.value', 'Condominio Los Cedros');
     }
 
     public function test_permission_code_can_be_generated_from_module_and_action(): void
@@ -195,6 +242,9 @@ class CondominiumPhaseTest extends TestCase
             ->assertJsonPath('data.currency', 'USD')
             ->assertJsonPath('data.towers_count', 4)
             ->assertJsonPath('data.houses_count', 120)
+            ->assertJsonPath('data.administrator.name', 'Carlos Ramírez')
+            ->assertJsonPath('data.administrator.first_name', 'Carlos')
+            ->assertJsonPath('data.administrator.last_name', 'Ramírez')
             ->assertJsonPath('data.administrator.email', 'carlos.ramirez@example.com')
             ->assertJsonCount(4, 'data.features')
             ->assertJsonStructure([
@@ -236,6 +286,8 @@ class CondominiumPhaseTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'name' => 'Carlos Ramírez',
+            'first_name' => 'Carlos',
+            'last_name' => 'Ramírez',
             'email' => 'carlos.ramirez@example.com',
             'document_type_id' => $documentType->id,
             'document_number' => '0912345678',

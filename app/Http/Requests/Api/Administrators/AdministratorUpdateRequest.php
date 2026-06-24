@@ -19,6 +19,8 @@ class AdministratorUpdateRequest extends FormRequest
 
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'first_name' => ['sometimes', 'required', 'string', 'max:255'],
+            'last_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($administrator?->id)],
             'country' => ['sometimes', 'required', 'string', 'size:2', Rule::exists('countries', 'code')->where('is_active', true)],
             'document_type_id' => ['sometimes', 'required', 'integer', new ValidCatalogItem('document_types')],

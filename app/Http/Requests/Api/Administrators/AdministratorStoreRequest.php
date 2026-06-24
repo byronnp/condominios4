@@ -16,7 +16,9 @@ class AdministratorStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['nullable', 'required_without:first_name', 'string', 'max:255'],
+            'first_name' => ['nullable', 'required_without:name', 'string', 'max:255'],
+            'last_name' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'country' => ['required', 'string', 'size:2', Rule::exists('countries', 'code')->where('is_active', true)],
             'document_type_id' => ['required', 'integer', new ValidCatalogItem('document_types')],

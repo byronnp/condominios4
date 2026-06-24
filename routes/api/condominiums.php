@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(AuthenticateJwt::class)->group(function () {
     Route::get('condominiums', [CondominiumController::class, 'index']);
+    Route::get('condominiums/options', [CondominiumController::class, 'options']);
     Route::post('condominiums', [CondominiumController::class, 'store']);
     Route::put('condominiums/{condominium}', [CondominiumController::class, 'update']);
     Route::delete('condominiums/{condominium}', [CondominiumController::class, 'destroy']);

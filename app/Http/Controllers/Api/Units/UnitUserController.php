@@ -29,7 +29,32 @@ class UnitUserController extends Controller
         return ApiResponse::success(UnitUserResource::collection($this->unitPeople($unit)), 'Personas de la unidad encontradas.');
     }
 
-    #[OA\Post(path: '/api/condominiums/{condominium}/units/{unit}/users', operationId: 'unitUsersStore', summary: 'Agregar persona a unidad', tags: ['Personas por unidad'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 201, description: 'Persona agregada')])]
+    #[OA\Post(
+        path: '/api/condominiums/{condominium}/units/{unit}/users',
+        operationId: 'unitUsersStore',
+        summary: 'Agregar persona a unidad',
+        tags: ['Personas por unidad'],
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            required: ['country', 'document_type_id', 'document_number', 'relationship_type_id'],
+            properties: [
+                new OA\Property(property: 'name', description: 'Nombre completo compatible. Puede enviarse en lugar de first_name.', type: 'string', nullable: true, example: 'María Gómez'),
+                new OA\Property(property: 'first_name', description: 'Nombres. Obligatorio cuando no se envía name.', type: 'string', nullable: true, example: 'María'),
+                new OA\Property(property: 'last_name', type: 'string', nullable: true, example: 'Gómez'),
+                new OA\Property(property: 'country', type: 'string', example: 'EC'),
+                new OA\Property(property: 'document_type_id', type: 'integer', example: 1),
+                new OA\Property(property: 'document_number', type: 'string', example: '1711111111'),
+                new OA\Property(property: 'phone', type: 'string', nullable: true, example: '0991112222'),
+                new OA\Property(property: 'secondary_phone', type: 'string', nullable: true, example: '022222222'),
+                new OA\Property(property: 'relationship_type_id', type: 'integer', example: 1),
+                new OA\Property(property: 'started_at', type: 'string', format: 'date', nullable: true, example: '2026-06-24'),
+                new OA\Property(property: 'ended_at', type: 'string', format: 'date', nullable: true),
+                new OA\Property(property: 'is_primary', type: 'boolean', nullable: true, example: true),
+                new OA\Property(property: 'is_billing_responsible', type: 'boolean', nullable: true, example: true),
+            ]
+        )),
+        responses: [new OA\Response(response: 201, description: 'Persona agregada'), new OA\Response(response: 422, description: 'Datos inválidos')]
+    )]
     public function store(UnitUserStoreRequest $request, Condominium $condominium, Unit $unit): JsonResponse
     {
         $this->assertUnit($condominium, $unit);
@@ -45,7 +70,9 @@ class UnitUserController extends Controller
                 'document_type_id' => $data['document_type_id'],
                 'document_number' => $data['document_number'],
             ], [
-                'name' => $data['name'],
+                'name' => $data['name'] ?? null,
+                'first_name' => $data['first_name'] ?? null,
+                'last_name' => $data['last_name'] ?? null,
                 'phone' => $data['phone'] ?? null,
                 'secondary_phone' => $data['secondary_phone'] ?? null,
                 'email' => null,
@@ -147,6 +174,8 @@ class UnitUserController extends Controller
             ->select([
                 'users.id',
                 'users.name',
+                'users.first_name',
+                'users.last_name',
                 'users.email',
                 'users.phone',
                 'users.secondary_phone',

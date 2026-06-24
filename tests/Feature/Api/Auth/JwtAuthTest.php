@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\Auth;
 
 use App\Models\Catalog;
+use App\Models\User;
 use Database\Seeders\CatalogSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,7 +35,8 @@ class JwtAuthTest extends TestCase
         $documentTypeId = $this->documentTypeId();
 
         $response = $this->postJson('/api/auth/register', [
-            'name' => 'Carlos Perez',
+            'first_name' => 'Carlos',
+            'last_name' => 'Perez',
             'email' => 'carlos@example.com',
             'password' => 'admin123',
             'password_confirmation' => 'admin123',
@@ -64,7 +66,8 @@ class JwtAuthTest extends TestCase
         $documentTypeId = $this->documentTypeId();
 
         $this->postJson('/api/auth/register', [
-            'name' => 'Ana Gomez',
+            'first_name' => 'Ana',
+            'last_name' => 'Gomez',
             'email' => 'ana@example.com',
             'password' => 'admin123',
             'password_confirmation' => 'admin123',
@@ -86,6 +89,9 @@ class JwtAuthTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('data.user.email', 'ana@example.com')
+            ->assertJsonPath('data.user.name', 'Ana Gomez')
+            ->assertJsonPath('data.user.first_name', 'Ana')
+            ->assertJsonPath('data.user.last_name', 'Gomez')
             ->assertJsonPath('data.platform_role', null)
             ->assertJsonPath('data.is_platform_admin', false)
             ->assertJsonPath('data.permissions', []);
@@ -159,10 +165,15 @@ class JwtAuthTest extends TestCase
             ->assertJsonPath('data.platform_role.code', 'administrador_senior')
             ->assertJsonPath('data.platform_role.name', 'Administrador Senior')
             ->assertJsonPath('data.is_platform_admin', true)
-            ->assertJsonPath('data.condominium.name', 'Condominio Los Cedros')
-            ->assertJsonFragment(['code' => 'administrador']);
+            ->assertJsonPath('data.condominium', null)
+            ->assertJsonCount(0, 'data.roles')
+            ->assertJsonCount(0, 'data.permissions');
 
-        $this->assertContains('roles.manage', $response->json('data.permissions'));
+        $seniorAdmin = User::where('email', 'byron_np@hotmail.com')->firstOrFail();
+
+        $this->assertDatabaseMissing('condominium_user', [
+            'user_id' => $seniorAdmin->id,
+        ]);
     }
 
     public function test_logout_revokes_current_access_token(): void
