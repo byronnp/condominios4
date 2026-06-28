@@ -10,6 +10,8 @@ class MenuSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->renameLegacyAdministratorMenu();
+
         $activeCodes = [];
 
         foreach ($this->menus() as $menuData) {
@@ -44,6 +46,17 @@ class MenuSeeder extends Seeder
             ->update(['is_active' => false]);
     }
 
+    private function renameLegacyAdministratorMenu(): void
+    {
+        if (Menu::query()->where('code', 'usuarios')->exists()) {
+            return;
+        }
+
+        Menu::query()
+            ->where('code', 'administradores')
+            ->update(['code' => 'usuarios']);
+    }
+
     private function menus(): array
     {
         $principal = [
@@ -61,7 +74,7 @@ class MenuSeeder extends Seeder
         return [
             ['name' => 'Resumen general', 'code' => 'dashboard', 'path' => '/dashboard', 'icon' => 'layout-dashboard', 'sort_order' => 1, 'permissions' => [], 'parent_code' => null, ...$principal],
             ['name' => 'Condominios', 'code' => 'condominios', 'path' => '/condominios', 'icon' => 'building', 'sort_order' => 2, 'permissions' => ['condominiums.view'], 'parent_code' => null, ...$principal],
-            ['name' => 'Administradores', 'code' => 'administradores', 'path' => '/administradores', 'icon' => 'users', 'sort_order' => 4, 'permissions' => ['administrators.view'], 'parent_code' => null, ...$principal],
+            ['name' => 'Usuarios', 'code' => 'usuarios', 'path' => '/usuarios', 'icon' => 'users', 'sort_order' => 4, 'permissions' => ['users.view'], 'parent_code' => null, ...$principal],
             ['name' => 'Unidades', 'code' => 'unidades', 'path' => '/unidades', 'icon' => 'home', 'sort_order' => 6, 'permissions' => ['units.view'], 'parent_code' => null, ...$principal],
             ['name' => 'Propietarios', 'code' => 'propietarios', 'path' => '/propietarios', 'icon' => 'user-round-check', 'sort_order' => 8, 'permissions' => ['unit_users.view'], 'parent_code' => null, ...$principal],
             ['name' => 'Residentes', 'code' => 'residentes', 'path' => '/residentes', 'icon' => 'users-round', 'sort_order' => 9, 'permissions' => ['unit_users.view'], 'parent_code' => null, ...$principal],

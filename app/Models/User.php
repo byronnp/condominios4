@@ -6,6 +6,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -67,6 +68,44 @@ class User extends Authenticatable
         return $this->belongsToMany(Condominium::class, 'condominium_user')
             ->withPivot(['id', 'is_active', 'joined_at', 'deleted_at'])
             ->withTimestamps();
+    }
+
+    public function scopeVisibleTo(Builder $query, User $actor): Builder
+    {
+        if ($actor->isPlatformAdmin()) {
+            return $query;
+        }
+
+        return $query->whereHas('condominiums', function (Builder $query) use ($actor): void {
+            $query->whereIn('condominiums.id', $actor->manageableCondominiumIds('users.view'))
+                ->where('condominium_user.is_active', true)
+                ->whereNull('condominium_user.deleted_at');
+        });
+    }
+
+    /** @return array<int, int> */
+    public function manageableCondominiumIds(?string $permission = null): array
+    {
+        $query = DB::table('condominium_user')
+            ->join('condominium_user_role', 'condominium_user_role.condominium_user_id', '=', 'condominium_user.id')
+            ->join('roles', 'roles.id', '=', 'condominium_user_role.role_id')
+            ->where('condominium_user.user_id', $this->id)
+            ->where('condominium_user.is_active', true)
+            ->where('roles.code', 'administrador')
+            ->whereNull('condominium_user.deleted_at')
+            ->whereNull('condominium_user_role.deleted_at')
+            ->whereNull('roles.deleted_at');
+
+        if ($permission !== null) {
+            $query->join('role_permission', 'role_permission.role_id', '=', 'roles.id')
+                ->join('permissions', 'permissions.id', '=', 'role_permission.permission_id')
+                ->where('permissions.code', $permission)
+                ->whereNull('role_permission.deleted_at')
+                ->whereNull('permissions.deleted_at');
+        }
+
+        return $query->distinct()->pluck('condominium_user.condominium_id')
+            ->map(fn ($id): int => (int) $id)->all();
     }
 
     public function documentType(): BelongsTo

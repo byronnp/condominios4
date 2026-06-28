@@ -6,6 +6,7 @@ require __DIR__.'/api/locations.php';
 require __DIR__.'/api/auth.php';
 require __DIR__.'/api/condominiums.php';
 require __DIR__.'/api/administrators.php';
+require __DIR__.'/api/users.php';
 require __DIR__.'/api/roles.php';
 require __DIR__.'/api/permissions.php';
 require __DIR__.'/api/menus.php';

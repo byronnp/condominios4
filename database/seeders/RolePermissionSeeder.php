@@ -44,10 +44,16 @@ class RolePermissionSeeder extends Seeder
             });
 
             $administrator = $roles->get('administrador');
-            $administrator?->permissions()->sync($permissions->pluck('id')->all());
+            $administratorPermissions = $permissions
+                ->reject(fn (Permission $permission): bool => $permission->module === 'condominiums')
+                ->pluck('id')
+                ->all();
+
+            $administrator?->permissions()->sync($administratorPermissions);
 
             $viewPermissions = $permissions
-                ->filter(fn (Permission $permission): bool => str_ends_with($permission->code, '.view'))
+                ->filter(fn (Permission $permission): bool => $permission->module !== 'condominiums'
+                    && str_ends_with($permission->code, '.view'))
                 ->pluck('id')
                 ->all();
 
@@ -109,6 +115,8 @@ class RolePermissionSeeder extends Seeder
     {
         return [
             ['code' => 'administrador', 'name' => 'Administrador', 'description' => 'Acceso completo al condominio.'],
+            ['code' => 'directiva', 'name' => 'Directiva', 'description' => 'Miembro de la directiva del condominio.'],
+            ['code' => 'contabilidad', 'name' => 'Contabilidad', 'description' => 'Gestión contable y financiera del condominio.'],
             ['code' => 'presidente', 'name' => 'Presidente', 'description' => 'Miembro principal de la directiva.'],
             ['code' => 'tesorero', 'name' => 'Tesorero', 'description' => 'Responsable de seguimiento financiero.'],
             ['code' => 'secretario', 'name' => 'Secretario', 'description' => 'Responsable de actas y comunicaciones.'],
@@ -127,6 +135,8 @@ class RolePermissionSeeder extends Seeder
             ['module' => 'users', 'action' => 'view', 'name' => 'Ver usuarios', 'code' => 'users.view'],
             ['module' => 'users', 'action' => 'create', 'name' => 'Crear usuarios', 'code' => 'users.create'],
             ['module' => 'users', 'action' => 'assign', 'name' => 'Asignar usuarios', 'code' => 'users.assign'],
+            ['module' => 'users', 'action' => 'update', 'name' => 'Actualizar usuarios', 'code' => 'users.update'],
+            ['module' => 'users', 'action' => 'status', 'name' => 'Cambiar estado de usuarios', 'code' => 'users.status'],
             ['module' => 'administrators', 'action' => 'view', 'name' => 'Ver administradores', 'code' => 'administrators.view'],
             ['module' => 'administrators', 'action' => 'create', 'name' => 'Crear administradores', 'code' => 'administrators.create'],
             ['module' => 'administrators', 'action' => 'update', 'name' => 'Actualizar administradores', 'code' => 'administrators.update'],

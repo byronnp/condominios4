@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -51,6 +52,15 @@ class Condominium extends Model
             'houses_count' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function scopeVisibleTo(Builder $query, User $user, string $permission = 'condominiums.view'): Builder
+    {
+        if ($user->isPlatformAdmin()) {
+            return $query;
+        }
+
+        return $query->whereIn($this->qualifyColumn('id'), $user->manageableCondominiumIds($permission));
     }
 
     public function type(): BelongsTo

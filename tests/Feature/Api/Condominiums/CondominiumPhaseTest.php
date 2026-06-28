@@ -8,10 +8,12 @@ use App\Models\Condominium;
 use App\Models\Permission;
 use App\Models\Province;
 use App\Models\User;
+use App\Mail\CondominiumAdministratorCreatedMail;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -56,6 +58,8 @@ class CondominiumPhaseTest extends TestCase
         ]);
         $this->assertDatabaseHas('permissions', ['code' => 'roles.manage']);
         $this->assertDatabaseHas('menus', ['code' => 'dashboard', 'category_code' => 'principal']);
+        $this->assertDatabaseHas('menus', ['code' => 'usuarios', 'name' => 'Usuarios', 'path' => '/usuarios', 'is_active' => true]);
+        $this->assertDatabaseMissing('menus', ['code' => 'administradores', 'is_active' => true]);
         $this->assertDatabaseHas('menus', ['code' => 'reportes', 'category_code' => 'herramientas']);
         $this->assertDatabaseHas('condominium_boards', ['condominium_id' => $condominium->id, 'name' => 'Directiva 2026-2028']);
         $this->assertDatabaseHas('condominium_payment_methods', ['condominium_id' => $condominium->id, 'account_number' => '2200123456']);
@@ -93,6 +97,33 @@ class CondominiumPhaseTest extends TestCase
         ]);
     }
 
+    public function test_only_senior_administrator_can_see_condominiums_menu(): void
+    {
+        $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
+
+        $this->getJson('/api/auth/menu', [
+            'Authorization' => 'Bearer '.$this->loginToken(),
+        ])
+            ->assertOk()
+            ->assertJsonFragment(['code' => 'condominios']);
+
+        $this->getJson('/api/auth/menu', [
+            ...$this->condominiumAdminHeaders(),
+            'X-Condominium-Id' => (string) $condominium->id,
+        ])
+            ->assertOk()
+            ->assertJsonMissing(['code' => 'condominios']);
+    }
+
+    public function test_condominium_administrator_cannot_list_condominiums(): void
+    {
+        $this->getJson('/api/condominiums', $this->condominiumAdminHeaders())
+            ->assertForbidden();
+
+        $this->getJson('/api/condominiums/options', $this->condominiumAdminHeaders())
+            ->assertForbidden();
+    }
+
     public function test_platform_admin_can_list_condominium_options_for_combos(): void
     {
         $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
@@ -108,31 +139,36 @@ class CondominiumPhaseTest extends TestCase
             ->assertJsonCount(1, 'data');
     }
 
-    public function test_condominium_admin_only_receives_assigned_condominium_options(): void
+    public function test_condominium_administrator_cannot_access_or_mutate_an_unassigned_condominium(): void
     {
-        $assignedCondominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
-
-        Condominium::create([
-            'name' => 'Condominio No Asignado',
-            'slug' => 'condominio-no-asignado',
-            'address' => 'Av. No Asignada 123',
+        $assigned = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
+        $other = Condominium::create([
+            'name' => 'Condominio Privado',
+            'slug' => 'condominio-privado',
+            'address' => 'Av. Privada 123',
             'country_code' => 'EC',
-            'total_units' => 1,
+            'total_units' => 5,
             'is_active' => true,
         ]);
+        $headers = $this->condominiumAdminHeaders();
 
-        $login = $this->postJson('/api/auth/login', [
-            'email' => 'swagger.admin@example.com',
-            'password' => 'Swagger123!',
-        ])->assertOk();
+        $this->getJson('/api/condominiums', $headers)->assertForbidden();
 
-        $this->getJson('/api/condominiums/options', [
-            'Authorization' => 'Bearer '.$login->json('data.access_token'),
-        ])
-            ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.key', $assignedCondominium->id)
-            ->assertJsonPath('data.0.value', 'Condominio Los Cedros');
+        $this->getJson("/api/condominiums/{$other->id}", $headers)->assertForbidden();
+        $this->putJson("/api/condominiums/{$assigned->id}", ['name' => 'Intento'], $headers)->assertForbidden();
+        $this->patchJson("/api/condominiums/{$assigned->id}/status", ['is_active' => false], $headers)->assertForbidden();
+        $this->postJson('/api/condominiums', ['name' => 'No permitido', 'address' => 'N/A'], $headers)->assertForbidden();
+    }
+
+    public function test_platform_administrator_can_change_condominium_status(): void
+    {
+        $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
+
+        $this->patchJson("/api/condominiums/{$condominium->id}/status", ['is_active' => false], [
+            'Authorization' => 'Bearer '.$this->loginToken(),
+        ])->assertOk()->assertJsonPath('data.is_active', false);
+
+        $this->assertDatabaseHas('condominiums', ['id' => $condominium->id, 'is_active' => false, 'deleted_at' => null]);
     }
 
     public function test_permission_code_can_be_generated_from_module_and_action(): void
@@ -190,6 +226,7 @@ class CondominiumPhaseTest extends TestCase
         $logoDisk = config('filesystems.logo_disk', 'public');
 
         Storage::fake($logoDisk);
+        Mail::fake();
 
         $token = $this->loginToken();
         $province = Province::where('code', 'EC-G')->firstOrFail();
@@ -302,6 +339,11 @@ class CondominiumPhaseTest extends TestCase
             'condominium_user_id' => $administrator->pivot->id,
             'role_id' => $role->id,
         ]);
+
+        Mail::assertQueued(CondominiumAdministratorCreatedMail::class, function (CondominiumAdministratorCreatedMail $mail) use ($condominium): bool {
+            return $mail->administrator->email === 'carlos.ramirez@example.com'
+                && $mail->condominium->is($condominium);
+        });
     }
 
     public function test_condominium_can_be_updated_with_partial_payload_and_logo(): void
@@ -500,5 +542,16 @@ class CondominiumPhaseTest extends TestCase
         ])->assertOk();
 
         return $response->json('data.access_token');
+    }
+
+    /** @return array<string, string> */
+    private function condominiumAdminHeaders(): array
+    {
+        $login = $this->postJson('/api/auth/login', [
+            'email' => 'byronnp@gmail.com',
+            'password' => 'admin123',
+        ])->assertOk();
+
+        return ['Authorization' => 'Bearer '.$login->json('data.access_token')];
     }
 }

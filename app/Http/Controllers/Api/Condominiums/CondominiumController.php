@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api\Condominiums;
 use App\Domain\Condominiums\Services\CondominiumCreationService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Condominiums\CondominiumOptionIndexRequest;
+use App\Http\Requests\Api\Condominiums\CondominiumStatusRequest;
 use App\Http\Requests\Api\Condominiums\CondominiumStoreRequest;
 use App\Http\Requests\Api\Condominiums\CondominiumUpdateRequest;
 use App\Http\Resources\Api\Condominiums\CondominiumResource;
 use App\Models\Condominium;
 use App\Support\Api\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use OpenApi\Attributes as OA;
 
 class CondominiumController extends Controller
@@ -19,10 +22,13 @@ class CondominiumController extends Controller
         private readonly CondominiumCreationService $creationService,
     ) {}
 
-    #[OA\Get(path: '/api/condominiums', operationId: 'condominiumsIndex', summary: 'Listar condominios', tags: ['Condominios'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Condominios encontrados')])]
-    public function index(): JsonResponse
+    #[OA\Get(path: '/api/condominiums', operationId: 'condominiumsIndex', summary: 'Listar condominios', tags: ['Condominios'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Condominios encontrados'), new OA\Response(response: 403, description: 'Acceso permitido solo al administrador senior')])]
+    public function index(Request $request): JsonResponse
     {
+        Gate::authorize('viewAny', Condominium::class);
+
         $condominiums = Condominium::query()
+            ->visibleTo($request->user())
             ->with(['type', 'country', 'province', 'city', 'features', 'activeBillingSetting', 'users.documentType', 'roles'])
             ->latest()
             ->get();
@@ -49,31 +55,25 @@ class CondominiumController extends Controller
         responses: [
             new OA\Response(response: 200, description: 'Opciones de condominios encontradas'),
             new OA\Response(response: 401, description: 'No autenticado'),
+            new OA\Response(response: 403, description: 'Acceso permitido solo al administrador senior'),
             new OA\Response(response: 422, description: 'Parámetros inválidos'),
         ]
     )]
     public function options(CondominiumOptionIndexRequest $request): JsonResponse
     {
+        Gate::authorize('viewAny', Condominium::class);
         $search = $request->validated('search');
         $user = $request->user();
 
         $options = Condominium::query()
             ->select(['id', 'name'])
             ->where('is_active', true)
-            ->when(! $user->isPlatformAdmin(), fn ($query) => $query->whereExists(
-                fn ($subquery) => $subquery
-                    ->selectRaw('1')
-                    ->from('condominium_user')
-                    ->whereColumn('condominium_user.condominium_id', 'condominiums.id')
-                    ->where('condominium_user.user_id', $user->id)
-                    ->where('condominium_user.is_active', true)
-                    ->whereNull('condominium_user.deleted_at')
-            ))
+            ->visibleTo($user)
             ->when($search, fn ($query, string $search) => $query->where('name', 'like', '%'.trim($search).'%'))
             ->orderBy('name')
             ->get()
             ->map(fn (Condominium $condominium): array => [
-                'id' => $condominium->id,
+                'key' => $condominium->id,
                 'value' => $condominium->name,
             ])
             ->values();
@@ -138,6 +138,8 @@ class CondominiumController extends Controller
     )]
     public function store(CondominiumStoreRequest $request): JsonResponse
     {
+        Gate::authorize('create', Condominium::class);
+
         $condominium = $this->creationService->create(
             $request->condominiumData(),
             $request->featureIds(),
@@ -206,6 +208,8 @@ class CondominiumController extends Controller
     )]
     public function update(CondominiumUpdateRequest $request, Condominium $condominium): JsonResponse
     {
+        Gate::authorize('update', $condominium);
+
         $condominium = $this->creationService->update(
             $condominium,
             $request->condominiumData(),
@@ -231,17 +235,47 @@ class CondominiumController extends Controller
     )]
     public function destroy(Condominium $condominium): JsonResponse
     {
+        Gate::authorize('delete', $condominium);
+
         $this->creationService->delete($condominium);
 
         return ApiResponse::success(null, 'Condominio eliminado correctamente.');
     }
 
     #[OA\Get(path: '/api/condominiums/{condominium}', operationId: 'condominiumsShow', summary: 'Obtener condominio', tags: ['Condominios'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Condominio encontrado'), new OA\Response(response: 404, description: 'No encontrado')])]
-    public function show(Condominium $condominium): JsonResponse
+    public function show(Request $request, Condominium $condominium): JsonResponse
     {
+        Gate::authorize('view', $condominium);
+
         return ApiResponse::success(
             new CondominiumResource($condominium->load(['type', 'country', 'province', 'city', 'features', 'activeBillingSetting', 'users.documentType', 'roles.permissions', 'boards.members.user', 'paymentMethods.paymentMethodType'])),
             'Condominio encontrado.'
+        );
+    }
+
+    #[OA\Patch(
+        path: '/api/condominiums/{condominium}/status',
+        operationId: 'condominiumsUpdateStatus',
+        summary: 'Activar o inactivar condominio',
+        tags: ['Condominios'],
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            required: ['is_active'],
+            properties: [new OA\Property(property: 'is_active', type: 'boolean', example: false)]
+        )),
+        responses: [
+            new OA\Response(response: 200, description: 'Estado actualizado'),
+            new OA\Response(response: 403, description: 'No autorizado'),
+        ]
+    )]
+    public function updateStatus(CondominiumStatusRequest $request, Condominium $condominium): JsonResponse
+    {
+        Gate::authorize('updateStatus', $condominium);
+        $condominium->update($request->validated());
+
+        return ApiResponse::success(
+            new CondominiumResource($condominium->fresh()),
+            'Estado del condominio actualizado correctamente.'
         );
     }
 }

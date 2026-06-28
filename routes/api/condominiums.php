@@ -9,6 +9,7 @@ Route::middleware(AuthenticateJwt::class)->group(function () {
     Route::get('condominiums/options', [CondominiumController::class, 'options']);
     Route::post('condominiums', [CondominiumController::class, 'store']);
     Route::put('condominiums/{condominium}', [CondominiumController::class, 'update']);
+    Route::patch('condominiums/{condominium}/status', [CondominiumController::class, 'updateStatus']);
     Route::delete('condominiums/{condominium}', [CondominiumController::class, 'destroy']);
     Route::get('condominiums/{condominium}', [CondominiumController::class, 'show']);
 });

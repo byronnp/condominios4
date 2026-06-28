@@ -7,6 +7,7 @@ use App\Http\Requests\Api\Menus\MenuStoreRequest;
 use App\Http\Resources\Api\Menus\MenuResource;
 use App\Models\Condominium;
 use App\Models\Menu;
+use App\Models\Permission;
 use App\Support\Api\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -59,19 +60,22 @@ class MenuController extends Controller
     #[OA\Get(path: '/api/auth/menu', operationId: 'authMenu', summary: 'Obtener menú del usuario autenticado', tags: ['Menús'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Menú obtenido')])]
     public function current(Request $request): JsonResponse
     {
+        $user = $request->user();
         $condominium = Condominium::query()
             ->whereKey($request->header('X-Condominium-Id'))
             ->first()
-            ?? $request->user()->condominiums()->first();
+            ?? $user->condominiums()->first();
 
-        if (! $condominium) {
+        if (! $condominium && ! $user->isPlatformAdmin()) {
             return ApiResponse::success(MenuResource::collection(collect()), 'Menú obtenido correctamente.');
         }
 
-        $permissionCodes = $request->user()
-            ->permissionsForCondominium($condominium)
-            ->pluck('code')
-            ->all();
+        $permissionCodes = $user->isPlatformAdmin()
+            ? Permission::query()->where('is_active', true)->pluck('code')->all()
+            : $user->permissionsForCondominium($condominium)
+                ->where('code', '!=', 'condominiums.view')
+                ->pluck('code')
+                ->all();
 
         $parents = Menu::query()
             ->with(['children.permissions', 'permissions'])

@@ -8,9 +8,11 @@ use App\Models\CondominiumFeature;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Mail\CondominiumAdministratorCreatedMail;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
@@ -30,6 +32,7 @@ class CondominiumCreationService
         ?UploadedFile $logo = null,
     ): Condominium {
         $logoPath = null;
+        $administratorToNotify = null;
 
         try {
             if ($logo !== null) {
@@ -37,14 +40,14 @@ class CondominiumCreationService
                 $condominiumData['logo_path'] = $logoPath;
             }
 
-            return DB::transaction(function () use ($condominiumData, $featureIds, $currency, $administratorData): Condominium {
+            $condominium = DB::transaction(function () use ($condominiumData, $featureIds, $currency, $administratorData, &$administratorToNotify): Condominium {
                 $condominium = Condominium::create($condominiumData);
 
                 $this->syncFeatures($condominium, $featureIds);
                 $this->createBillingSetting($condominium, $currency);
 
                 if ($administratorData !== null) {
-                    $this->attachAdministrator($condominium, $administratorData);
+                    $administratorToNotify = $this->attachAdministrator($condominium, $administratorData);
                 }
 
                 return $condominium->fresh([
@@ -58,6 +61,14 @@ class CondominiumCreationService
                     'roles',
                 ]);
             });
+
+            if ($administratorToNotify !== null) {
+                Mail::to($administratorToNotify->email)->queue(
+                    new CondominiumAdministratorCreatedMail($administratorToNotify, $condominium)
+                );
+            }
+
+            return $condominium;
         } catch (Throwable $exception) {
             if ($logoPath !== null) {
                 try {
@@ -89,6 +100,7 @@ class CondominiumCreationService
     ): Condominium {
         $logoPath = null;
         $previousLogoPath = $condominium->logo_path;
+        $administratorToNotify = null;
 
         try {
             if ($logo !== null) {
@@ -96,7 +108,7 @@ class CondominiumCreationService
                 $condominiumData['logo_path'] = $logoPath;
             }
 
-            $condominium = DB::transaction(function () use ($condominium, $condominiumData, $featureIds, $currency, $administratorData): Condominium {
+            $condominium = DB::transaction(function () use ($condominium, $condominiumData, $featureIds, $currency, $administratorData, &$administratorToNotify): Condominium {
                 $condominium->fill($condominiumData)->save();
 
                 if ($featureIds !== null) {
@@ -108,7 +120,7 @@ class CondominiumCreationService
                 }
 
                 if ($administratorData !== null) {
-                    $this->attachAdministrator($condominium, $administratorData);
+                    $administratorToNotify = $this->attachAdministrator($condominium, $administratorData);
                 }
 
                 return $condominium->fresh([
@@ -122,6 +134,12 @@ class CondominiumCreationService
                     'roles',
                 ]);
             });
+
+            if ($administratorToNotify !== null) {
+                Mail::to($administratorToNotify->email)->queue(
+                    new CondominiumAdministratorCreatedMail($administratorToNotify, $condominium)
+                );
+            }
 
             if ($logoPath !== null && $previousLogoPath !== null && $previousLogoPath !== $logoPath) {
                 try {
@@ -285,9 +303,9 @@ class CondominiumCreationService
     /**
      * @param  array<string, mixed>  $administratorData
      */
-    private function attachAdministrator(Condominium $condominium, array $administratorData): void
+    private function attachAdministrator(Condominium $condominium, array $administratorData): ?User
     {
-        $administrator = $this->findOrCreateAdministrator($administratorData);
+        [$administrator, $wasCreated] = $this->findOrCreateAdministrator($administratorData);
 
         DB::table('condominium_user')->updateOrInsert([
             'condominium_id' => $condominium->id,
@@ -315,12 +333,15 @@ class CondominiumCreationService
             'updated_at' => now(),
             'deleted_at' => null,
         ]);
+
+        return $wasCreated ? $administrator : null;
     }
 
     /**
      * @param  array<string, mixed>  $administratorData
+     * @return array{0: User, 1: bool}
      */
-    private function findOrCreateAdministrator(array $administratorData): User
+    private function findOrCreateAdministrator(array $administratorData): array
     {
         $user = User::query()
             ->where('email', $administratorData['email'])
@@ -332,7 +353,7 @@ class CondominiumCreationService
             ->first();
 
         if ($user === null) {
-            return User::create($administratorData);
+            return [User::create($administratorData), true];
         }
 
         $user->fill([
@@ -346,7 +367,7 @@ class CondominiumCreationService
             'is_access_enabled' => $administratorData['is_access_enabled'] ?? $user->is_access_enabled,
         ])->save();
 
-        return $user;
+        return [$user, false];
     }
 
     private function administratorRole(Condominium $condominium): Role
