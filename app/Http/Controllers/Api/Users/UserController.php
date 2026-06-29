@@ -47,7 +47,63 @@ class UserController extends Controller
         return ApiResponse::success(UserResource::collection(collect($paginator->items())), 'Usuarios encontrados.', meta: ['current_page' => $paginator->currentPage(), 'per_page' => $paginator->perPage(), 'total' => $paginator->total(), 'last_page' => $paginator->lastPage()]);
     }
 
-    #[OA\Post(path: '/api/users', operationId: 'usersStore', summary: 'Crear usuario', security: [['bearerAuth' => []]], tags: ['Usuarios'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(example: ['first_name' => 'Ana', 'last_name' => 'Pérez', 'email' => 'ana@example.com', 'country' => 'EC', 'document_type_id' => 1, 'document_number' => '0912345678', 'assignments' => [['condominium_id' => 1, 'role_id' => 2]]])), responses: [new OA\Response(response: 201, description: 'Usuario creado'), new OA\Response(response: 422, description: 'Datos inválidos')])]
+    #[OA\Post(
+        path: '/api/users',
+        operationId: 'usersStore',
+        summary: 'Crear usuario administrativo',
+        description: 'Crea un usuario desde administración, sin contraseña inicial, y lo asigna a uno o más condominios y roles. Si is_access_enabled no se envía, el usuario queda activo por defecto; para obligar activación por invitación, enviar is_access_enabled=false y luego usar el endpoint de reenvío o creación de invitación según el flujo.',
+        security: [['bearerAuth' => []]],
+        tags: ['Usuarios'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'country', 'document_type_id', 'document_number', 'assignments'],
+                properties: [
+                    new OA\Property(property: 'name', description: 'Nombre completo compatible. Puede enviarse en lugar de first_name.', type: 'string', nullable: true, example: 'Ana Pérez'),
+                    new OA\Property(property: 'first_name', type: 'string', nullable: true, example: 'Ana'),
+                    new OA\Property(property: 'last_name', type: 'string', nullable: true, example: 'Pérez'),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'ana@example.com'),
+                    new OA\Property(property: 'country', type: 'string', example: 'EC'),
+                    new OA\Property(property: 'document_type_id', type: 'integer', example: 1),
+                    new OA\Property(property: 'document_number', type: 'string', example: '0912345678'),
+                    new OA\Property(property: 'phone', type: 'string', nullable: true, example: '0991112222'),
+                    new OA\Property(property: 'secondary_phone', type: 'string', nullable: true, example: null),
+                    new OA\Property(property: 'is_access_enabled', description: 'Controla si el usuario puede iniciar sesión inmediatamente. En false requiere activación posterior mediante invitación.', type: 'boolean', nullable: true, example: false),
+                    new OA\Property(
+                        property: 'assignments',
+                        type: 'array',
+                        items: new OA\Items(
+                            required: ['role_id'],
+                            properties: [
+                                new OA\Property(property: 'condominium_id', description: 'Obligatorio para administradores de plataforma; se infiere para administradores de condominio.', type: 'integer', nullable: true, example: 1),
+                                new OA\Property(property: 'role_id', type: 'integer', example: 2),
+                            ],
+                            type: 'object'
+                        )
+                    ),
+                ],
+                type: 'object',
+                example: [
+                    'first_name' => 'Ana',
+                    'last_name' => 'Pérez',
+                    'email' => 'ana@example.com',
+                    'country' => 'EC',
+                    'document_type_id' => 1,
+                    'document_number' => '0912345678',
+                    'phone' => '0991112222',
+                    'is_access_enabled' => false,
+                    'assignments' => [
+                        ['condominium_id' => 1, 'role_id' => 2],
+                    ],
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Usuario creado'),
+            new OA\Response(response: 403, description: 'Sin permiso'),
+            new OA\Response(response: 422, description: 'Datos inválidos'),
+        ]
+    )]
     public function store(StoreUserRequest $request): JsonResponse
     {
         Gate::authorize('create', User::class);

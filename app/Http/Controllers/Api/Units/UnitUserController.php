@@ -33,6 +33,7 @@ class UnitUserController extends Controller
         path: '/api/condominiums/{condominium}/units/{unit}/users',
         operationId: 'unitUsersStore',
         summary: 'Agregar persona a unidad',
+        description: 'Crea o reutiliza una persona por país, tipo y número de documento, y la relaciona con la unidad. La persona queda sin email, sin contraseña y con is_access_enabled=false hasta que se genere y acepte una invitación de acceso.',
         tags: ['Personas por unidad'],
         security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(

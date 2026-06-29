@@ -143,6 +143,20 @@ class OpenApiExampleEnricher
             'POST /api/auth/refresh' => ['refresh_token' => 'refresh-token'],
             'POST /api/auth/logout' => ['refresh_token' => 'refresh-token'],
             'POST /api/logout' => ['refresh_token' => 'refresh-token'],
+            'POST /api/users' => [
+                'first_name' => 'Ana',
+                'last_name' => 'Pérez',
+                'email' => 'ana@example.com',
+                'country' => 'EC',
+                'document_type_id' => 1,
+                'document_number' => '0912345678',
+                'phone' => '0991112222',
+                'secondary_phone' => null,
+                'is_access_enabled' => false,
+                'assignments' => [
+                    ['condominium_id' => 1, 'role_id' => 2],
+                ],
+            ],
             'POST /api/condominiums' => [
                 'name' => 'Condominio Vista Verde',
                 'slug' => 'condominio-vista-verde',
@@ -357,6 +371,24 @@ class OpenApiExampleEnricher
                 'auth_session' => $this->authSession(),
             ],
             str_contains($operationKey, '/auth/sessions') => [$this->authSession()],
+            in_array($operationKey, [
+                'POST /api/users',
+                'GET /api/users/{user}',
+                'PUT /api/users/{user}',
+                'PATCH /api/users/{user}/status',
+            ], true) => $this->user(),
+            $operationKey === 'GET /api/users' => [$this->user()],
+            $operationKey === 'GET /api/users/form-options' => [
+                'roles' => [$this->role()],
+                'condominiums' => [
+                    ['id' => 1, 'name' => 'Condominio Los Cedros'],
+                ],
+                'statuses' => [
+                    ['value' => 'active', 'label' => 'Activo'],
+                    ['value' => 'inactive', 'label' => 'Inactivo'],
+                ],
+                'document_types' => [$this->catalogItem()],
+            ],
             str_contains($operationKey, '/catalogs/{catalog}/items') => [$this->catalogItem()],
             str_contains($operationKey, '/catalogs') => str_contains($operationKey, '/catalogs/{catalog}')
                 ? $this->catalog()

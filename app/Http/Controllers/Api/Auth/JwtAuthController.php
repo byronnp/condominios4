@@ -35,6 +35,7 @@ class JwtAuthController extends Controller
         path: '/api/auth/register',
         operationId: 'authRegister',
         summary: 'Registrar usuario',
+        description: 'Registra un usuario público con contraseña, habilita el acceso inmediatamente y devuelve tokens de sesión. Este flujo no crea asignaciones a condominios ni invitaciones.',
         tags: ['Autenticación'],
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
             required: ['email', 'password', 'password_confirmation', 'country', 'document_type_id', 'document_number'],

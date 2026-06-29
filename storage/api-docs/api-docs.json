@@ -818,6 +818,7 @@
                     "Autenticación"
                 ],
                 "summary": "Registrar usuario",
+                "description": "Registra un usuario público con contraseña, habilita el acceso inmediatamente y devuelve tokens de sesión. Este flujo no crea asignaciones a condominios ni invitaciones.",
                 "operationId": "authRegister",
                 "requestBody": {
                     "required": true,
@@ -4877,6 +4878,7 @@
                     "Personas por unidad"
                 ],
                 "summary": "Agregar persona a unidad",
+                "description": "Crea o reutiliza una persona por país, tipo y número de documento, y la relaciona con la unidad. La persona queda sin email, sin contraseña y con is_access_enabled=false hasta que se genere y acepte una invitación de acceso.",
                 "operationId": "unitUsersStore",
                 "requestBody": {
                     "required": true,
@@ -5392,7 +5394,29 @@
                                 "example": {
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
-                                    "data": null,
+                                    "data": [
+                                        {
+                                            "id": 1,
+                                            "name": "SWAGGER ADMIN",
+                                            "first_name": "SWAGGER",
+                                            "last_name": "ADMIN",
+                                            "email": "swagger.admin@example.com",
+                                            "country": "EC",
+                                            "document_type": {
+                                                "id": 1,
+                                                "catalog_id": 1,
+                                                "code": "cedula",
+                                                "name": "Cédula",
+                                                "description": "Documento de identidad",
+                                                "sort_order": 1,
+                                                "is_active": true
+                                            },
+                                            "document_number": "1799999999",
+                                            "phone": "0999999998",
+                                            "secondary_phone": null,
+                                            "is_access_enabled": true
+                                        }
+                                    ],
                                     "meta": {}
                                 }
                             }
@@ -5426,14 +5450,112 @@
                 "tags": [
                     "Usuarios"
                 ],
-                "summary": "Crear usuario",
+                "summary": "Crear usuario administrativo",
+                "description": "Crea un usuario desde administración, sin contraseña inicial, y lo asigna a uno o más condominios y roles. Si is_access_enabled no se envía, el usuario queda activo por defecto; para obligar activación por invitación, enviar is_access_enabled=false y luego usar el endpoint de reenvío o creación de invitación según el flujo.",
                 "operationId": "usersStore",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
-                            "schema": [],
-                            "example": []
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "country",
+                                    "document_type_id",
+                                    "document_number",
+                                    "assignments"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Nombre completo compatible. Puede enviarse en lugar de first_name.",
+                                        "type": "string",
+                                        "example": "Ana Pérez",
+                                        "nullable": true
+                                    },
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "Ana",
+                                        "nullable": true
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Pérez",
+                                        "nullable": true
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "ana@example.com"
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "example": "EC"
+                                    },
+                                    "document_type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "document_number": {
+                                        "type": "string",
+                                        "example": "0912345678"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0991112222",
+                                        "nullable": true
+                                    },
+                                    "secondary_phone": {
+                                        "type": "string",
+                                        "example": null,
+                                        "nullable": true
+                                    },
+                                    "is_access_enabled": {
+                                        "description": "Controla si el usuario puede iniciar sesión inmediatamente. En false requiere activación posterior mediante invitación.",
+                                        "type": "boolean",
+                                        "example": false,
+                                        "nullable": true
+                                    },
+                                    "assignments": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "role_id"
+                                            ],
+                                            "properties": {
+                                                "condominium_id": {
+                                                    "description": "Obligatorio para administradores de plataforma; se infiere para administradores de condominio.",
+                                                    "type": "integer",
+                                                    "example": 1,
+                                                    "nullable": true
+                                                },
+                                                "role_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "first_name": "Ana",
+                                "last_name": "Pérez",
+                                "email": "ana@example.com",
+                                "country": "EC",
+                                "document_type_id": 1,
+                                "document_number": "0912345678",
+                                "phone": "0991112222",
+                                "secondary_phone": null,
+                                "is_access_enabled": false,
+                                "assignments": [
+                                    {
+                                        "condominium_id": 1,
+                                        "role_id": 2
+                                    }
+                                ]
+                            }
                         }
                     }
                 },
@@ -5448,7 +5570,44 @@
                                 "example": {
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
-                                    "data": null,
+                                    "data": {
+                                        "id": 1,
+                                        "name": "SWAGGER ADMIN",
+                                        "first_name": "SWAGGER",
+                                        "last_name": "ADMIN",
+                                        "email": "swagger.admin@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "1799999999",
+                                        "phone": "0999999998",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": true
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sin permiso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
                                     "meta": {}
                                 }
                             }
@@ -5511,7 +5670,27 @@
                                 "example": {
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
-                                    "data": null,
+                                    "data": {
+                                        "id": 1,
+                                        "name": "SWAGGER ADMIN",
+                                        "first_name": "SWAGGER",
+                                        "last_name": "ADMIN",
+                                        "email": "swagger.admin@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "1799999999",
+                                        "phone": "0999999998",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": true
+                                    },
                                     "meta": {}
                                 }
                             }
@@ -5577,7 +5756,27 @@
                                 "example": {
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
-                                    "data": null,
+                                    "data": {
+                                        "id": 1,
+                                        "name": "SWAGGER ADMIN",
+                                        "first_name": "SWAGGER",
+                                        "last_name": "ADMIN",
+                                        "email": "swagger.admin@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "1799999999",
+                                        "phone": "0999999998",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": true
+                                    },
                                     "meta": {}
                                 }
                             }
@@ -5649,7 +5848,27 @@
                                 "example": {
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
-                                    "data": null,
+                                    "data": {
+                                        "id": 1,
+                                        "name": "SWAGGER ADMIN",
+                                        "first_name": "SWAGGER",
+                                        "last_name": "ADMIN",
+                                        "email": "swagger.admin@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "1799999999",
+                                        "phone": "0999999998",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": true
+                                    },
                                     "meta": {}
                                 }
                             }
@@ -5681,7 +5900,53 @@
                                 "example": {
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
-                                    "data": null,
+                                    "data": {
+                                        "roles": [
+                                            {
+                                                "id": 1,
+                                                "condominium_id": 1,
+                                                "name": "Administrador",
+                                                "code": "administrador",
+                                                "permissions": [
+                                                    {
+                                                        "id": 1,
+                                                        "module": "roles",
+                                                        "action": "manage",
+                                                        "code": "roles.manage",
+                                                        "name": "Administrar roles",
+                                                        "is_active": true
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "condominiums": [
+                                            {
+                                                "id": 1,
+                                                "name": "Condominio Los Cedros"
+                                            }
+                                        ],
+                                        "statuses": [
+                                            {
+                                                "value": "active",
+                                                "label": "Activo"
+                                            },
+                                            {
+                                                "value": "inactive",
+                                                "label": "Inactivo"
+                                            }
+                                        ],
+                                        "document_types": [
+                                            {
+                                                "id": 1,
+                                                "catalog_id": 1,
+                                                "code": "cedula",
+                                                "name": "Cédula",
+                                                "description": "Documento de identidad",
+                                                "sort_order": 1,
+                                                "is_active": true
+                                            }
+                                        ]
+                                    },
                                     "meta": {}
                                 }
                             }
