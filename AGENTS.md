@@ -21,6 +21,7 @@ Completed phases:
 Additional completed modules:
 
 - Locations: normalized `countries`, `provinces`, and `cities` tables, location seed data, public location APIs, Swagger/OpenAPI documentation, and tests. Use this module for geographic selections instead of generic catalogs.
+- Administrator access invitations: condominium creation creates or reuses the administrator from `admin_*`, assigns the condominium administrator role, keeps `is_access_enabled = false`, creates a 24-hour single-use invitation with a hashed token, and queues the activation email after the database transaction commits. Access is enabled only after the user defines a strong password through `POST /api/auth/activate-access`. Protected resends use `POST /api/users/{user}/resend-invitation` and require a senior administrator or `users.invite`/`users.resend_invitation`. Existing unit-user invitations remain supported.
 
 Upcoming phases:
 
@@ -37,7 +38,11 @@ Every new phase must include migrations, seeders with usable test data, Swagger 
 - `docker compose exec app php artisan migrate --seed`: run migrations and seed required test data.
 - `docker compose exec app php artisan test`: run the full test suite.
 - `docker compose exec app php artisan openapi:generate`: regenerate OpenAPI/Swagger documentation with request and response examples.
+- `docker compose ps queue-worker`: verify the permanent queue worker is running.
+- `docker compose logs -f queue-worker`: follow queued email processing and failures.
 - `./vendor/bin/pint --dirty`: format changed PHP files with Laravel Pint.
+
+The `queue-worker` Docker Compose service runs `php artisan queue:work` with automatic restart through `restart: unless-stopped`. Start it together with the application using `docker compose up -d`; do not rely on a manually detached `docker compose exec` worker for persistent queue processing.
 
 Use Docker commands when validating database-backed behavior because the project is configured against the local MySQL server through the container.
 
@@ -86,3 +91,7 @@ Pull requests should include a concise summary, affected modules, migration/seed
 Do not commit real secrets. JWT configuration belongs in `.env`, especially `JWT_SECRET`, token TTL values, and database credentials. Keep seed credentials limited to local development data only.
 
 When `docker-compose.yml` needs runtime values, source them from `.env` with interpolation instead of hardcoding them in the compose file. Keep the public URL for uploaded files separate from the internal S3 endpoint used by the Laravel container.
+
+Administrator invitations must never contain or store temporary passwords. Store only the SHA-256 hash of the random 64-character invitation token, keep the plain token only in the queued email, and clear the stored hash when an invitation is accepted, expired, or revoked. Invitation states are `pending`, `accepted`, `expired`, and `revoked`. Login must remain blocked while `users.is_access_enabled` is false.
+
+Configure invitation links with `FRONTEND_URL` and `INVITATION_EXPIRES_HOURS`. The Quasar frontend uses hash routing, so activation emails must target `{FRONTEND_URL}/#/activar-acceso?token=TOKEN`. Mail credentials and provider secrets belong only in `.env` and must not be committed.
