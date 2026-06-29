@@ -123,6 +123,11 @@ class User extends Authenticatable
         return $this->hasMany(RefreshToken::class);
     }
 
+    public function accessInvitations(): HasMany
+    {
+        return $this->hasMany(UserAccessInvitation::class);
+    }
+
     public function billingProfiles(): HasMany
     {
         return $this->hasMany(UserBillingProfile::class);

@@ -11,15 +11,23 @@ class UserAccessInvitation extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_ACCEPTED = 'accepted';
+    public const STATUS_EXPIRED = 'expired';
+    public const STATUS_REVOKED = 'revoked';
+
     protected $fillable = [
         'condominium_id',
         'unit_id',
         'user_id',
+        'role_id',
         'invited_by_user_id',
         'email',
         'token_hash',
+        'status',
         'expires_at',
         'accepted_at',
+        'revoked_at',
         'cancelled_at',
         'cancelled_by_user_id',
         'cancel_reason',
@@ -30,6 +38,7 @@ class UserAccessInvitation extends Model
         return [
             'expires_at' => 'datetime',
             'accepted_at' => 'datetime',
+            'revoked_at' => 'datetime',
             'cancelled_at' => 'datetime',
         ];
     }
@@ -47,6 +56,11 @@ class UserAccessInvitation extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class);
     }
 
     public function invitedBy(): BelongsTo

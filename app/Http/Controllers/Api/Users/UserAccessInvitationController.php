@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Users;
 
+use App\Domain\Users\Services\UserInvitationService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Users\UserAccessInvitationAcceptRequest;
 use App\Http\Requests\Api\Users\UserAccessInvitationCancelRequest;
@@ -50,29 +51,13 @@ class UserAccessInvitationController extends Controller
     }
 
     #[OA\Post(path: '/api/access-invitations/{token}/accept', operationId: 'accessInvitationsAccept', summary: 'Aceptar invitación de acceso', tags: ['Invitaciones'], responses: [new OA\Response(response: 200, description: 'Invitación aceptada')])]
-    public function accept(UserAccessInvitationAcceptRequest $request, string $token): JsonResponse
+    public function accept(UserAccessInvitationAcceptRequest $request, string $token, UserInvitationService $service): JsonResponse
     {
-        $data = $request->validated();
-
-        $invitation = UserAccessInvitation::query()
-            ->where('token_hash', hash('sha256', $token))
-            ->whereNull('accepted_at')
-            ->whereNull('cancelled_at')
-            ->first();
-
-        if (! $invitation || $invitation->expires_at->isPast()) {
-            return ApiResponse::error('Invitación inválida o expirada.', 422, code: 'access_invitation_invalid');
+        try {
+            $service->accept([...$request->validated(), 'token' => $token]);
+        } catch (\RuntimeException $exception) {
+            return ApiResponse::error($exception->getMessage(), 422, code: 'access_invitation_invalid');
         }
-
-        DB::transaction(function () use ($invitation, $data): void {
-            $invitation->user->update([
-                'email' => $invitation->email,
-                'password' => $data['password'],
-                'is_access_enabled' => true,
-            ]);
-
-            $invitation->update(['accepted_at' => now()]);
-        });
 
         return ApiResponse::success(message: 'Invitación aceptada correctamente.');
     }
@@ -84,6 +69,9 @@ class UserAccessInvitationController extends Controller
         $data = $request->validated();
 
         $invitation->update([
+            'status' => UserAccessInvitation::STATUS_REVOKED,
+            'revoked_at' => now(),
+            'token_hash' => null,
             'cancelled_at' => now(),
             'cancelled_by_user_id' => $request->user()->id,
             'cancel_reason' => $data['cancel_reason'] ?? null,

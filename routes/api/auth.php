@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\Api\Auth\JwtAuthController;
+use App\Http\Controllers\Api\Auth\ActivateAccessController;
 use App\Http\Controllers\Api\Menus\MenuController;
 use App\Http\Middleware\AuthenticateJwt;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
+    Route::post('activate-access', ActivateAccessController::class);
     Route::post('register', [JwtAuthController::class, 'register']);
     Route::post('login', [JwtAuthController::class, 'login']);
     Route::post('refresh', [JwtAuthController::class, 'refresh']);

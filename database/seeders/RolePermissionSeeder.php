@@ -137,6 +137,8 @@ class RolePermissionSeeder extends Seeder
             ['module' => 'users', 'action' => 'assign', 'name' => 'Asignar usuarios', 'code' => 'users.assign'],
             ['module' => 'users', 'action' => 'update', 'name' => 'Actualizar usuarios', 'code' => 'users.update'],
             ['module' => 'users', 'action' => 'status', 'name' => 'Cambiar estado de usuarios', 'code' => 'users.status'],
+            ['module' => 'users', 'action' => 'invite', 'name' => 'Invitar usuarios', 'code' => 'users.invite'],
+            ['module' => 'users', 'action' => 'resend_invitation', 'name' => 'Reenviar invitaciones', 'code' => 'users.resend_invitation'],
             ['module' => 'administrators', 'action' => 'view', 'name' => 'Ver administradores', 'code' => 'administrators.view'],
             ['module' => 'administrators', 'action' => 'create', 'name' => 'Crear administradores', 'code' => 'administrators.create'],
             ['module' => 'administrators', 'action' => 'update', 'name' => 'Actualizar administradores', 'code' => 'administrators.update'],

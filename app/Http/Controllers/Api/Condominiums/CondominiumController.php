@@ -146,6 +146,7 @@ class CondominiumController extends Controller
             $request->currency(),
             $request->administratorData(),
             $request->file('logo'),
+            $request->user(),
         );
 
         return ApiResponse::success(new CondominiumResource($condominium), 'Condominio creado correctamente.', 201);
@@ -217,6 +218,7 @@ class CondominiumController extends Controller
             $request->currency(),
             $request->administratorData(),
             $request->logo(),
+            $request->user(),
         );
 
         return ApiResponse::success(new CondominiumResource($condominium), 'Condominio actualizado correctamente.');

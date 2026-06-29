@@ -78,13 +78,13 @@ class UnitPhaseTest extends TestCase
             ->assertJsonPath('data.email', 'juan.perez@example.com');
 
         $this->postJson("/api/access-invitations/{$invitation->json('data.token')}/accept", [
-            'password' => 'admin123',
-            'password_confirmation' => 'admin123',
+            'password' => 'Admin123!',
+            'password_confirmation' => 'Admin123!',
         ])->assertOk();
 
         $this->postJson('/api/auth/login', [
             'email' => 'juan.perez@example.com',
-            'password' => 'admin123',
+            'password' => 'Admin123!',
         ])->assertOk();
     }
 

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Requests\Api\Users;
+namespace App\Http\Requests\Api\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
-class UserAccessInvitationAcceptRequest extends FormRequest
+class ActivateAccessRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,6 +15,7 @@ class UserAccessInvitationAcceptRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'token' => ['required', 'string', 'size:64'],
             'password' => ['required', 'string', 'confirmed', Password::min(8)->letters()->mixedCase()->numbers()->symbols()],
         ];
     }

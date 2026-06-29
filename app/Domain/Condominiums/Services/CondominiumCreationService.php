@@ -2,23 +2,26 @@
 
 namespace App\Domain\Condominiums\Services;
 
+use App\Domain\Users\Services\UserInvitationService;
 use App\Models\Condominium;
 use App\Models\CondominiumBillingSetting;
 use App\Models\CondominiumFeature;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use App\Mail\CondominiumAdministratorCreatedMail;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
 
 class CondominiumCreationService
 {
+    public function __construct(
+        private readonly UserInvitationService $invitationService,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $condominiumData
      * @param  array<int, int>  $featureIds
@@ -30,9 +33,9 @@ class CondominiumCreationService
         ?string $currency = null,
         ?array $administratorData = null,
         ?UploadedFile $logo = null,
+        ?User $invitedBy = null,
     ): Condominium {
         $logoPath = null;
-        $administratorToNotify = null;
 
         try {
             if ($logo !== null) {
@@ -40,14 +43,19 @@ class CondominiumCreationService
                 $condominiumData['logo_path'] = $logoPath;
             }
 
-            $condominium = DB::transaction(function () use ($condominiumData, $featureIds, $currency, $administratorData, &$administratorToNotify): Condominium {
+            $condominium = DB::transaction(function () use ($condominiumData, $featureIds, $currency, $administratorData, $invitedBy): Condominium {
                 $condominium = Condominium::create($condominiumData);
 
                 $this->syncFeatures($condominium, $featureIds);
                 $this->createBillingSetting($condominium, $currency);
 
                 if ($administratorData !== null) {
-                    $administratorToNotify = $this->attachAdministrator($condominium, $administratorData);
+                    if ($invitedBy === null) {
+                        throw new RuntimeException('No se pudo identificar al usuario que envía la invitación.');
+                    }
+
+                    [$administrator, $role] = $this->attachAdministrator($condominium, $administratorData);
+                    $this->invitationService->invite($administrator, $condominium, $role, $invitedBy);
                 }
 
                 return $condominium->fresh([
@@ -61,12 +69,6 @@ class CondominiumCreationService
                     'roles',
                 ]);
             });
-
-            if ($administratorToNotify !== null) {
-                Mail::to($administratorToNotify->email)->queue(
-                    new CondominiumAdministratorCreatedMail($administratorToNotify, $condominium)
-                );
-            }
 
             return $condominium;
         } catch (Throwable $exception) {
@@ -97,10 +99,10 @@ class CondominiumCreationService
         ?string $currency = null,
         ?array $administratorData = null,
         ?UploadedFile $logo = null,
+        ?User $invitedBy = null,
     ): Condominium {
         $logoPath = null;
         $previousLogoPath = $condominium->logo_path;
-        $administratorToNotify = null;
 
         try {
             if ($logo !== null) {
@@ -108,7 +110,7 @@ class CondominiumCreationService
                 $condominiumData['logo_path'] = $logoPath;
             }
 
-            $condominium = DB::transaction(function () use ($condominium, $condominiumData, $featureIds, $currency, $administratorData, &$administratorToNotify): Condominium {
+            $condominium = DB::transaction(function () use ($condominium, $condominiumData, $featureIds, $currency, $administratorData, $invitedBy): Condominium {
                 $condominium->fill($condominiumData)->save();
 
                 if ($featureIds !== null) {
@@ -120,7 +122,10 @@ class CondominiumCreationService
                 }
 
                 if ($administratorData !== null) {
-                    $administratorToNotify = $this->attachAdministrator($condominium, $administratorData);
+                    [$administrator, $role, $wasCreated] = $this->attachAdministrator($condominium, $administratorData);
+                    if ($wasCreated && $invitedBy !== null) {
+                        $this->invitationService->invite($administrator, $condominium, $role, $invitedBy);
+                    }
                 }
 
                 return $condominium->fresh([
@@ -134,12 +139,6 @@ class CondominiumCreationService
                     'roles',
                 ]);
             });
-
-            if ($administratorToNotify !== null) {
-                Mail::to($administratorToNotify->email)->queue(
-                    new CondominiumAdministratorCreatedMail($administratorToNotify, $condominium)
-                );
-            }
 
             if ($logoPath !== null && $previousLogoPath !== null && $previousLogoPath !== $logoPath) {
                 try {
@@ -302,8 +301,9 @@ class CondominiumCreationService
 
     /**
      * @param  array<string, mixed>  $administratorData
+     * @return array{0: User, 1: Role, 2: bool}
      */
-    private function attachAdministrator(Condominium $condominium, array $administratorData): ?User
+    private function attachAdministrator(Condominium $condominium, array $administratorData): array
     {
         [$administrator, $wasCreated] = $this->findOrCreateAdministrator($administratorData);
 
@@ -311,7 +311,7 @@ class CondominiumCreationService
             'condominium_id' => $condominium->id,
             'user_id' => $administrator->id,
         ], [
-            'is_active' => $administratorData['is_access_enabled'] ?? true,
+            'is_active' => true,
             'joined_at' => now(),
             'created_at' => now(),
             'updated_at' => now(),
@@ -334,7 +334,7 @@ class CondominiumCreationService
             'deleted_at' => null,
         ]);
 
-        return $wasCreated ? $administrator : null;
+        return [$administrator, $role, $wasCreated];
     }
 
     /**
@@ -353,7 +353,7 @@ class CondominiumCreationService
             ->first();
 
         if ($user === null) {
-            return [User::create($administratorData), true];
+            return [User::create([...$administratorData, 'password' => null, 'is_access_enabled' => false]), true];
         }
 
         $user->fill([
@@ -364,7 +364,7 @@ class CondominiumCreationService
             'document_type_id' => $administratorData['document_type_id'],
             'document_number' => $administratorData['document_number'],
             'phone' => $administratorData['phone'] ?? $user->phone,
-            'is_access_enabled' => $administratorData['is_access_enabled'] ?? $user->is_access_enabled,
+            'is_access_enabled' => false,
         ])->save();
 
         return [$user, false];

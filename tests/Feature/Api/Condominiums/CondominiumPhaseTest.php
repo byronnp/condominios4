@@ -3,12 +3,12 @@
 namespace Tests\Feature\Api\Condominiums;
 
 use App\Domain\Condominiums\Services\CondominiumCreationService;
+use App\Mail\UserAccessInvitationMail;
 use App\Models\CatalogItem;
 use App\Models\Condominium;
 use App\Models\Permission;
 use App\Models\Province;
 use App\Models\User;
-use App\Mail\CondominiumAdministratorCreatedMail;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -329,7 +329,7 @@ class CondominiumPhaseTest extends TestCase
             'document_type_id' => $documentType->id,
             'document_number' => '0912345678',
             'phone' => '+593 99 123 4567',
-            'is_access_enabled' => true,
+            'is_access_enabled' => false,
         ]);
 
         $administrator = $condominium->users()->where('email', 'carlos.ramirez@example.com')->firstOrFail();
@@ -340,9 +340,16 @@ class CondominiumPhaseTest extends TestCase
             'role_id' => $role->id,
         ]);
 
-        Mail::assertQueued(CondominiumAdministratorCreatedMail::class, function (CondominiumAdministratorCreatedMail $mail) use ($condominium): bool {
-            return $mail->administrator->email === 'carlos.ramirez@example.com'
-                && $mail->condominium->is($condominium);
+        $this->assertDatabaseHas('user_access_invitations', [
+            'user_id' => $administrator->id,
+            'condominium_id' => $condominium->id,
+            'role_id' => $role->id,
+            'status' => 'pending',
+        ]);
+
+        Mail::assertQueued(UserAccessInvitationMail::class, function (UserAccessInvitationMail $mail) use ($condominium): bool {
+            return $mail->invitation->email === 'carlos.ramirez@example.com'
+                && $mail->invitation->condominium_id === $condominium->id;
         });
     }
 

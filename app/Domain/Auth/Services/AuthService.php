@@ -48,12 +48,16 @@ class AuthService
     {
         $user = User::where('email', $data['email'])->first();
 
-        if (! $user || ! $user->password || ! Hash::check($data['password'], $user->password)) {
+        if (! $user) {
             throw new RuntimeException('Credenciales inválidas.');
         }
 
         if (! $user->is_access_enabled) {
-            throw new RuntimeException('Acceso deshabilitado.');
+            throw new RuntimeException('Tu acceso aún no ha sido activado. Revisa tu correo de invitación.');
+        }
+
+        if (! $user->password || ! Hash::check($data['password'], $user->password)) {
+            throw new RuntimeException('Credenciales inválidas.');
         }
 
         return DB::transaction(fn (): array => $this->createSessionTokens($user, $request));
