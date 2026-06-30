@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\Administrators;
 
+use App\Models\UserAccessInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,8 @@ class AdministratorResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $invitation = $this->latestAccessInvitation;
+
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -29,9 +32,50 @@ class AdministratorResource extends JsonResource
             'phone' => $this->phone,
             'secondary_phone' => $this->secondary_phone,
             'is_access_enabled' => (bool) $this->is_access_enabled,
+            'administrator_type' => $this->isPlatformAdmin() ? 'senior' : 'condominium',
+            'access_status' => $this->accessStatus($invitation),
+            'invitation' => $this->invitationData($invitation),
             'condominiums' => $this->administratorCondominiums(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+        ];
+    }
+
+    private function accessStatus(?UserAccessInvitation $invitation): string
+    {
+        if ($this->is_access_enabled) {
+            return 'active';
+        }
+
+        if ($invitation?->status === UserAccessInvitation::STATUS_PENDING) {
+            return $invitation->expires_at->isPast() ? 'invitation_expired' : 'pending_activation';
+        }
+
+        return match ($invitation?->status) {
+            UserAccessInvitation::STATUS_EXPIRED => 'invitation_expired',
+            UserAccessInvitation::STATUS_REVOKED => 'invitation_revoked',
+            default => 'inactive',
+        };
+    }
+
+    /** @return array<string, mixed>|null */
+    private function invitationData(?UserAccessInvitation $invitation): ?array
+    {
+        if ($invitation === null) {
+            return null;
+        }
+
+        $isExpired = $invitation->expires_at->isPast();
+
+        return [
+            'id' => $invitation->id,
+            'status' => $invitation->status === UserAccessInvitation::STATUS_PENDING && $isExpired
+                ? UserAccessInvitation::STATUS_EXPIRED
+                : $invitation->status,
+            'expires_at' => $invitation->expires_at,
+            'accepted_at' => $invitation->accepted_at,
+            'revoked_at' => $invitation->revoked_at,
+            'is_expired' => $isExpired,
         ];
     }
 

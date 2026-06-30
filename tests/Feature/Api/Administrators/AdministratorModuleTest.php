@@ -2,12 +2,15 @@
 
 namespace Tests\Feature\Api\Administrators;
 
+use App\Mail\UserAccessInvitationMail;
 use App\Models\CatalogItem;
 use App\Models\Condominium;
 use App\Models\User;
+use App\Models\UserAccessInvitation;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class AdministratorModuleTest extends TestCase
@@ -50,6 +53,9 @@ class AdministratorModuleTest extends TestCase
                         'email',
                         'document_type',
                         'is_access_enabled',
+                        'administrator_type',
+                        'access_status',
+                        'invitation',
                         'condominiums',
                     ],
                 ],
@@ -59,6 +65,8 @@ class AdministratorModuleTest extends TestCase
 
     public function test_platform_admin_can_create_update_and_change_administrator_status(): void
     {
+        Mail::fake();
+
         $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
         $documentType = $this->documentType();
 
@@ -70,7 +78,6 @@ class AdministratorModuleTest extends TestCase
             'document_type_id' => $documentType->id,
             'document_number' => '0912345678',
             'phone' => '0991234567',
-            'is_access_enabled' => false,
             'condominium_ids' => [$condominium->id],
         ], $this->headers())
             ->assertCreated()
@@ -79,6 +86,10 @@ class AdministratorModuleTest extends TestCase
             ->assertJsonPath('data.last_name', 'Ramírez')
             ->assertJsonPath('data.email', 'carlos.ramirez@example.com')
             ->assertJsonPath('data.is_access_enabled', false)
+            ->assertJsonPath('data.administrator_type', 'condominium')
+            ->assertJsonPath('data.access_status', 'pending_activation')
+            ->assertJsonPath('data.invitation.status', 'pending')
+            ->assertJsonPath('data.invitation.is_expired', false)
             ->assertJsonPath('data.condominiums.0.id', $condominium->id);
 
         $administratorId = $response->json('data.id');
@@ -91,6 +102,22 @@ class AdministratorModuleTest extends TestCase
         ]);
 
         $this->assertAdministratorRoleAssignment($administratorId, $condominium->id);
+
+        $invitation = UserAccessInvitation::query()
+            ->where('user_id', $administratorId)
+            ->where('condominium_id', $condominium->id)
+            ->firstOrFail();
+
+        $this->assertSame(UserAccessInvitation::STATUS_PENDING, $invitation->status);
+        $this->assertNotNull($invitation->token_hash);
+        Mail::assertQueued(UserAccessInvitationMail::class, fn (UserAccessInvitationMail $mail): bool => $mail->invitation->is($invitation));
+
+        $invitation->update(['expires_at' => now()->subMinute()]);
+        $this->getJson("/api/administrators/{$administratorId}", $this->headers())
+            ->assertOk()
+            ->assertJsonPath('data.access_status', 'invitation_expired')
+            ->assertJsonPath('data.invitation.status', 'expired')
+            ->assertJsonPath('data.invitation.is_expired', true);
 
         $this->putJson("/api/administrators/{$administratorId}", [
             'first_name' => 'Carlos Andrés',

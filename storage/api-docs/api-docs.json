@@ -18,6 +18,7 @@
                     "Administradores"
                 ],
                 "summary": "Listar administradores",
+                "description": "Devuelve administradores con su estado de acceso, tipo y última invitación de activación.",
                 "operationId": "administratorsIndex",
                 "parameters": [
                     {
@@ -79,7 +80,50 @@
                                 "example": {
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
-                                    "data": null,
+                                    "data": [
+                                        {
+                                            "id": 2,
+                                            "name": "Carlos Ramírez",
+                                            "first_name": "Carlos",
+                                            "last_name": "Ramírez",
+                                            "email": "carlos.ramirez@example.com",
+                                            "country": "EC",
+                                            "document_type": {
+                                                "id": 1,
+                                                "catalog_id": 1,
+                                                "code": "cedula",
+                                                "name": "Cédula",
+                                                "description": "Documento de identidad",
+                                                "sort_order": 1,
+                                                "is_active": true
+                                            },
+                                            "document_number": "0912345678",
+                                            "phone": "0991234567",
+                                            "secondary_phone": null,
+                                            "is_access_enabled": false,
+                                            "administrator_type": "condominium",
+                                            "access_status": "pending_activation",
+                                            "invitation": {
+                                                "id": 1,
+                                                "status": "pending",
+                                                "expires_at": "2026-07-01T12:00:00Z",
+                                                "accepted_at": null,
+                                                "revoked_at": null,
+                                                "is_expired": false
+                                            },
+                                            "condominiums": [
+                                                {
+                                                    "id": 1,
+                                                    "name": "Condominio Los Cedros",
+                                                    "slug": "condominio-los-cedros",
+                                                    "is_active": true,
+                                                    "joined_at": "2026-06-30T12:00:00Z"
+                                                }
+                                            ],
+                                            "created_at": "2026-06-30T12:00:00Z",
+                                            "updated_at": "2026-06-30T12:00:00Z"
+                                        }
+                                    ],
                                     "meta": {}
                                 }
                             }
@@ -114,6 +158,7 @@
                     "Administradores"
                 ],
                 "summary": "Crear administrador",
+                "description": "Crea el administrador con acceso deshabilitado, lo asigna a los condominios indicados y envía por correo una invitación de activación de 24 horas.",
                 "operationId": "administratorsStore",
                 "requestBody": {
                     "required": true,
@@ -172,10 +217,6 @@
                                         "example": "042345678",
                                         "nullable": true
                                     },
-                                    "is_access_enabled": {
-                                        "type": "boolean",
-                                        "example": false
-                                    },
                                     "condominium_ids": {
                                         "type": "array",
                                         "items": {
@@ -189,7 +230,6 @@
                                 "type": "object"
                             },
                             "example": {
-                                "name": "Carlos Ramírez",
                                 "first_name": "Carlos",
                                 "last_name": "Ramírez",
                                 "email": "carlos.ramirez@example.com",
@@ -197,8 +237,6 @@
                                 "document_type_id": 1,
                                 "document_number": "0912345678",
                                 "phone": "0991234567",
-                                "secondary_phone": "042345678",
-                                "is_access_enabled": false,
                                 "condominium_ids": [
                                     1
                                 ]
@@ -208,7 +246,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Administrador creado",
+                        "description": "Administrador creado e invitación enviada",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -217,7 +255,48 @@
                                 "example": {
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
-                                    "data": null,
+                                    "data": {
+                                        "id": 2,
+                                        "name": "Carlos Ramírez",
+                                        "first_name": "Carlos",
+                                        "last_name": "Ramírez",
+                                        "email": "carlos.ramirez@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "0912345678",
+                                        "phone": "0991234567",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": false,
+                                        "administrator_type": "condominium",
+                                        "access_status": "pending_activation",
+                                        "invitation": {
+                                            "id": 1,
+                                            "status": "pending",
+                                            "expires_at": "2026-07-01T12:00:00Z",
+                                            "accepted_at": null,
+                                            "revoked_at": null,
+                                            "is_expired": false
+                                        },
+                                        "condominiums": [
+                                            {
+                                                "id": 1,
+                                                "name": "Condominio Los Cedros",
+                                                "slug": "condominio-los-cedros",
+                                                "is_active": true,
+                                                "joined_at": "2026-06-30T12:00:00Z"
+                                            }
+                                        ],
+                                        "created_at": "2026-06-30T12:00:00Z",
+                                        "updated_at": "2026-06-30T12:00:00Z"
+                                    },
                                     "meta": {}
                                 }
                             }
@@ -270,7 +349,48 @@
                                 "example": {
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
-                                    "data": null,
+                                    "data": {
+                                        "id": 2,
+                                        "name": "Carlos Ramírez",
+                                        "first_name": "Carlos",
+                                        "last_name": "Ramírez",
+                                        "email": "carlos.ramirez@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "0912345678",
+                                        "phone": "0991234567",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": false,
+                                        "administrator_type": "condominium",
+                                        "access_status": "pending_activation",
+                                        "invitation": {
+                                            "id": 1,
+                                            "status": "pending",
+                                            "expires_at": "2026-07-01T12:00:00Z",
+                                            "accepted_at": null,
+                                            "revoked_at": null,
+                                            "is_expired": false
+                                        },
+                                        "condominiums": [
+                                            {
+                                                "id": 1,
+                                                "name": "Condominio Los Cedros",
+                                                "slug": "condominio-los-cedros",
+                                                "is_active": true,
+                                                "joined_at": "2026-06-30T12:00:00Z"
+                                            }
+                                        ],
+                                        "created_at": "2026-06-30T12:00:00Z",
+                                        "updated_at": "2026-06-30T12:00:00Z"
+                                    },
                                     "meta": {}
                                 }
                             }
@@ -380,7 +500,48 @@
                                 "example": {
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
-                                    "data": null,
+                                    "data": {
+                                        "id": 2,
+                                        "name": "Carlos Ramírez",
+                                        "first_name": "Carlos",
+                                        "last_name": "Ramírez",
+                                        "email": "carlos.ramirez@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "0912345678",
+                                        "phone": "0991234567",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": false,
+                                        "administrator_type": "condominium",
+                                        "access_status": "pending_activation",
+                                        "invitation": {
+                                            "id": 1,
+                                            "status": "pending",
+                                            "expires_at": "2026-07-01T12:00:00Z",
+                                            "accepted_at": null,
+                                            "revoked_at": null,
+                                            "is_expired": false
+                                        },
+                                        "condominiums": [
+                                            {
+                                                "id": 1,
+                                                "name": "Condominio Los Cedros",
+                                                "slug": "condominio-los-cedros",
+                                                "is_active": true,
+                                                "joined_at": "2026-06-30T12:00:00Z"
+                                            }
+                                        ],
+                                        "created_at": "2026-06-30T12:00:00Z",
+                                        "updated_at": "2026-06-30T12:00:00Z"
+                                    },
                                     "meta": {}
                                 }
                             }
@@ -485,7 +646,48 @@
                                 "example": {
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
-                                    "data": null,
+                                    "data": {
+                                        "id": 2,
+                                        "name": "Carlos Ramírez",
+                                        "first_name": "Carlos",
+                                        "last_name": "Ramírez",
+                                        "email": "carlos.ramirez@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "0912345678",
+                                        "phone": "0991234567",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": false,
+                                        "administrator_type": "condominium",
+                                        "access_status": "pending_activation",
+                                        "invitation": {
+                                            "id": 1,
+                                            "status": "pending",
+                                            "expires_at": "2026-07-01T12:00:00Z",
+                                            "accepted_at": null,
+                                            "revoked_at": null,
+                                            "is_expired": false
+                                        },
+                                        "condominiums": [
+                                            {
+                                                "id": 1,
+                                                "name": "Condominio Los Cedros",
+                                                "slug": "condominio-los-cedros",
+                                                "is_active": true,
+                                                "joined_at": "2026-06-30T12:00:00Z"
+                                            }
+                                        ],
+                                        "created_at": "2026-06-30T12:00:00Z",
+                                        "updated_at": "2026-06-30T12:00:00Z"
+                                    },
                                     "meta": {}
                                 }
                             }
@@ -540,87 +742,46 @@
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
                                     "data": {
-                                        "id": 1,
-                                        "name": "Condominio Los Cedros",
-                                        "slug": "condominio-los-cedros",
-                                        "ruc": "1799999999001",
-                                        "type": {
+                                        "id": 2,
+                                        "name": "Carlos Ramírez",
+                                        "first_name": "Carlos",
+                                        "last_name": "Ramírez",
+                                        "email": "carlos.ramirez@example.com",
+                                        "country": "EC",
+                                        "document_type": {
                                             "id": 1,
-                                            "code": "residencial",
-                                            "name": "Residencial"
-                                        },
-                                        "description": "Condominio residencial con áreas comunes y seguridad privada.",
-                                        "email": "administracion@loscedros.ec",
-                                        "phone": "0999999999",
-                                        "address": "Av. Amazonas N34-120 y Atahualpa",
-                                        "address_reference": "Frente al parque central",
-                                        "country_code": "EC",
-                                        "province_id": 1,
-                                        "city_id": 1,
-                                        "country": {
-                                            "id": 1,
-                                            "code": "EC",
-                                            "iso3": "ECU",
-                                            "name": "Ecuador",
-                                            "phone_code": "+593",
-                                            "currency_code": "USD",
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
                                             "is_active": true
                                         },
-                                        "province": {
+                                        "document_number": "0912345678",
+                                        "phone": "0991234567",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": false,
+                                        "administrator_type": "condominium",
+                                        "access_status": "pending_activation",
+                                        "invitation": {
                                             "id": 1,
-                                            "country_id": 1,
-                                            "code": "EC-P",
-                                            "name": "Pichincha",
-                                            "is_active": true
+                                            "status": "pending",
+                                            "expires_at": "2026-07-01T12:00:00Z",
+                                            "accepted_at": null,
+                                            "revoked_at": null,
+                                            "is_expired": false
                                         },
-                                        "city": {
-                                            "id": 1,
-                                            "province_id": 1,
-                                            "code": "EC-P-QUITO",
-                                            "name": "Quito",
-                                            "is_active": true
-                                        },
-                                        "latitude": -2.170998,
-                                        "longitude": -79.922359,
-                                        "currency": "USD",
-                                        "towers_count": 4,
-                                        "houses_count": 120,
-                                        "total_units": 24,
-                                        "features": [
+                                        "condominiums": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
-                                            },
-                                            {
-                                                "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "name": "Condominio Los Cedros",
+                                                "slug": "condominio-los-cedros",
+                                                "is_active": true,
+                                                "joined_at": "2026-06-30T12:00:00Z"
                                             }
                                         ],
-                                        "administrator": {
-                                            "id": 1,
-                                            "name": "Carlos Ramírez",
-                                            "first_name": "Carlos",
-                                            "last_name": "Ramírez",
-                                            "email": "carlos.ramirez@example.com",
-                                            "document_type": {
-                                                "id": 1,
-                                                "catalog_id": 1,
-                                                "code": "cedula",
-                                                "name": "Cédula",
-                                                "description": "Documento de identidad",
-                                                "sort_order": 1,
-                                                "is_active": true
-                                            },
-                                            "document_number": "0912345678",
-                                            "phone": "+593 99 123 4567",
-                                            "is_access_enabled": true,
-                                            "is_active": true
-                                        },
-                                        "logo_path": "condominiums/logos/logo.png",
-                                        "logo_url": "https://cdn.example.com/condominiums/logos/logo.png",
-                                        "is_active": true
+                                        "created_at": "2026-06-30T12:00:00Z",
+                                        "updated_at": "2026-06-30T12:00:00Z"
                                     },
                                     "meta": {}
                                 }
@@ -654,87 +815,46 @@
                                     "success": true,
                                     "message": "Operación realizada correctamente.",
                                     "data": {
-                                        "id": 1,
-                                        "name": "Condominio Los Cedros",
-                                        "slug": "condominio-los-cedros",
-                                        "ruc": "1799999999001",
-                                        "type": {
+                                        "id": 2,
+                                        "name": "Carlos Ramírez",
+                                        "first_name": "Carlos",
+                                        "last_name": "Ramírez",
+                                        "email": "carlos.ramirez@example.com",
+                                        "country": "EC",
+                                        "document_type": {
                                             "id": 1,
-                                            "code": "residencial",
-                                            "name": "Residencial"
-                                        },
-                                        "description": "Condominio residencial con áreas comunes y seguridad privada.",
-                                        "email": "administracion@loscedros.ec",
-                                        "phone": "0999999999",
-                                        "address": "Av. Amazonas N34-120 y Atahualpa",
-                                        "address_reference": "Frente al parque central",
-                                        "country_code": "EC",
-                                        "province_id": 1,
-                                        "city_id": 1,
-                                        "country": {
-                                            "id": 1,
-                                            "code": "EC",
-                                            "iso3": "ECU",
-                                            "name": "Ecuador",
-                                            "phone_code": "+593",
-                                            "currency_code": "USD",
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
                                             "is_active": true
                                         },
-                                        "province": {
+                                        "document_number": "0912345678",
+                                        "phone": "0991234567",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": false,
+                                        "administrator_type": "condominium",
+                                        "access_status": "pending_activation",
+                                        "invitation": {
                                             "id": 1,
-                                            "country_id": 1,
-                                            "code": "EC-P",
-                                            "name": "Pichincha",
-                                            "is_active": true
+                                            "status": "pending",
+                                            "expires_at": "2026-07-01T12:00:00Z",
+                                            "accepted_at": null,
+                                            "revoked_at": null,
+                                            "is_expired": false
                                         },
-                                        "city": {
-                                            "id": 1,
-                                            "province_id": 1,
-                                            "code": "EC-P-QUITO",
-                                            "name": "Quito",
-                                            "is_active": true
-                                        },
-                                        "latitude": -2.170998,
-                                        "longitude": -79.922359,
-                                        "currency": "USD",
-                                        "towers_count": 4,
-                                        "houses_count": 120,
-                                        "total_units": 24,
-                                        "features": [
+                                        "condominiums": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
-                                            },
-                                            {
-                                                "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "name": "Condominio Los Cedros",
+                                                "slug": "condominio-los-cedros",
+                                                "is_active": true,
+                                                "joined_at": "2026-06-30T12:00:00Z"
                                             }
                                         ],
-                                        "administrator": {
-                                            "id": 1,
-                                            "name": "Carlos Ramírez",
-                                            "first_name": "Carlos",
-                                            "last_name": "Ramírez",
-                                            "email": "carlos.ramirez@example.com",
-                                            "document_type": {
-                                                "id": 1,
-                                                "catalog_id": 1,
-                                                "code": "cedula",
-                                                "name": "Cédula",
-                                                "description": "Documento de identidad",
-                                                "sort_order": 1,
-                                                "is_active": true
-                                            },
-                                            "document_number": "0912345678",
-                                            "phone": "+593 99 123 4567",
-                                            "is_access_enabled": true,
-                                            "is_active": true
-                                        },
-                                        "logo_path": "condominiums/logos/logo.png",
-                                        "logo_url": "https://cdn.example.com/condominiums/logos/logo.png",
-                                        "is_active": true
+                                        "created_at": "2026-06-30T12:00:00Z",
+                                        "updated_at": "2026-06-30T12:00:00Z"
                                     },
                                     "meta": {}
                                 }

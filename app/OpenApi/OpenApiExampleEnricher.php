@@ -157,6 +157,16 @@ class OpenApiExampleEnricher
                     ['condominium_id' => 1, 'role_id' => 2],
                 ],
             ],
+            'POST /api/administrators' => [
+                'first_name' => 'Carlos',
+                'last_name' => 'Ramírez',
+                'email' => 'carlos.ramirez@example.com',
+                'country' => 'EC',
+                'document_type_id' => 1,
+                'document_number' => '0912345678',
+                'phone' => '0991234567',
+                'condominium_ids' => [1],
+            ],
             'POST /api/condominiums' => [
                 'name' => 'Condominio Vista Verde',
                 'slug' => 'condominio-vista-verde',
@@ -378,6 +388,15 @@ class OpenApiExampleEnricher
                 'PATCH /api/users/{user}/status',
             ], true) => $this->user(),
             $operationKey === 'GET /api/users' => [$this->user()],
+            $operationKey === 'GET /api/administrators' => [$this->administrator()],
+            in_array($operationKey, [
+                'POST /api/administrators',
+                'GET /api/administrators/{administrator}',
+                'PUT /api/administrators/{administrator}',
+                'PATCH /api/administrators/{administrator}/status',
+                'POST /api/administrators/{administrator}/condominiums',
+                'DELETE /api/administrators/{administrator}/condominiums/{condominium}',
+            ], true) => $this->administrator(),
             $operationKey === 'GET /api/users/form-options' => [
                 'roles' => [$this->role()],
                 'condominiums' => [
@@ -477,6 +496,42 @@ class OpenApiExampleEnricher
             'phone' => '0999999998',
             'secondary_phone' => null,
             'is_access_enabled' => true,
+        ];
+    }
+
+    private function administrator(): array
+    {
+        return [
+            'id' => 2,
+            'name' => 'Carlos Ramírez',
+            'first_name' => 'Carlos',
+            'last_name' => 'Ramírez',
+            'email' => 'carlos.ramirez@example.com',
+            'country' => 'EC',
+            'document_type' => $this->catalogItem(),
+            'document_number' => '0912345678',
+            'phone' => '0991234567',
+            'secondary_phone' => null,
+            'is_access_enabled' => false,
+            'administrator_type' => 'condominium',
+            'access_status' => 'pending_activation',
+            'invitation' => [
+                'id' => 1,
+                'status' => 'pending',
+                'expires_at' => '2026-07-01T12:00:00Z',
+                'accepted_at' => null,
+                'revoked_at' => null,
+                'is_expired' => false,
+            ],
+            'condominiums' => [[
+                'id' => 1,
+                'name' => 'Condominio Los Cedros',
+                'slug' => 'condominio-los-cedros',
+                'is_active' => true,
+                'joined_at' => '2026-06-30T12:00:00Z',
+            ]],
+            'created_at' => '2026-06-30T12:00:00Z',
+            'updated_at' => '2026-06-30T12:00:00Z',
         ];
     }
 

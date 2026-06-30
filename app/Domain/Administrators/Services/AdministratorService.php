@@ -2,6 +2,7 @@
 
 namespace App\Domain\Administrators\Services;
 
+use App\Domain\Users\Services\UserInvitationService;
 use App\Models\Condominium;
 use App\Models\Permission;
 use App\Models\Role;
@@ -10,32 +11,45 @@ use Illuminate\Support\Facades\DB;
 
 class AdministratorService
 {
+    public function __construct(
+        private readonly UserInvitationService $invitationService,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $data
      */
-    public function create(array $data): User
+    public function create(array $data, User $invitedBy): User
     {
-        return DB::transaction(function () use ($data): User {
+        return DB::transaction(function () use ($data, $invitedBy): User {
             $condominiumIds = $data['condominium_ids'];
             unset($data['condominium_ids']);
 
             $administrator = User::create([
                 ...$data,
                 'password' => null,
-                'is_access_enabled' => $data['is_access_enabled'] ?? false,
+                'is_access_enabled' => false,
             ]);
 
+            $invitationCondominium = null;
+            $invitationRole = null;
+
             foreach ($condominiumIds as $condominiumId) {
-                $this->assignToCondominium($administrator, Condominium::findOrFail($condominiumId));
+                $condominium = Condominium::findOrFail($condominiumId);
+                $role = $this->assignToCondominium($administrator, $condominium);
+
+                $invitationCondominium ??= $condominium;
+                $invitationRole ??= $role;
             }
+
+            $this->invitationService->invite($administrator, $invitationCondominium, $invitationRole, $invitedBy);
 
             return $administrator->fresh('documentType');
         });
     }
 
-    public function assignToCondominium(User $administrator, Condominium $condominium): void
+    public function assignToCondominium(User $administrator, Condominium $condominium): Role
     {
-        DB::transaction(function () use ($administrator, $condominium): void {
+        return DB::transaction(function () use ($administrator, $condominium): Role {
             DB::table('condominium_user')->updateOrInsert([
                 'condominium_id' => $condominium->id,
                 'user_id' => $administrator->id,
@@ -62,6 +76,8 @@ class AdministratorService
                 'updated_at' => now(),
                 'deleted_at' => null,
             ]);
+
+            return $role;
         });
     }
 

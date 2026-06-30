@@ -128,6 +128,11 @@ class User extends Authenticatable
         return $this->hasMany(UserAccessInvitation::class);
     }
 
+    public function latestAccessInvitation(): HasOne
+    {
+        return $this->hasOne(UserAccessInvitation::class)->latestOfMany();
+    }
+
     public function billingProfiles(): HasMany
     {
         return $this->hasMany(UserBillingProfile::class);

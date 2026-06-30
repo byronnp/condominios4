@@ -29,6 +29,7 @@ class AdministratorController extends Controller
         path: '/api/administrators',
         operationId: 'administratorsIndex',
         summary: 'Listar administradores',
+        description: 'Devuelve administradores con su estado de acceso, tipo y última invitación de activación.',
         tags: ['Administradores'],
         security: [['bearerAuth' => []]],
         parameters: [
@@ -88,6 +89,7 @@ class AdministratorController extends Controller
         path: '/api/administrators',
         operationId: 'administratorsStore',
         summary: 'Crear administrador',
+        description: 'Crea el administrador con acceso deshabilitado, lo asigna a los condominios indicados y envía por correo una invitación de activación de 24 horas.',
         tags: ['Administradores'],
         security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
@@ -102,12 +104,11 @@ class AdministratorController extends Controller
                 new OA\Property(property: 'document_number', type: 'string', example: '0912345678'),
                 new OA\Property(property: 'phone', type: 'string', nullable: true, example: '0991234567'),
                 new OA\Property(property: 'secondary_phone', type: 'string', nullable: true, example: '042345678'),
-                new OA\Property(property: 'is_access_enabled', type: 'boolean', example: false),
                 new OA\Property(property: 'condominium_ids', type: 'array', items: new OA\Items(type: 'integer'), example: [1]),
             ]
         )),
         responses: [
-            new OA\Response(response: 201, description: 'Administrador creado'),
+            new OA\Response(response: 201, description: 'Administrador creado e invitación enviada'),
             new OA\Response(response: 422, description: 'Datos inválidos'),
         ]
     )]
@@ -116,9 +117,9 @@ class AdministratorController extends Controller
         $data = $request->validated();
         $this->assertCanManageCondominiums($request->user(), $data['condominium_ids'], 'administrators.create');
 
-        $administrator = $this->administratorService->create($data);
+        $administrator = $this->administratorService->create($data, $request->user());
 
-        return ApiResponse::success(new AdministratorResource($administrator), 'Administrador creado correctamente.', 201);
+        return ApiResponse::success(new AdministratorResource($administrator), 'Administrador creado e invitación enviada correctamente.', 201);
     }
 
     #[OA\Get(path: '/api/administrators/{administrator}', operationId: 'administratorsShow', summary: 'Consultar administrador', tags: ['Administradores'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Administrador encontrado'), new OA\Response(response: 404, description: 'No encontrado')])]
@@ -231,7 +232,7 @@ class AdministratorController extends Controller
     private function administratorQuery(): Builder
     {
         return User::query()
-            ->with('documentType')
+            ->with(['documentType', 'latestAccessInvitation'])
             ->whereExists(function ($query): void {
                 $query->selectRaw('1')
                     ->from('condominium_user')

@@ -25,7 +25,6 @@ class AdministratorStoreRequest extends FormRequest
             'document_number' => ['required', 'string', 'max:30'],
             'phone' => ['nullable', 'string', 'max:50'],
             'secondary_phone' => ['nullable', 'string', 'max:50'],
-            'is_access_enabled' => ['nullable', 'boolean'],
             'condominium_ids' => ['required', 'array', 'min:1'],
             'condominium_ids.*' => ['integer', 'distinct', Rule::exists('condominiums', 'id')->whereNull('deleted_at')],
         ];

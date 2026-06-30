@@ -59,7 +59,7 @@ class CondominiumPhaseTest extends TestCase
         $this->assertDatabaseHas('permissions', ['code' => 'roles.manage']);
         $this->assertDatabaseHas('menus', ['code' => 'dashboard', 'category_code' => 'principal']);
         $this->assertDatabaseHas('menus', ['code' => 'usuarios', 'name' => 'Usuarios', 'path' => '/usuarios', 'is_active' => true]);
-        $this->assertDatabaseMissing('menus', ['code' => 'administradores', 'is_active' => true]);
+        $this->assertDatabaseHas('menus', ['code' => 'administradores', 'name' => 'Administradores', 'path' => '/administradores', 'is_active' => true]);
         $this->assertDatabaseHas('menus', ['code' => 'reportes', 'category_code' => 'herramientas']);
         $this->assertDatabaseHas('condominium_boards', ['condominium_id' => $condominium->id, 'name' => 'Directiva 2026-2028']);
         $this->assertDatabaseHas('condominium_payment_methods', ['condominium_id' => $condominium->id, 'account_number' => '2200123456']);
