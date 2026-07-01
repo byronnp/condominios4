@@ -122,10 +122,10 @@ class AdministratorController extends Controller
         return ApiResponse::success(new AdministratorResource($administrator), 'Administrador creado e invitación enviada correctamente.', 201);
     }
 
-    #[OA\Get(path: '/api/administrators/{administrator}', operationId: 'administratorsShow', summary: 'Consultar administrador', tags: ['Administradores'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Administrador encontrado'), new OA\Response(response: 404, description: 'No encontrado')])]
+    #[OA\Get(path: '/api/administrators/{administrator}', operationId: 'administratorsShow', summary: 'Consultar administrador', description: 'Un administrador senior puede consultar tanto administradores globales como administradores de condominio. Los administradores de condominio quedan limitados a su alcance autorizado.', tags: ['Administradores'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Administrador encontrado'), new OA\Response(response: 403, description: 'No autorizado'), new OA\Response(response: 404, description: 'No encontrado')])]
     public function show(Request $request, User $administrator): JsonResponse
     {
-        $this->assertAdministrator($administrator);
+        $this->assertAdministrator($administrator, $request->user()->isPlatformAdmin());
         $this->assertCanAccessAdministrator($request->user(), $administrator, 'administrators.view');
 
         return ApiResponse::success(new AdministratorResource($administrator->load('documentType')), 'Administrador encontrado.');
@@ -280,9 +280,9 @@ class AdministratorController extends Controller
         });
     }
 
-    private function assertAdministrator(User $administrator): void
+    private function assertAdministrator(User $administrator, bool $includePlatformAdministrators = false): void
     {
-        abort_if(! $this->administratorQuery()->whereKey($administrator->id)->exists(), 404);
+        abort_if(! $this->administratorQuery($includePlatformAdministrators)->whereKey($administrator->id)->exists(), 404);
     }
 
     private function assertCanAccessAdministrator(User $user, User $administrator, string $permission): void

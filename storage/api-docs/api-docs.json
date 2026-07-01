@@ -338,6 +338,7 @@
                     "Administradores"
                 ],
                 "summary": "Consultar administrador",
+                "description": "Un administrador senior puede consultar tanto administradores globales como administradores de condominio. Los administradores de condominio quedan limitados a su alcance autorizado.",
                 "operationId": "administratorsShow",
                 "responses": {
                     "200": {
@@ -392,6 +393,23 @@
                                         "created_at": "2026-06-30T12:00:00Z",
                                         "updated_at": "2026-06-30T12:00:00Z"
                                     },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
                                     "meta": {}
                                 }
                             }

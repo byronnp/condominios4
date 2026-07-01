@@ -83,6 +83,17 @@ class AdministratorModuleTest extends TestCase
             ->assertJsonMissing(['id' => $deletedAdministrator->id]);
     }
 
+    public function test_platform_admin_can_show_a_senior_administrator(): void
+    {
+        $seniorAdministrator = User::where('email', 'byron_np@hotmail.com')->firstOrFail();
+
+        $this->getJson("/api/administrators/{$seniorAdministrator->id}", $this->headers())
+            ->assertOk()
+            ->assertJsonPath('data.id', $seniorAdministrator->id)
+            ->assertJsonPath('data.administrator_type', 'senior')
+            ->assertJsonPath('data.email', $seniorAdministrator->email);
+    }
+
     public function test_condominium_admin_lists_only_its_condominium_administrators(): void
     {
         $seniorAdministrator = User::where('email', 'byron_np@hotmail.com')->firstOrFail();
