@@ -63,6 +63,44 @@ class AdministratorModuleTest extends TestCase
             ]);
     }
 
+    public function test_platform_admin_lists_all_non_deleted_administrators(): void
+    {
+        $seniorAdministrator = User::where('email', 'byron_np@hotmail.com')->firstOrFail();
+        $condominiumAdministrator = User::where('email', 'byronnp@gmail.com')->firstOrFail();
+        $deletedAdministrator = User::where('email', 'swagger.admin@example.com')->firstOrFail();
+        $deletedAdministrator->delete();
+
+        $this->getJson('/api/administrators?per_page=100', $this->headers())
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $seniorAdministrator->id,
+                'administrator_type' => 'senior',
+            ])
+            ->assertJsonFragment([
+                'id' => $condominiumAdministrator->id,
+                'administrator_type' => 'condominium',
+            ])
+            ->assertJsonMissing(['id' => $deletedAdministrator->id]);
+    }
+
+    public function test_condominium_admin_lists_only_its_condominium_administrators(): void
+    {
+        $seniorAdministrator = User::where('email', 'byron_np@hotmail.com')->firstOrFail();
+        $condominiumAdministrator = User::where('email', 'byronnp@gmail.com')->firstOrFail();
+
+        $login = $this->postJson('/api/auth/login', [
+            'email' => 'byronnp@gmail.com',
+            'password' => 'admin123',
+        ])->assertOk();
+
+        $this->getJson('/api/administrators?per_page=100', [
+            'Authorization' => 'Bearer '.$login->json('data.access_token'),
+        ])
+            ->assertOk()
+            ->assertJsonFragment(['id' => $condominiumAdministrator->id])
+            ->assertJsonMissing(['id' => $seniorAdministrator->id]);
+    }
+
     public function test_platform_admin_can_create_update_and_change_administrator_status(): void
     {
         Mail::fake();

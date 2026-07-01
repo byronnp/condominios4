@@ -29,7 +29,7 @@ class AdministratorController extends Controller
         path: '/api/administrators',
         operationId: 'administratorsIndex',
         summary: 'Listar administradores',
-        description: 'Devuelve administradores con su estado de acceso, tipo y última invitación de activación.',
+        description: 'Devuelve administradores con su estado de acceso, tipo y última invitación. El administrador senior ve todos los administradores no eliminados; un administrador de condominio ve únicamente los administradores de sus condominios autorizados.',
         tags: ['Administradores'],
         security: [['bearerAuth' => []]],
         parameters: [
@@ -51,7 +51,7 @@ class AdministratorController extends Controller
 
         abort_if(! $request->user()->isPlatformAdmin() && $accessibleCondominiumIds === [], 403);
 
-        $query = $this->administratorQuery()
+        $query = $this->administratorQuery($request->user()->isPlatformAdmin())
             ->when(! $request->user()->isPlatformAdmin(), function (Builder $query) use ($accessibleCondominiumIds): void {
                 $this->whereAdministratorInCondominiums($query, $accessibleCondominiumIds);
             })
@@ -229,20 +229,35 @@ class AdministratorController extends Controller
         return ApiResponse::success(message: 'Administrador eliminado correctamente.');
     }
 
-    private function administratorQuery(): Builder
+    private function administratorQuery(bool $includePlatformAdministrators = false): Builder
     {
         return User::query()
             ->with(['documentType', 'latestAccessInvitation'])
-            ->whereExists(function ($query): void {
-                $query->selectRaw('1')
-                    ->from('condominium_user')
-                    ->join('condominium_user_role', 'condominium_user_role.condominium_user_id', '=', 'condominium_user.id')
-                    ->join('roles', 'roles.id', '=', 'condominium_user_role.role_id')
-                    ->whereColumn('condominium_user.user_id', 'users.id')
-                    ->where('roles.code', 'administrador')
-                    ->whereNull('condominium_user.deleted_at')
-                    ->whereNull('condominium_user_role.deleted_at')
-                    ->whereNull('roles.deleted_at');
+            ->where(function (Builder $query) use ($includePlatformAdministrators): void {
+                $query->whereExists(function ($query): void {
+                    $query->selectRaw('1')
+                        ->from('condominium_user')
+                        ->join('condominium_user_role', 'condominium_user_role.condominium_user_id', '=', 'condominium_user.id')
+                        ->join('roles', 'roles.id', '=', 'condominium_user_role.role_id')
+                        ->whereColumn('condominium_user.user_id', 'users.id')
+                        ->where('roles.code', 'administrador')
+                        ->whereNull('condominium_user.deleted_at')
+                        ->whereNull('condominium_user_role.deleted_at')
+                        ->whereNull('roles.deleted_at');
+                });
+
+                if ($includePlatformAdministrators) {
+                    $query->orWhereExists(function ($query): void {
+                        $query->selectRaw('1')
+                            ->from('role_user')
+                            ->join('roles', 'roles.id', '=', 'role_user.role_id')
+                            ->whereColumn('role_user.user_id', 'users.id')
+                            ->whereNull('roles.condominium_id')
+                            ->whereIn('roles.code', ['administrador_senior', 'admin'])
+                            ->where('roles.is_active', true)
+                            ->whereNull('roles.deleted_at');
+                    });
+                }
             });
     }
 

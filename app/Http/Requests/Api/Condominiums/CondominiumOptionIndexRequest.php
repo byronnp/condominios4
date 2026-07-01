@@ -17,4 +17,12 @@ class CondominiumOptionIndexRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:255'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'search.string' => 'El criterio de búsqueda debe ser una cadena de texto.',
+            'search.max' => 'El criterio de búsqueda no puede tener más de 255 caracteres.',
+        ];
+    }
 }

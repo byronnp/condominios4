@@ -139,6 +139,18 @@ class CondominiumPhaseTest extends TestCase
             ->assertJsonCount(1, 'data');
     }
 
+    public function test_condominium_options_reports_invalid_search_parameters(): void
+    {
+        $this->getJson('/api/condominiums/options?search='.str_repeat('a', 256), [
+            'Authorization' => 'Bearer '.$this->loginToken(),
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath(
+                'errors.search.0',
+                'El criterio de búsqueda no puede tener más de 255 caracteres.',
+            );
+    }
+
     public function test_condominium_administrator_cannot_access_or_mutate_an_unassigned_condominium(): void
     {
         $assigned = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
