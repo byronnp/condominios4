@@ -204,6 +204,7 @@
                                         "example": 1
                                     },
                                     "document_number": {
+                                        "description": "Debe tener el formato del tipo seleccionado y ser único para la combinación de país y tipo de documento.",
                                         "type": "string",
                                         "example": "0912345678"
                                     },

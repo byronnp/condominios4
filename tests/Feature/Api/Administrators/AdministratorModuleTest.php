@@ -200,7 +200,37 @@ class AdministratorModuleTest extends TestCase
                 'document_type_id',
                 'document_number',
                 'condominium_ids',
-            ]);
+            ])
+            ->assertJsonPath('errors.email.0', 'El correo electrónico es obligatorio.')
+            ->assertJsonPath('errors.country.0', 'El país es obligatorio.')
+            ->assertJsonPath('errors.document_type_id.0', 'El tipo de documento es obligatorio.')
+            ->assertJsonPath('errors.document_number.0', 'El número de documento es obligatorio.')
+            ->assertJsonPath('errors.condominium_ids.0', 'Debe seleccionar al menos un condominio.');
+    }
+
+    public function test_administrator_creation_reports_a_duplicate_document_number(): void
+    {
+        $existingUser = User::where('email', 'byronnp@gmail.com')->firstOrFail();
+        $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
+
+        $this->postJson('/api/administrators', [
+            'first_name' => 'Ana',
+            'last_name' => 'Pérez',
+            'email' => 'ana.duplicate@example.com',
+            'country' => $existingUser->country,
+            'document_type_id' => $existingUser->document_type_id,
+            'document_number' => $existingUser->document_number,
+            'phone' => '0991234567',
+            'condominium_ids' => [$condominium->id],
+        ], $this->headers())
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['document_number'])
+            ->assertJsonPath(
+                'errors.document_number.0',
+                'Ya existe un usuario con este país, tipo y número de documento.',
+            );
+
+        $this->assertDatabaseMissing('users', ['email' => 'ana.duplicate@example.com']);
     }
 
     private function documentType(): CatalogItem

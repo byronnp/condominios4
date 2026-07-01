@@ -101,7 +101,7 @@ class AdministratorController extends Controller
                 new OA\Property(property: 'email', type: 'string', format: 'email', example: 'carlos.ramirez@example.com'),
                 new OA\Property(property: 'country', type: 'string', example: 'EC'),
                 new OA\Property(property: 'document_type_id', type: 'integer', example: 1),
-                new OA\Property(property: 'document_number', type: 'string', example: '0912345678'),
+                new OA\Property(property: 'document_number', description: 'Debe tener el formato del tipo seleccionado y ser único para la combinación de país y tipo de documento.', type: 'string', example: '0912345678'),
                 new OA\Property(property: 'phone', type: 'string', nullable: true, example: '0991234567'),
                 new OA\Property(property: 'secondary_phone', type: 'string', nullable: true, example: '042345678'),
                 new OA\Property(property: 'condominium_ids', type: 'array', items: new OA\Items(type: 'integer'), example: [1]),
