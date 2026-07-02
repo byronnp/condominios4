@@ -70,6 +70,7 @@ class OperationsSeeder extends Seeder
             'description' => 'Área social para reuniones y eventos.',
             'capacity' => 40,
             'reservation_fee' => 15.00,
+            'is_reservable' => true,
             'requires_approval' => true,
             'is_active' => true,
         ]);

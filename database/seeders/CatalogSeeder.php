@@ -34,6 +34,12 @@ class CatalogSeeder extends Seeder
                     'is_active' => true,
                 ]);
             }
+
+            if ($catalog->code === 'condominium_features') {
+                $catalog->items()
+                    ->whereIn('code', $this->movedCommonAreaCodes())
+                    ->update(['is_active' => false]);
+            }
         }
     }
 
@@ -75,16 +81,30 @@ class CatalogSeeder extends Seeder
                     ['code' => 'camaras_seguridad', 'name' => 'Cámaras de seguridad'],
                     ['code' => 'control_acceso', 'name' => 'Control de acceso'],
                     ['code' => 'parqueadero_visitas', 'name' => 'Parqueadero de visitas'],
-                    ['code' => 'areas_verdes', 'name' => 'Áreas verdes'],
-                    ['code' => 'juegos_infantiles', 'name' => 'Juegos infantiles'],
-                    ['code' => 'piscina', 'name' => 'Piscina'],
-                    ['code' => 'gimnasio', 'name' => 'Gimnasio'],
-                    ['code' => 'salon_comunal', 'name' => 'Salón comunal'],
-                    ['code' => 'area_bbq', 'name' => 'Área BBQ'],
-                    ['code' => 'cancha_deportiva', 'name' => 'Cancha deportiva'],
+                    ['code' => 'internet_comunal', 'name' => 'Internet comunal'],
+                    ['code' => 'acceso_discapacitados', 'name' => 'Acceso para personas con discapacidad'],
                     ['code' => 'ascensor', 'name' => 'Ascensor'],
                     ['code' => 'generador_electrico', 'name' => 'Generador eléctrico'],
                     ['code' => 'cisterna', 'name' => 'Cisterna'],
+                ],
+            ],
+            [
+                'code' => 'common_area_types',
+                'name' => 'Tipos de áreas comunes',
+                'description' => 'Clasificación de espacios físicos compartidos dentro de un condominio.',
+                'items' => [
+                    ['code' => 'piscina', 'name' => 'Piscina', 'metadata' => ['category' => 'recreational', 'default_is_reservable' => true]],
+                    ['code' => 'casa_comunal', 'name' => 'Casa comunal', 'metadata' => ['category' => 'social', 'default_is_reservable' => true]],
+                    ['code' => 'areas_verdes', 'name' => 'Áreas verdes', 'metadata' => ['category' => 'green', 'default_is_reservable' => false]],
+                    ['code' => 'gimnasio', 'name' => 'Gimnasio', 'metadata' => ['category' => 'recreational', 'default_is_reservable' => true]],
+                    ['code' => 'area_bbq', 'name' => 'Área BBQ', 'metadata' => ['category' => 'social', 'default_is_reservable' => true]],
+                    ['code' => 'cancha_deportiva', 'name' => 'Cancha deportiva', 'metadata' => ['category' => 'recreational', 'default_is_reservable' => true]],
+                    ['code' => 'juegos_infantiles', 'name' => 'Juegos infantiles', 'metadata' => ['category' => 'recreational', 'default_is_reservable' => false]],
+                    ['code' => 'garita', 'name' => 'Garita', 'metadata' => ['category' => 'security', 'default_is_reservable' => false]],
+                    ['code' => 'cuarto_bombas', 'name' => 'Cuarto de bombas', 'metadata' => ['category' => 'technical', 'default_is_reservable' => false]],
+                    ['code' => 'cuarto_electrico', 'name' => 'Cuarto eléctrico', 'metadata' => ['category' => 'technical', 'default_is_reservable' => false]],
+                    ['code' => 'terraza', 'name' => 'Terraza', 'metadata' => ['category' => 'social', 'default_is_reservable' => true]],
+                    ['code' => 'otro', 'name' => 'Otro', 'metadata' => ['category' => 'other', 'default_is_reservable' => false]],
                 ],
             ],
             [
@@ -164,6 +184,20 @@ class CatalogSeeder extends Seeder
                     ['code' => 'finalizada', 'name' => 'Finalizada'],
                 ],
             ],
+        ];
+    }
+
+    /** @return array<int, string> */
+    private function movedCommonAreaCodes(): array
+    {
+        return [
+            'areas_verdes',
+            'juegos_infantiles',
+            'piscina',
+            'gimnasio',
+            'salon_comunal',
+            'area_bbq',
+            'cancha_deportiva',
         ];
     }
 }

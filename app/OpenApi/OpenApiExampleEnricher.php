@@ -637,8 +637,8 @@ class OpenApiExampleEnricher
             'houses_count' => 120,
             'total_units' => 24,
             'features' => [
-                ['id' => 1, 'code' => 'piscina', 'name' => 'Piscina'],
-                ['id' => 2, 'code' => 'gimnasio', 'name' => 'Gimnasio'],
+                ['id' => 1, 'code' => 'seguridad_24_7', 'name' => 'Seguridad 24/7'],
+                ['id' => 2, 'code' => 'control_acceso', 'name' => 'Control de acceso'],
             ],
             'administrator' => [
                 'id' => 1,

@@ -91,12 +91,26 @@ class CatalogEndpointTest extends TestCase
                 'name' => 'Seguridad 24/7',
             ])
             ->assertJsonFragment([
+                'code' => 'parqueadero_visitas',
+                'name' => 'Parqueadero de visitas',
+            ])
+            ->assertJsonMissing(['code' => 'piscina']);
+    }
+
+    public function test_common_area_types_catalog_can_be_listed(): void
+    {
+        $this->seed(CatalogSeeder::class);
+
+        $this->getJson('/api/catalogs/common_area_types/items')
+            ->assertOk()
+            ->assertJsonPath('meta.catalog.code', 'common_area_types')
+            ->assertJsonFragment([
                 'code' => 'piscina',
                 'name' => 'Piscina',
             ])
             ->assertJsonFragment([
-                'code' => 'parqueadero_visitas',
-                'name' => 'Parqueadero de visitas',
+                'code' => 'garita',
+                'name' => 'Garita',
             ]);
     }
 

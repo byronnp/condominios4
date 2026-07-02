@@ -24,7 +24,10 @@ class CommonAreaReservationController extends Controller
     public function store(CommonAreaReservationStoreRequest $request, Condominium $condominium): JsonResponse
     {
         $data = $request->validated();
-        $area = CommonArea::where('condominium_id', $condominium->id)->findOrFail($data['common_area_id']);
+        $area = CommonArea::where('condominium_id', $condominium->id)
+            ->where('is_active', true)
+            ->where('is_reservable', true)
+            ->findOrFail($data['common_area_id']);
 
         if ($this->hasOverlap((int) $data['common_area_id'], $data['starts_at'], $data['ends_at'])) {
             return ApiResponse::error('El área común ya tiene una reserva en ese horario.', 422, code: 'reservation_overlap');

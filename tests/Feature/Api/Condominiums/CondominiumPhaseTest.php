@@ -50,7 +50,7 @@ class CondominiumPhaseTest extends TestCase
         $this->assertSame(2, $condominium->towers_count);
         $this->assertSame(24, $condominium->houses_count);
         $this->assertSame('USD', $condominium->activeBillingSetting?->currency);
-        $this->assertContains('piscina', $condominium->features->pluck('code')->all());
+        $this->assertContains('seguridad_24_7', $condominium->features->pluck('code')->all());
         $this->assertDatabaseHas('roles', ['condominium_id' => $condominium->id, 'code' => 'administrador']);
         $this->assertDatabaseMissing('condominium_user', [
             'condominium_id' => $condominium->id,
@@ -122,6 +122,33 @@ class CondominiumPhaseTest extends TestCase
 
         $this->getJson('/api/condominiums/options', $this->condominiumAdminHeaders())
             ->assertForbidden();
+    }
+
+    public function test_platform_admin_can_paginate_condominiums(): void
+    {
+        $this->getJson('/api/condominiums?page=1&per_page=1', [
+            'Authorization' => 'Bearer '.$this->loginToken(),
+        ])
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.per_page', 1)
+            ->assertJsonStructure([
+                'meta' => ['current_page', 'per_page', 'total', 'last_page'],
+            ]);
+    }
+
+    public function test_condominium_index_reports_invalid_pagination_parameters(): void
+    {
+        $this->getJson('/api/condominiums?page=0&per_page=101', [
+            'Authorization' => 'Bearer '.$this->loginToken(),
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.page.0', 'La página debe ser al menos 1.')
+            ->assertJsonPath(
+                'errors.per_page.0',
+                'La cantidad de registros por página no puede ser mayor que 100.',
+            );
     }
 
     public function test_platform_admin_can_list_condominium_options_for_combos(): void
@@ -247,7 +274,7 @@ class CondominiumPhaseTest extends TestCase
             ->where('code', 'residencial')
             ->firstOrFail();
         $featureIds = CatalogItem::whereHas('catalog', fn ($query) => $query->where('code', 'condominium_features'))
-            ->whereIn('code', ['piscina', 'gimnasio', 'seguridad_24_7', 'parqueadero_visitas'])
+            ->whereIn('code', ['seguridad_24_7', 'camaras_seguridad', 'control_acceso', 'parqueadero_visitas'])
             ->pluck('id')
             ->all();
         $documentType = CatalogItem::whereHas('catalog', fn ($query) => $query->where('code', 'document_types'))
@@ -374,7 +401,7 @@ class CondominiumPhaseTest extends TestCase
         $token = $this->loginToken();
         $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
         $featureIds = CatalogItem::whereHas('catalog', fn ($query) => $query->where('code', 'condominium_features'))
-            ->whereIn('code', ['gimnasio', 'seguridad_24_7'])
+            ->whereIn('code', ['camaras_seguridad', 'seguridad_24_7'])
             ->pluck('id')
             ->all();
 

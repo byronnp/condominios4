@@ -87,7 +87,7 @@ class CondominiumSeeder extends Seeder
     private function syncFeatures(Condominium $condominium): void
     {
         CatalogItem::whereHas('catalog', fn ($query) => $query->where('code', 'condominium_features'))
-            ->whereIn('code', ['seguridad_24_7', 'camaras_seguridad', 'areas_verdes', 'piscina', 'gimnasio', 'salon_comunal'])
+            ->whereIn('code', ['seguridad_24_7', 'camaras_seguridad', 'control_acceso', 'parqueadero_visitas'])
             ->get()
             ->each(function (CatalogItem $feature) use ($condominium): void {
                 $condominiumFeature = CondominiumFeature::withTrashed()->firstOrNew([

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Condominiums;
 
 use App\Domain\Condominiums\Services\CondominiumCreationService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Condominiums\CondominiumIndexRequest;
 use App\Http\Requests\Api\Condominiums\CondominiumOptionIndexRequest;
 use App\Http\Requests\Api\Condominiums\CondominiumStatusRequest;
 use App\Http\Requests\Api\Condominiums\CondominiumStoreRequest;
@@ -22,18 +23,28 @@ class CondominiumController extends Controller
         private readonly CondominiumCreationService $creationService,
     ) {}
 
-    #[OA\Get(path: '/api/condominiums', operationId: 'condominiumsIndex', summary: 'Listar condominios', tags: ['Condominios'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Condominios encontrados'), new OA\Response(response: 403, description: 'Acceso permitido solo al administrador senior')])]
-    public function index(Request $request): JsonResponse
+    #[OA\Get(path: '/api/condominiums', operationId: 'condominiumsIndex', summary: 'Listar condominios', tags: ['Condominios'], security: [['bearerAuth' => []]], parameters: [new OA\Parameter(name: 'page', in: 'query', schema: new OA\Schema(type: 'integer', minimum: 1), example: 1), new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', minimum: 1, maximum: 100), example: 20)], responses: [new OA\Response(response: 200, description: 'Condominios encontrados'), new OA\Response(response: 403, description: 'Acceso permitido solo al administrador senior'), new OA\Response(response: 422, description: 'Parámetros de paginación inválidos')])]
+    public function index(CondominiumIndexRequest $request): JsonResponse
     {
         Gate::authorize('viewAny', Condominium::class);
+        $data = $request->validated();
 
-        $condominiums = Condominium::query()
+        $paginator = Condominium::query()
             ->visibleTo($request->user())
             ->with(['type', 'country', 'province', 'city', 'features', 'activeBillingSetting', 'users.documentType', 'roles'])
             ->latest()
-            ->get();
+            ->paginate($data['per_page'] ?? 20);
 
-        return ApiResponse::success(CondominiumResource::collection($condominiums), 'Condominios encontrados.');
+        return ApiResponse::success(
+            CondominiumResource::collection(collect($paginator->items())),
+            'Condominios encontrados.',
+            meta: [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+            ],
+        );
     }
 
     #[OA\Get(
@@ -228,6 +239,7 @@ class CondominiumController extends Controller
         path: '/api/condominiums/{condominium}',
         operationId: 'condominiumsDestroy',
         summary: 'Eliminar condominio',
+        description: 'Realiza una eliminación lógica mediante deleted_at. No elimina ni inactiva a los usuarios asociados y no revoca automáticamente sus sesiones o tokens. El condominio deja de estar disponible mediante el enlace de modelo y las consultas Eloquent normales.',
         tags: ['Condominios'],
         security: [['bearerAuth' => []]],
         responses: [
@@ -259,6 +271,7 @@ class CondominiumController extends Controller
         path: '/api/condominiums/{condominium}/status',
         operationId: 'condominiumsUpdateStatus',
         summary: 'Activar o inactivar condominio',
+        description: 'Actualiza exclusivamente condominiums.is_active. En el comportamiento actual no modifica usuarios, membresías, sesiones ni tokens; la restricción transversal de operaciones sobre condominios inactivos queda pendiente.',
         tags: ['Condominios'],
         security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(

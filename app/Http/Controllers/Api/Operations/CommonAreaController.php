@@ -31,6 +31,7 @@ class CommonAreaController extends Controller
             'description' => $data['description'] ?? null,
             'capacity' => $data['capacity'] ?? 1,
             'reservation_fee' => $data['reservation_fee'] ?? 0,
+            'is_reservable' => $data['is_reservable'] ?? true,
             'requires_approval' => $data['requires_approval'] ?? true,
             'is_active' => $data['is_active'] ?? true,
         ]);

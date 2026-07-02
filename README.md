@@ -79,6 +79,24 @@ Bearer {access_token}
 
 6. Probar los endpoints protegidos.
 
+## Estado y eliminación de condominios
+
+`PATCH /api/condominiums/{condominium}/status` modifica únicamente el campo
+`condominiums.is_active`. Actualmente no inactiva usuarios o membresías y no
+revoca sesiones ni tokens. El inicio de sesión depende de
+`users.is_access_enabled`, por lo que un usuario puede autenticarse aunque su
+condominio esté inactivo. La validación transversal que impida operar sobre un
+condominio inactivo está pendiente.
+
+`DELETE /api/condominiums/{condominium}` realiza una eliminación lógica mediante
+`deleted_at`. Los usuarios asociados no se eliminan ni se inactivan y sus
+sesiones no se revocan automáticamente. El condominio eliminado deja de estar
+disponible en el enlace de modelo y en las consultas Eloquent normales, pero el
+usuario puede iniciar sesión si `users.is_access_enabled` continúa activo.
+
+Los administradores senior conservan su acceso global porque no dependen de una
+asignación a un condominio.
+
 ## Pruebas
 
 Ejecutar suite completa:

@@ -22,6 +22,7 @@ Additional completed modules:
 
 - Locations: normalized `countries`, `provinces`, and `cities` tables, location seed data, public location APIs, Swagger/OpenAPI documentation, and tests. Use this module for geographic selections instead of generic catalogs.
 - Administrator access invitations: condominium creation creates or reuses the administrator from `admin_*`, assigns the condominium administrator role, keeps `is_access_enabled = false`, creates a 24-hour single-use invitation with a hashed token, and queues the activation email after the database transaction commits. Access is enabled only after the user defines a strong password through `POST /api/auth/activate-access`. Protected resends use `POST /api/users/{user}/resend-invitation` and require a senior administrator or `users.invite`/`users.resend_invitation`. Existing unit-user invitations remain supported.
+- Administrator visibility: `GET /api/administrators` lets senior administrators list all non-deleted senior and condominium administrators. Condominium administrators may list only administrators assigned to condominiums where they have the required permission. `GET /api/administrators/{administrator}` follows the same read scope. Do not broaden senior-administrator mutation access implicitly when changing shared administrator queries.
 
 Upcoming phases:
 
@@ -50,6 +51,8 @@ Whenever a migration is created, changed, or executed, run it together with seed
 
 Whenever API behavior changes, update the OpenAPI/Swagger documentation in the same change. This includes new or changed routes, request payloads, validation rules, response payloads, status codes, authentication requirements, permissions, query parameters, and examples. Every API operation must include request payload examples when it receives a body and response examples using the real API envelope or resource shape. After updating annotations, regenerate the documentation with `docker compose exec app php artisan openapi:generate`.
 
+Paginated collection endpoints use query parameters `page` and `per_page`, default to 20 items, and limit `per_page` to 100 unless a module has a documented reason to differ. Return the records in `data` and pagination information in `meta` with `current_page`, `per_page`, `total`, and `last_page`. Validate pagination through a module-specific FormRequest.
+
 ## Coding Style & Naming Conventions
 
 Follow Laravel conventions and PSR-12 formatting through Pint. Use 4-space indentation for PHP. Name controllers by module and action scope, for example `CondominiumController`, `RoleController`, and `MenuController`.
@@ -63,6 +66,16 @@ For normalized location data, use `countries.code` as the country identifier and
 Do not place `$request->validate()` rules inside API controllers. Create FormRequest classes under `app/Http/Requests/Api/{Module}` and inject them into controller actions. Name requests with the controller/action intent, for example `PaymentStoreRequest`, `MonthlyFeeGenerateRequest`, or `TreasuryHandoverCalculateRequest`.
 
 Controllers should call `$request->validated()` and remain focused on orchestration only. Cross-field, catalog, condominium-scoped, or reusable validation logic should live in dedicated rule classes under `app/Rules`, for example `ValidCatalogItem`, instead of being duplicated across requests.
+
+Every FormRequest must define explicit Spanish messages for all of its declared validation rules through `messages()`. Include wildcard messages for array elements, such as `condominium_ids.*.exists`. Reusable custom rules must return their own clear domain-specific message. Expected client errors must produce a field-level `422 validation_failed` response and must not be allowed to reach a database constraint and become a generic server error.
+
+For condominium create and update payloads, the external fields are `towers` and `houses`, which map to `towers_count` and `houses_count`. `total_units` is a separate explicit field and is not currently calculated from `houses`, apartments, or rows in `units`; send it when the total must be stored. Do not assume these counters remain synchronized automatically.
+
+## Condominium Status and Access
+
+Condominium deletion is a soft delete. It does not delete or disable associated users and does not revoke their sessions or tokens. Inactivation currently changes only `condominiums.is_active`; it does not disable memberships, prevent login, or enforce a platform-wide operational block. Authentication continues to depend on `users.is_access_enabled`.
+
+Do not claim that inactivation fully blocks condominium access until a centralized active-condominium check and session revocation behavior have been implemented and tested. Any future implementation must consistently cover context selection, route authorization, existing sessions, refresh tokens, users with another active condominium, and unrestricted platform access for senior administrators.
 
 ## Testing Guidelines
 

@@ -1407,13 +1407,13 @@
                                             "features": [
                                                 {
                                                     "id": 1,
-                                                    "code": "piscina",
-                                                    "name": "Piscina"
+                                                    "code": "seguridad_24_7",
+                                                    "name": "Seguridad 24/7"
                                                 },
                                                 {
                                                     "id": 2,
-                                                    "code": "gimnasio",
-                                                    "name": "Gimnasio"
+                                                    "code": "control_acceso",
+                                                    "name": "Control de acceso"
                                                 }
                                             ],
                                             "administrator": {
@@ -2306,6 +2306,27 @@
                 ],
                 "summary": "Listar condominios",
                 "operationId": "condominiumsIndex",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        },
+                        "example": 20
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Condominios encontrados",
@@ -2368,13 +2389,13 @@
                                             "features": [
                                                 {
                                                     "id": 1,
-                                                    "code": "piscina",
-                                                    "name": "Piscina"
+                                                    "code": "seguridad_24_7",
+                                                    "name": "Seguridad 24/7"
                                                 },
                                                 {
                                                     "id": 2,
-                                                    "code": "gimnasio",
-                                                    "name": "Gimnasio"
+                                                    "code": "control_acceso",
+                                                    "name": "Control de acceso"
                                                 }
                                             ],
                                             "administrator": {
@@ -2419,6 +2440,27 @@
                                     "message": "No se pudo procesar la solicitud.",
                                     "errors": {},
                                     "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Parámetros de paginación inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
                                     "meta": {}
                                 }
                             }
@@ -2723,13 +2765,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -2980,13 +3022,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -3305,13 +3347,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -3410,6 +3452,7 @@
                     "Condominios"
                 ],
                 "summary": "Eliminar condominio",
+                "description": "Realiza una eliminación lógica mediante deleted_at. No elimina ni inactiva a los usuarios asociados y no revoca automáticamente sus sesiones o tokens. El condominio deja de estar disponible mediante el enlace de modelo y las consultas Eloquent normales.",
                 "operationId": "condominiumsDestroy",
                 "responses": {
                     "200": {
@@ -3472,13 +3515,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -3541,6 +3584,7 @@
                     "Condominios"
                 ],
                 "summary": "Activar o inactivar condominio",
+                "description": "Actualiza exclusivamente condominiums.is_active. En el comportamiento actual no modifica usuarios, membresías, sesiones ni tokens; la restricción transversal de operaciones sobre condominios inactivos queda pendiente.",
                 "operationId": "condominiumsUpdateStatus",
                 "requestBody": {
                     "required": true,
@@ -3625,13 +3669,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -4255,13 +4299,13 @@
                                             "features": [
                                                 {
                                                     "id": 1,
-                                                    "code": "piscina",
-                                                    "name": "Piscina"
+                                                    "code": "seguridad_24_7",
+                                                    "name": "Seguridad 24/7"
                                                 },
                                                 {
                                                     "id": 2,
-                                                    "code": "gimnasio",
-                                                    "name": "Gimnasio"
+                                                    "code": "control_acceso",
+                                                    "name": "Control de acceso"
                                                 }
                                             ],
                                             "administrator": {
@@ -8491,13 +8535,13 @@
                                             "features": [
                                                 {
                                                     "id": 1,
-                                                    "code": "piscina",
-                                                    "name": "Piscina"
+                                                    "code": "seguridad_24_7",
+                                                    "name": "Seguridad 24/7"
                                                 },
                                                 {
                                                     "id": 2,
-                                                    "code": "gimnasio",
-                                                    "name": "Gimnasio"
+                                                    "code": "control_acceso",
+                                                    "name": "Control de acceso"
                                                 }
                                             ],
                                             "administrator": {
@@ -8789,13 +8833,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -8953,13 +8997,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -9088,13 +9132,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -9254,13 +9298,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -9389,13 +9433,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -9547,13 +9591,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -9709,13 +9753,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -9844,13 +9888,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -9928,7 +9972,18 @@
                                         "example": 15,
                                         "nullable": true
                                     },
+                                    "is_reservable": {
+                                        "description": "Indica si el área admite reservas.",
+                                        "type": "boolean",
+                                        "example": true,
+                                        "nullable": true
+                                    },
                                     "requires_approval": {
+                                        "type": "boolean",
+                                        "example": true,
+                                        "nullable": true
+                                    },
+                                    "is_active": {
                                         "type": "boolean",
                                         "example": true,
                                         "nullable": true
@@ -9942,7 +9997,9 @@
                                 "description": "Área social",
                                 "capacity": 40,
                                 "reservation_fee": 15,
-                                "requires_approval": true
+                                "is_reservable": true,
+                                "requires_approval": true,
+                                "is_active": true
                             }
                         }
                     }
@@ -10008,13 +10065,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -10143,13 +10200,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -10193,6 +10250,7 @@
                     "Operación diaria"
                 ],
                 "summary": "Crear reserva de área común",
+                "description": "Solo admite áreas activas con is_reservable=true.",
                 "operationId": "commonAreaReservationsStore",
                 "requestBody": {
                     "required": true,
@@ -10309,13 +10367,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -10348,7 +10406,7 @@
                         }
                     },
                     "422": {
-                        "description": "Datos inválidos",
+                        "description": "Datos inválidos, área no reservable o cruce de horarios",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -10444,13 +10502,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -10575,13 +10633,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -10706,13 +10764,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -10877,13 +10935,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -11012,13 +11070,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -11209,13 +11267,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -11385,13 +11443,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {
@@ -11520,13 +11578,13 @@
                                         "features": [
                                             {
                                                 "id": 1,
-                                                "code": "piscina",
-                                                "name": "Piscina"
+                                                "code": "seguridad_24_7",
+                                                "name": "Seguridad 24/7"
                                             },
                                             {
                                                 "id": 2,
-                                                "code": "gimnasio",
-                                                "name": "Gimnasio"
+                                                "code": "control_acceso",
+                                                "name": "Control de acceso"
                                             }
                                         ],
                                         "administrator": {

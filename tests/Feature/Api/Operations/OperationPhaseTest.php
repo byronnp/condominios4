@@ -111,12 +111,14 @@ class OperationPhaseTest extends TestCase
             'name' => 'Terraza',
             'capacity' => 20,
             'reservation_fee' => 10,
+            'is_reservable' => true,
             'requires_approval' => false,
         ], [
             'Authorization' => "Bearer {$token}",
         ])
             ->assertCreated()
-            ->assertJsonPath('data.code', 'terraza');
+            ->assertJsonPath('data.code', 'terraza')
+            ->assertJsonPath('data.is_reservable', true);
 
         $this->postJson("/api/condominiums/{$condominium->id}/common-area-reservations", [
             'common_area_id' => $area->json('data.id'),
@@ -140,6 +142,34 @@ class OperationPhaseTest extends TestCase
         ])
             ->assertStatus(422)
             ->assertJsonPath('code', 'reservation_overlap');
+    }
+
+    public function test_non_reservable_common_area_rejects_reservations(): void
+    {
+        $token = $this->loginToken();
+        $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
+        $unit = Unit::where('code', 'CASA-01')->firstOrFail();
+
+        $area = $this->postJson("/api/condominiums/{$condominium->id}/common-areas", [
+            'name' => 'Garita principal',
+            'is_reservable' => false,
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ])->assertCreated();
+
+        $this->postJson("/api/condominiums/{$condominium->id}/common-area-reservations", [
+            'common_area_id' => $area->json('data.id'),
+            'unit_id' => $unit->id,
+            'starts_at' => '2026-07-03 08:00:00',
+            'ends_at' => '2026-07-03 09:00:00',
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath(
+                'errors.common_area_id.0',
+                'El área común no existe, está inactiva o no admite reservas.',
+            );
     }
 
     public function test_incidents_and_maintenances_can_be_created(): void

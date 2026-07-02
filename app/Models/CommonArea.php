@@ -19,6 +19,7 @@ class CommonArea extends Model
         'description',
         'capacity',
         'reservation_fee',
+        'is_reservable',
         'requires_approval',
         'is_active',
     ];
@@ -28,6 +29,7 @@ class CommonArea extends Model
         return [
             'capacity' => 'integer',
             'reservation_fee' => 'decimal:2',
+            'is_reservable' => 'boolean',
             'requires_approval' => 'boolean',
             'is_active' => 'boolean',
         ];
