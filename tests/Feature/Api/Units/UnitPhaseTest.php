@@ -109,6 +109,39 @@ class UnitPhaseTest extends TestCase
             ->assertJsonFragment(['period_month' => 7]);
     }
 
+    public function test_units_can_be_paginated_on_the_server(): void
+    {
+        $token = $this->loginToken();
+        $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
+
+        $this->getJson("/api/condominiums/{$condominium->id}/units?page=1&per_page=2", [
+            'Authorization' => "Bearer {$token}",
+        ])
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.per_page', 2)
+            ->assertJsonStructure([
+                'meta' => ['current_page', 'per_page', 'total', 'last_page'],
+            ]);
+    }
+
+    public function test_unit_index_reports_invalid_pagination_parameters(): void
+    {
+        $token = $this->loginToken();
+        $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
+
+        $this->getJson("/api/condominiums/{$condominium->id}/units?page=0&per_page=101", [
+            'Authorization' => "Bearer {$token}",
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.page.0', 'La página debe ser al menos 1.')
+            ->assertJsonPath(
+                'errors.per_page.0',
+                'La cantidad de registros por página no puede ser mayor que 100.',
+            );
+    }
+
     public function test_person_without_access_cannot_login_until_invitation_is_accepted(): void
     {
         $tenant = User::where('document_number', '1723456789')->firstOrFail();

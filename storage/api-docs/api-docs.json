@@ -4866,6 +4866,27 @@
                 ],
                 "summary": "Listar unidades",
                 "operationId": "unitsIndex",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        },
+                        "example": 20
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Unidades encontradas",
@@ -4889,6 +4910,27 @@
                                             "is_active": true
                                         }
                                     ],
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Parámetros de paginación inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
                                     "meta": {}
                                 }
                             }

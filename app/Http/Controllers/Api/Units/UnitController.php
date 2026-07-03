@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Units;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Units\UnitIndexRequest;
 use App\Http\Requests\Api\Units\UnitStoreRequest;
 use App\Http\Resources\Api\Units\UnitResource;
 use App\Models\Condominium;
@@ -16,15 +17,24 @@ use OpenApi\Attributes as OA;
 
 class UnitController extends Controller
 {
-    #[OA\Get(path: '/api/condominiums/{condominium}/units', operationId: 'unitsIndex', summary: 'Listar unidades', tags: ['Unidades'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Unidades encontradas')])]
-    public function index(Condominium $condominium): JsonResponse
+    #[OA\Get(path: '/api/condominiums/{condominium}/units', operationId: 'unitsIndex', summary: 'Listar unidades', tags: ['Unidades'], security: [['bearerAuth' => []]], parameters: [new OA\Parameter(name: 'page', in: 'query', schema: new OA\Schema(type: 'integer', minimum: 1), example: 1), new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', minimum: 1, maximum: 100), example: 20)], responses: [new OA\Response(response: 200, description: 'Unidades encontradas'), new OA\Response(response: 422, description: 'Parámetros de paginación inválidos')])]
+    public function index(UnitIndexRequest $request, Condominium $condominium): JsonResponse
     {
+        $data = $request->validated();
+        $paginator = $condominium->units()
+            ->with(['block', 'parentUnit', 'childUnits.unitType', 'unitType'])
+            ->orderBy('code')
+            ->paginate($data['per_page'] ?? 20);
+
         return ApiResponse::success(
-            UnitResource::collection($condominium->units()
-                ->with(['block', 'parentUnit', 'childUnits.unitType', 'unitType'])
-                ->orderBy('code')
-                ->get()),
-            'Unidades encontradas.'
+            UnitResource::collection(collect($paginator->items())),
+            'Unidades encontradas.',
+            meta: [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+            ],
         );
     }
 
