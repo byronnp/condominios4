@@ -42,6 +42,26 @@ class UnitPhaseTest extends TestCase
         $this->assertDatabaseHas('user_billing_profiles', ['business_name' => 'ADMINISTRADOR CONDOMINIO']);
         $this->assertDatabaseHas('user_access_invitations', ['email' => 'ana.perez@example.com']);
         $this->assertDatabaseHas('permissions', ['code' => 'unit_users.manage_all']);
+
+        Condominium::query()
+            ->whereIn('slug', [
+                'condominio-jardines-del-valle',
+                'condominio-altos-del-bosque',
+                'condominio-villas-del-sol',
+            ])
+            ->each(function (Condominium $testCondominium): void {
+                $houses = $testCondominium->units()->where('code', 'like', 'CASA-%')->get();
+
+                $this->assertCount(5, $houses);
+
+                foreach ($houses as $testHouse) {
+                    $this->assertDatabaseHas('units', [
+                        'condominium_id' => $testCondominium->id,
+                        'parent_unit_id' => $testHouse->id,
+                        'code' => 'P-'.substr($testHouse->code, -2),
+                    ]);
+                }
+            });
     }
 
     public function test_admin_can_list_people_change_billing_responsible_and_create_access_invitation(): void
@@ -137,6 +157,56 @@ class UnitPhaseTest extends TestCase
             ->assertJsonFragment(['period_month' => 7]);
     }
 
+    public function test_senior_administrator_can_update_a_house(): void
+    {
+        $token = $this->loginToken();
+        $condominium = Condominium::where('slug', 'condominio-altos-del-bosque')->firstOrFail();
+        $house = $condominium->units()->where('code', 'CASA-01')->firstOrFail();
+
+        $this->patchJson("/api/condominiums/{$condominium->id}/units/{$house->id}", [
+            'number' => '01-A',
+            'area_m2' => 135.50,
+            'current_aliquot_percentage' => 6.25,
+            'aliquot_starts_on' => '2026-07-01',
+            'is_assignable' => false,
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.number', '01-A')
+            ->assertJsonPath('data.area_m2', '135.50')
+            ->assertJsonPath('data.current_aliquot_percentage', '6.2500')
+            ->assertJsonPath('data.is_assignable', false)
+            ->assertJsonFragment(['period_month' => 7, 'percentage' => '6.2500']);
+
+        $this->assertDatabaseHas('units', [
+            'id' => $house->id,
+            'number' => '01-A',
+            'area_m2' => 135.50,
+        ]);
+    }
+
+    public function test_condominium_administrator_can_only_update_units_in_its_condominium(): void
+    {
+        $token = $this->loginToken('admin.2.1@condominios.test', 'AdminTest123!');
+        $ownCondominium = Condominium::where('slug', 'condominio-altos-del-bosque')->firstOrFail();
+        $ownHouse = $ownCondominium->units()->where('code', 'CASA-01')->firstOrFail();
+        $otherCondominium = Condominium::where('slug', 'condominio-villas-del-sol')->firstOrFail();
+        $otherHouse = $otherCondominium->units()->where('code', 'CASA-01')->firstOrFail();
+
+        $this->patchJson("/api/condominiums/{$ownCondominium->id}/units/{$ownHouse->id}", [
+            'area_m2' => 140,
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ])->assertOk()->assertJsonPath('data.area_m2', '140.00');
+
+        $this->patchJson("/api/condominiums/{$otherCondominium->id}/units/{$otherHouse->id}", [
+            'area_m2' => 150,
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ])->assertForbidden();
+    }
+
     public function test_authenticated_user_can_get_a_house_by_its_id(): void
     {
         $token = $this->loginToken();
@@ -211,11 +281,11 @@ class UnitPhaseTest extends TestCase
         ])->assertUnauthorized();
     }
 
-    private function loginToken(): string
+    private function loginToken(string $email = 'byron_np@hotmail.com', string $password = 'admin123'): string
     {
         $response = $this->postJson('/api/auth/login', [
-            'email' => 'byron_np@hotmail.com',
-            'password' => 'admin123',
+            'email' => $email,
+            'password' => $password,
         ])->assertOk();
 
         return $response->json('data.access_token');

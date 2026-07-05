@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Units;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Units\UnitIndexRequest;
 use App\Http\Requests\Api\Units\UnitStoreRequest;
+use App\Http\Requests\Api\Units\UnitUpdateRequest;
 use App\Http\Resources\Api\Units\UnitResource;
 use App\Models\Condominium;
 use App\Models\Unit;
@@ -13,6 +14,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use OpenApi\Attributes as OA;
 
 class UnitController extends Controller
@@ -82,12 +84,125 @@ class UnitController extends Controller
         return ApiResponse::success(new UnitResource($unit->load(['block', 'parentUnit', 'unitType', 'aliquots'])), 'Unidad creada correctamente.', 201);
     }
 
-    #[OA\Get(path: '/api/condominiums/{condominium}/units/{unit}', operationId: 'unitsShow', summary: 'Obtener unidad', tags: ['Unidades'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Unidad encontrada')])]
+    #[OA\Get(
+        path: '/api/condominiums/{condominium}/units/{unit}',
+        operationId: 'unitsShow',
+        summary: 'Obtener una casa o unidad con sus unidades asociadas',
+        description: 'Devuelve el detalle de la unidad y sus unidades hijas en child_units. Los parqueaderos asociados a una casa aparecen en esta colección cuando su parent_unit_id corresponde al ID de la casa.',
+        tags: ['Unidades'],
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'condominium', description: 'ID del condominio', in: 'path', required: true, schema: new OA\Schema(type: 'integer', minimum: 1), example: 7),
+            new OA\Parameter(name: 'unit', description: 'ID de la casa o unidad', in: 'path', required: true, schema: new OA\Schema(type: 'integer', minimum: 1), example: 27),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Unidad encontrada con sus parqueaderos u otras unidades hijas asociadas',
+                content: new OA\JsonContent(example: [
+                    'success' => true,
+                    'message' => 'Unidad encontrada.',
+                    'data' => [
+                        'id' => 27,
+                        'condominium_id' => 7,
+                        'parent_unit_id' => null,
+                        'unit_type_id' => 101,
+                        'code' => 'CASA-01',
+                        'number' => '01',
+                        'floor' => null,
+                        'area_m2' => '120.00',
+                        'current_aliquot_percentage' => '5.0000',
+                        'is_assignable' => true,
+                        'is_active' => true,
+                        'child_units' => [[
+                            'id' => 30,
+                            'condominium_id' => 7,
+                            'parent_unit_id' => 27,
+                            'unit_type_id' => 103,
+                            'code' => 'P-12',
+                            'number' => '12',
+                            'area_m2' => '12.50',
+                            'is_assignable' => true,
+                            'is_active' => true,
+                            'unit_type' => [
+                                'id' => 103,
+                                'code' => 'parqueadero',
+                                'name' => 'Parqueadero',
+                            ],
+                        ]],
+                    ],
+                    'meta' => [],
+                ]),
+            ),
+            new OA\Response(response: 401, description: 'Token no proporcionado o inválido'),
+            new OA\Response(response: 404, description: 'Condominio o unidad no encontrada, o la unidad no pertenece al condominio'),
+        ],
+    )]
     public function show(Condominium $condominium, Unit $unit): JsonResponse
     {
         abort_if($unit->condominium_id !== $condominium->id, 404);
 
         return $this->unitResponse($unit);
+    }
+
+    #[OA\Patch(
+        path: '/api/condominiums/{condominium}/units/{unit}',
+        operationId: 'unitsUpdate',
+        summary: 'Actualizar una casa o unidad',
+        description: 'Actualiza parcialmente una unidad perteneciente al condominio. Requiere ser administrador sénior o tener el permiso units.manage en el condominio.',
+        tags: ['Unidades'],
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'condominium', in: 'path', required: true, schema: new OA\Schema(type: 'integer', minimum: 1), example: 7),
+            new OA\Parameter(name: 'unit', in: 'path', required: true, schema: new OA\Schema(type: 'integer', minimum: 1), example: 27),
+        ],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(example: [
+            'number' => '01',
+            'area_m2' => 135.50,
+            'current_aliquot_percentage' => 6.25,
+            'aliquot_starts_on' => '2026-07-01',
+            'is_assignable' => true,
+            'is_active' => true,
+        ])),
+        responses: [
+            new OA\Response(response: 200, description: 'Unidad actualizada correctamente'),
+            new OA\Response(response: 401, description: 'Token no proporcionado o inválido'),
+            new OA\Response(response: 403, description: 'Sin permiso para actualizar la unidad'),
+            new OA\Response(response: 404, description: 'Condominio o unidad no encontrada, o la unidad no pertenece al condominio'),
+            new OA\Response(response: 422, description: 'Datos inválidos'),
+        ],
+    )]
+    public function update(UnitUpdateRequest $request, Condominium $condominium, Unit $unit): JsonResponse
+    {
+        abort_if($unit->condominium_id !== $condominium->id, 404);
+        Gate::authorize('update', $unit);
+
+        $data = $request->validated();
+
+        DB::transaction(function () use ($unit, $data): void {
+            $unit->update(collect($data)->except('aliquot_starts_on')->all());
+
+            if (array_key_exists('current_aliquot_percentage', $data) && $data['current_aliquot_percentage'] !== null) {
+                $startsOn = CarbonImmutable::parse($data['aliquot_starts_on']);
+
+                $unit->aliquots()->updateOrCreate([
+                    'period_year' => (int) $startsOn->format('Y'),
+                    'period_month' => (int) $startsOn->format('m'),
+                ], [
+                    'percentage' => $data['current_aliquot_percentage'],
+                    'amount' => null,
+                    'starts_on' => $startsOn->startOfMonth()->toDateString(),
+                    'ends_on' => $startsOn->endOfMonth()->toDateString(),
+                    'status' => 'active',
+                    'is_active' => true,
+                ]);
+            }
+        });
+
+        return ApiResponse::success(
+            new UnitResource($unit->fresh()->load(['condominium', 'block', 'parentUnit', 'childUnits.unitType', 'unitType', 'aliquots'])),
+            'Unidad actualizada correctamente.'
+        );
     }
 
     #[OA\Get(

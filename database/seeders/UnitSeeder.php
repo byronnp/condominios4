@@ -113,7 +113,12 @@ class UnitSeeder extends Seeder
         $this->billingProfile($owner, $documentTypes->get('cedula')->id, true);
         $this->billingProfile($tenant, $documentTypes->get('cedula')->id, true);
 
-        $this->seedTestHouses($documentTypes->get('cedula')->id, $unitTypes->get('casa')->id, $relationships->get('propietario')->id);
+        $this->seedTestHouses(
+            $documentTypes->get('cedula')->id,
+            $unitTypes->get('casa')->id,
+            $unitTypes->get('parqueadero')->id,
+            $relationships->get('propietario')->id,
+        );
 
         $house->aliquots()->updateOrCreate([
             'period_year' => 2026,
@@ -148,7 +153,7 @@ class UnitSeeder extends Seeder
         ]);
     }
 
-    private function seedTestHouses(int $documentTypeId, int $houseTypeId, int $ownerRelationshipTypeId): void
+    private function seedTestHouses(int $documentTypeId, int $houseTypeId, int $parkingTypeId, int $ownerRelationshipTypeId): void
     {
         $condominiums = Condominium::query()
             ->whereIn('slug', [
@@ -179,6 +184,21 @@ class UnitSeeder extends Seeder
                     'floor' => null,
                     'area_m2' => 100 + ($houseNumber * 5),
                     'current_aliquot_percentage' => 20.0000,
+                    'is_assignable' => true,
+                    'is_active' => true,
+                ]);
+
+                Unit::updateOrCreate([
+                    'condominium_id' => $condominium->id,
+                    'code' => sprintf('P-%02d', $houseNumber),
+                ], [
+                    'condominium_block_id' => null,
+                    'parent_unit_id' => $house->id,
+                    'unit_type_id' => $parkingTypeId,
+                    'number' => sprintf('%02d', $houseNumber),
+                    'floor' => null,
+                    'area_m2' => 12.50,
+                    'current_aliquot_percentage' => 0,
                     'is_assignable' => true,
                     'is_active' => true,
                 ]);
