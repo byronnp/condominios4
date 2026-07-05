@@ -113,6 +113,8 @@ class UnitSeeder extends Seeder
         $this->billingProfile($owner, $documentTypes->get('cedula')->id, true);
         $this->billingProfile($tenant, $documentTypes->get('cedula')->id, true);
 
+        $this->seedTestHouses($documentTypes->get('cedula')->id, $unitTypes->get('casa')->id, $relationships->get('propietario')->id);
+
         $house->aliquots()->updateOrCreate([
             'period_year' => 2026,
             'period_month' => 6,
@@ -144,6 +146,47 @@ class UnitSeeder extends Seeder
             'cancel_reason' => null,
             'deleted_at' => null,
         ]);
+    }
+
+    private function seedTestHouses(int $documentTypeId, int $houseTypeId, int $ownerRelationshipTypeId): void
+    {
+        $condominiums = Condominium::query()
+            ->whereIn('slug', [
+                'condominio-jardines-del-valle',
+                'condominio-altos-del-bosque',
+                'condominio-villas-del-sol',
+            ])
+            ->orderBy('id')
+            ->get();
+
+        foreach ($condominiums as $condominiumIndex => $condominium) {
+            for ($houseNumber = 1; $houseNumber <= 5; $houseNumber++) {
+                $owner = $this->person(sprintf('18%02d%06d', $condominiumIndex + 1, $houseNumber), [
+                    'name' => "PROPIETARIO CASA {$houseNumber} {$condominium->name}",
+                    'first_name' => "PROPIETARIO CASA {$houseNumber}",
+                    'last_name' => $condominium->name,
+                    'phone' => sprintf('097%07d', (($condominiumIndex + 1) * 10) + $houseNumber),
+                ], $documentTypeId);
+
+                $house = Unit::updateOrCreate([
+                    'condominium_id' => $condominium->id,
+                    'code' => sprintf('CASA-%02d', $houseNumber),
+                ], [
+                    'condominium_block_id' => null,
+                    'parent_unit_id' => null,
+                    'unit_type_id' => $houseTypeId,
+                    'number' => sprintf('%02d', $houseNumber),
+                    'floor' => null,
+                    'area_m2' => 100 + ($houseNumber * 5),
+                    'current_aliquot_percentage' => 20.0000,
+                    'is_assignable' => true,
+                    'is_active' => true,
+                ]);
+
+                $this->attachPerson($house, $owner, $ownerRelationshipTypeId, true, true, '2026-01-01');
+                $this->billingProfile($owner, $documentTypeId, true);
+            }
+        }
     }
 
     private function person(string $documentNumber, array $data, int $documentTypeId): User

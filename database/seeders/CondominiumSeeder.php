@@ -49,6 +49,34 @@ class CondominiumSeeder extends Seeder
 
         $this->syncFeatures($condominium);
 
+        foreach ($this->testCondominiums() as $index => $data) {
+            $testCondominium = Condominium::updateOrCreate([
+                'slug' => $data['slug'],
+            ], [
+                'name' => $data['name'],
+                'ruc' => $data['ruc'],
+                'condominium_type_id' => $condominiumType?->id,
+                'description' => 'Condominio de prueba con administradores, casas y propietarios precargados.',
+                'email' => $data['email'],
+                'phone' => $data['phone'],
+                'address' => $data['address'],
+                'address_reference' => $data['address_reference'],
+                'country_code' => $country?->code ?? 'EC',
+                'province_id' => $province?->id,
+                'city_id' => $city?->id,
+                'latitude' => $data['latitude'],
+                'longitude' => $data['longitude'],
+                'towers_count' => 0,
+                'houses_count' => 5,
+                'logo_path' => null,
+                'total_units' => 5,
+                'is_active' => true,
+            ]);
+
+            $this->syncFeatures($testCondominium);
+            $this->seedAdministrators($testCondominium, $index + 1);
+        }
+
         User::query()
             ->whereIn('email', ['byronnp@gmail.com', 'swagger.admin@example.com'])
             ->get()
@@ -82,6 +110,77 @@ class CondominiumSeeder extends Seeder
             ->whereNull('slug')
             ->get()
             ->each(fn (Condominium $item) => $item->update(['slug' => Str::slug($item->name)]));
+    }
+
+    private function seedAdministrators(Condominium $condominium, int $condominiumNumber): void
+    {
+        $documentTypeId = CatalogItem::whereHas('catalog', fn ($query) => $query->where('code', 'document_types'))
+            ->where('code', 'cedula')
+            ->value('id');
+
+        for ($administratorNumber = 1; $administratorNumber <= 3; $administratorNumber++) {
+            $administrator = User::updateOrCreate([
+                'email' => "admin.{$condominiumNumber}.{$administratorNumber}@condominios.test",
+            ], [
+                'name' => "ADMINISTRADOR {$administratorNumber} CONDOMINIO {$condominiumNumber}",
+                'first_name' => "ADMINISTRADOR {$administratorNumber}",
+                'last_name' => "CONDOMINIO {$condominiumNumber}",
+                'password' => 'AdminTest123!',
+                'country' => 'EC',
+                'document_type_id' => $documentTypeId,
+                'document_number' => sprintf('179%03d%04d', $condominiumNumber, $administratorNumber),
+                'phone' => sprintf('098%07d', ($condominiumNumber * 10) + $administratorNumber),
+                'secondary_phone' => null,
+                'is_access_enabled' => true,
+            ]);
+
+            $condominium->users()->syncWithoutDetaching([
+                $administrator->id => [
+                    'is_active' => true,
+                    'joined_at' => now(),
+                    'deleted_at' => null,
+                ],
+            ]);
+        }
+    }
+
+    private function testCondominiums(): array
+    {
+        return [
+            [
+                'slug' => 'condominio-jardines-del-valle',
+                'name' => 'Condominio Jardines del Valle',
+                'ruc' => '1799999999002',
+                'email' => 'administracion@jardinesdelvalle.test',
+                'phone' => '022900001',
+                'address' => 'Av. Ilaló y Río Zamora',
+                'address_reference' => 'Sector Valle de Los Chillos.',
+                'latitude' => -0.2851,
+                'longitude' => -78.4552,
+            ],
+            [
+                'slug' => 'condominio-altos-del-bosque',
+                'name' => 'Condominio Altos del Bosque',
+                'ruc' => '1799999999003',
+                'email' => 'administracion@altosdelbosque.test',
+                'phone' => '022900002',
+                'address' => 'Av. Occidental y Machala',
+                'address_reference' => 'Junto al parque del sector.',
+                'latitude' => -0.1458,
+                'longitude' => -78.5036,
+            ],
+            [
+                'slug' => 'condominio-villas-del-sol',
+                'name' => 'Condominio Villas del Sol',
+                'ruc' => '1799999999004',
+                'email' => 'administracion@villasdelsol.test',
+                'phone' => '022900003',
+                'address' => 'Av. Simón Bolívar y Ruta Viva',
+                'address_reference' => 'Ingreso por la vía principal.',
+                'latitude' => -0.2094,
+                'longitude' => -78.4217,
+            ],
+        ];
     }
 
     private function syncFeatures(Condominium $condominium): void

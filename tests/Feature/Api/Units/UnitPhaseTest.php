@@ -88,6 +88,34 @@ class UnitPhaseTest extends TestCase
         ])->assertOk();
     }
 
+    public function test_senior_administrator_can_assign_an_owner_to_any_condominium_house(): void
+    {
+        $token = $this->loginToken();
+        $condominium = Condominium::where('slug', 'condominio-altos-del-bosque')->firstOrFail();
+        $house = $condominium->units()->where('code', 'CASA-01')->firstOrFail();
+        $documentTypeId = Catalog::where('code', 'document_types')->firstOrFail()->items()->where('code', 'cedula')->value('id');
+        $relationshipTypeId = Catalog::where('code', 'resident_relationship_types')->firstOrFail()->items()->where('code', 'propietario')->value('id');
+
+        $this->postJson("/api/condominiums/{$condominium->id}/units/{$house->id}/users", [
+            'name' => 'Viviana Castro',
+            'first_name' => 'Viviana',
+            'last_name' => 'Castro',
+            'country' => 'EC',
+            'document_type_id' => $documentTypeId,
+            'document_number' => '1478523655',
+            'phone' => '0987654321',
+            'relationship_type_id' => $relationshipTypeId,
+            'started_at' => '2026-07-04',
+            'is_primary' => true,
+            'is_billing_responsible' => true,
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.user.document_number', '1478523655')
+            ->assertJsonPath('data.unit_relation.relationship_code', 'propietario');
+    }
+
     public function test_unit_can_be_created_with_initial_aliquot(): void
     {
         $token = $this->loginToken();
@@ -107,6 +135,34 @@ class UnitPhaseTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.code', 'CASA-02')
             ->assertJsonFragment(['period_month' => 7]);
+    }
+
+    public function test_authenticated_user_can_get_a_house_by_its_id(): void
+    {
+        $token = $this->loginToken();
+        $house = Unit::where('code', 'CASA-01')->firstOrFail();
+
+        $this->getJson("/api/units/{$house->id}", [
+            'Authorization' => "Bearer {$token}",
+        ])
+            ->assertOk()
+            ->assertJsonPath('message', 'Unidad encontrada.')
+            ->assertJsonPath('data.id', $house->id)
+            ->assertJsonPath('data.code', 'CASA-01')
+            ->assertJsonPath('data.condominium.id', $house->condominium_id);
+    }
+
+    public function test_house_by_id_requires_authentication_and_reports_unknown_ids(): void
+    {
+        $house = Unit::where('code', 'CASA-01')->firstOrFail();
+
+        $this->getJson("/api/units/{$house->id}")->assertUnauthorized();
+
+        $token = $this->loginToken();
+
+        $this->getJson('/api/units/999999', [
+            'Authorization' => "Bearer {$token}",
+        ])->assertNotFound();
     }
 
     public function test_units_can_be_paginated_on_the_server(): void

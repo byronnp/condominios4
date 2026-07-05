@@ -33,7 +33,7 @@ class UnitUserController extends Controller
         path: '/api/condominiums/{condominium}/units/{unit}/users',
         operationId: 'unitUsersStore',
         summary: 'Agregar persona a unidad',
-        description: 'Crea o reutiliza una persona por país, tipo y número de documento, y la relaciona con la unidad. La persona queda sin email, sin contraseña y con is_access_enabled=false hasta que se genere y acepte una invitación de acceso.',
+        description: 'Crea o reutiliza una persona por país, tipo y número de documento, y la relaciona con la unidad. El administrador sénior puede operar en cualquier condominio; los demás usuarios requieren el permiso correspondiente o ser propietarios autorizados para la relación. La persona queda sin email, sin contraseña y con is_access_enabled=false hasta que se genere y acepte una invitación de acceso.',
         tags: ['Personas por unidad'],
         security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
@@ -54,7 +54,7 @@ class UnitUserController extends Controller
                 new OA\Property(property: 'is_billing_responsible', type: 'boolean', nullable: true, example: true),
             ]
         )),
-        responses: [new OA\Response(response: 201, description: 'Persona agregada'), new OA\Response(response: 422, description: 'Datos inválidos')]
+        responses: [new OA\Response(response: 201, description: 'Persona agregada'), new OA\Response(response: 403, description: 'Sin autorización para agregar esta relación'), new OA\Response(response: 422, description: 'Datos inválidos')]
     )]
     public function store(UnitUserStoreRequest $request, Condominium $condominium, Unit $unit): JsonResponse
     {
@@ -205,7 +205,9 @@ class UnitUserController extends Controller
 
     private function canManageRelationship(Request $request, Condominium $condominium, Unit $unit, string $relationshipCode): bool
     {
-        if ($request->user()->hasPermission('unit_users.manage_all', $condominium) || $request->user()->hasPermission('unit_users.create', $condominium)) {
+        if ($request->user()->isPlatformAdmin()
+            || $request->user()->hasPermission('unit_users.manage_all', $condominium)
+            || $request->user()->hasPermission('unit_users.create', $condominium)) {
             return true;
         }
 
