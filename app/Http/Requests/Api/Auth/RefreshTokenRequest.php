@@ -20,4 +20,15 @@ class RefreshTokenRequest extends FormRequest
             'refresh_token' => ['required', 'string'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'refresh_token.required' => 'El refresh token es obligatorio.',
+            'refresh_token.string' => 'El refresh token debe ser una cadena de texto.',
+        ];
+    }
 }

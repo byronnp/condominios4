@@ -2,14 +2,20 @@
 
 namespace App\Domain\Auth\Services;
 
+use App\Exceptions\Auth\InvalidCredentialsException;
+use App\Exceptions\Auth\RefreshTokenExpiredException;
+use App\Exceptions\Auth\RefreshTokenRevokedException;
+use App\Exceptions\Auth\SessionInactiveException;
+use App\Exceptions\Auth\UserAccessDisabledException;
+use App\Exceptions\Auth\UserInactiveException;
 use App\Models\AuthSession;
 use App\Models\RefreshToken;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class AuthService
 {
@@ -48,17 +54,11 @@ class AuthService
     {
         $user = User::where('email', $data['email'])->first();
 
-        if (! $user) {
-            throw new RuntimeException('Credenciales inválidas.');
+        if (! $user || ! Hash::check($data['password'], $user->password ?? '')) {
+            throw new InvalidCredentialsException();
         }
 
-        if (! $user->is_access_enabled) {
-            throw new RuntimeException('Tu acceso aún no ha sido activado. Revisa tu correo de invitación.');
-        }
-
-        if (! $user->password || ! Hash::check($data['password'], $user->password)) {
-            throw new RuntimeException('Credenciales inválidas.');
-        }
+        $this->ensureUserCanAuthenticate($user);
 
         return DB::transaction(fn (): array => $this->createSessionTokens($user, $request));
     }
@@ -69,16 +69,33 @@ class AuthService
     public function refresh(string $refreshToken, Request $request): array
     {
         return DB::transaction(function () use ($refreshToken, $request): array {
-            $storedToken = RefreshToken::query()
-                ->valid()
+            $storedToken = RefreshToken::withTrashed()
                 ->where('token_hash', $this->hashRefreshToken($refreshToken))
                 ->with(['user', 'authSession'])
                 ->lockForUpdate()
                 ->first();
 
-            if (! $storedToken || ! $storedToken->authSession->is_active) {
-                throw new RuntimeException('Refresh token inválido o expirado.');
+            if (! $storedToken) {
+                throw new RefreshTokenExpiredException();
             }
+
+            if ($storedToken->revoked_at !== null) {
+                throw new RefreshTokenRevokedException();
+            }
+
+            if ($storedToken->expires_at->isPast()) {
+                throw new RefreshTokenExpiredException();
+            }
+
+            if (! $storedToken->authSession || ! $storedToken->authSession->is_active || $storedToken->authSession->ended_at !== null) {
+                throw new SessionInactiveException();
+            }
+
+            if (! $storedToken->user) {
+                throw new RefreshTokenExpiredException();
+            }
+
+            $this->ensureUserCanAuthenticate($storedToken->user);
 
             $storedToken->update([
                 'revoked_at' => now(),
@@ -143,6 +160,26 @@ class AuthService
                     'revoke_reason' => 'logout_all',
                 ]);
         });
+    }
+
+    private function ensureUserCanAuthenticate(User $user): void
+    {
+        if ($this->isUserInactive($user)) {
+            throw new UserInactiveException();
+        }
+
+        if (! $user->is_access_enabled) {
+            throw new UserAccessDisabledException();
+        }
+    }
+
+    private function isUserInactive(User $user): bool
+    {
+        if (! Schema::hasColumn($user->getTable(), 'is_active')) {
+            return false;
+        }
+
+        return ! (bool) $user->getAttribute('is_active');
     }
 
     /**

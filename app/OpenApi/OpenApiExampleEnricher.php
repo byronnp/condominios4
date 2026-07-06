@@ -137,12 +137,9 @@ class OpenApiExampleEnricher
 
         return [
             'POST /api/auth/register' => $register,
-            'POST /api/register' => $register,
             'POST /api/auth/login' => $login,
-            'POST /api/login' => $login,
             'POST /api/auth/refresh' => ['refresh_token' => 'refresh-token'],
             'POST /api/auth/logout' => ['refresh_token' => 'refresh-token'],
-            'POST /api/logout' => ['refresh_token' => 'refresh-token'],
             'POST /api/users' => [
                 'first_name' => 'Ana',
                 'last_name' => 'Pérez',
@@ -363,11 +360,9 @@ class OpenApiExampleEnricher
         return match (true) {
             str_contains($operationKey, '/auth/login'),
             str_contains($operationKey, '/auth/register'),
-            $operationKey === 'POST /api/login',
-            $operationKey === 'POST /api/register',
             str_contains($operationKey, '/auth/refresh') => $this->tokens(),
             str_contains($operationKey, '/auth/me'),
-            $operationKey === 'GET /api/user' => [
+            $operationKey === 'GET /api/auth/me' => [
                 'user' => $this->user(),
                 'platform_role' => [
                     'id' => 1,

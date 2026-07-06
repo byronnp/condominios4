@@ -492,18 +492,6 @@ class ApiEndpointDocumentation
     )]
     public function accessInvitationsCancel(): void {}
 
-    #[OA\Post(path: '/api/register', operationId: 'legacyAuthRegister', summary: 'Registrar usuario (ruta legacy)', tags: ['Autenticación'], responses: [new OA\Response(response: 201, description: 'Usuario registrado'), new OA\Response(response: 422, description: 'Datos inválidos')])]
-    public function legacyAuthRegister(): void {}
-
-    #[OA\Post(path: '/api/login', operationId: 'legacyAuthLogin', summary: 'Iniciar sesión (ruta legacy)', tags: ['Autenticación'], responses: [new OA\Response(response: 200, description: 'Sesión iniciada'), new OA\Response(response: 401, description: 'Credenciales inválidas')])]
-    public function legacyAuthLogin(): void {}
-
-    #[OA\Post(path: '/api/logout', operationId: 'legacyAuthLogout', summary: 'Cerrar sesión (ruta legacy)', tags: ['Autenticación'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Sesión cerrada'), new OA\Response(response: 401, description: 'No autenticado')])]
-    public function legacyAuthLogout(): void {}
-
-    #[OA\Get(path: '/api/user', operationId: 'legacyAuthUser', summary: 'Obtener usuario autenticado (ruta legacy)', tags: ['Autenticación'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Usuario autenticado')])]
-    public function legacyAuthUser(): void {}
-
     #[OA\Get(path: '/api/tenants', operationId: 'tenantsIndex', summary: 'Listar tenants legacy', tags: ['Tenants'], security: [['apiToken' => []]], responses: [new OA\Response(response: 200, description: 'Tenants encontrados')])]
     public function tenantsIndex(): void {}
 

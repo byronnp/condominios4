@@ -20,4 +20,14 @@ class LogoutRequest extends FormRequest
             'refresh_token' => ['nullable', 'string'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'refresh_token.string' => 'El refresh token debe ser una cadena de texto.',
+        ];
+    }
 }

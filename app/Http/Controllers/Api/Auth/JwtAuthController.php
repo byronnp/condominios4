@@ -22,7 +22,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use OpenApi\Attributes as OA;
-use RuntimeException;
 
 class JwtAuthController extends Controller
 {
@@ -35,7 +34,7 @@ class JwtAuthController extends Controller
         path: '/api/auth/register',
         operationId: 'authRegister',
         summary: 'Registrar usuario',
-        description: 'Registra un usuario público con contraseña, habilita el acceso inmediatamente y devuelve tokens de sesión. Este flujo no crea asignaciones a condominios ni invitaciones.',
+        description: 'Registro restringido. En local/testing permanece disponible para desarrollo; en producción se protege para administradores senior autenticados. Este flujo no crea asignaciones a condominios ni invitaciones.',
         tags: ['Autenticación'],
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
             required: ['email', 'password', 'password_confirmation', 'country', 'document_type_id', 'document_number'],
@@ -52,7 +51,7 @@ class JwtAuthController extends Controller
                 new OA\Property(property: 'device_name', type: 'string', nullable: true, example: 'Swagger UI'),
             ]
         )),
-        responses: [new OA\Response(response: 201, description: 'Usuario registrado'), new OA\Response(response: 422, description: 'Datos inválidos')]
+        responses: [new OA\Response(response: 201, description: 'Usuario registrado'), new OA\Response(response: 403, description: 'Acceso restringido'), new OA\Response(response: 422, description: 'Datos inválidos')]
     )]
     public function register(RegisterRequest $request): JsonResponse
     {
@@ -65,14 +64,10 @@ class JwtAuthController extends Controller
         );
     }
 
-    #[OA\Post(path: '/api/auth/login', operationId: 'authLogin', summary: 'Iniciar sesión', tags: ['Autenticación'], responses: [new OA\Response(response: 200, description: 'Sesión iniciada'), new OA\Response(response: 401, description: 'Credenciales inválidas')])]
+    #[OA\Post(path: '/api/auth/login', operationId: 'authLogin', summary: 'Iniciar sesión', tags: ['Autenticación'], responses: [new OA\Response(response: 200, description: 'Sesión iniciada'), new OA\Response(response: 401, description: 'Credenciales inválidas'), new OA\Response(response: 403, description: 'Usuario deshabilitado o inactivo'), new OA\Response(response: 429, description: 'Demasiados intentos')])]
     public function login(LoginRequest $request): JsonResponse
     {
-        try {
-            $tokens = $this->authService->login($request->validated(), $request);
-        } catch (RuntimeException $exception) {
-            return ApiResponse::error($exception->getMessage(), 401, code: 'invalid_credentials');
-        }
+        $tokens = $this->authService->login($request->validated(), $request);
 
         return ApiResponse::success(
             data: $this->tokenResponse($tokens),
@@ -80,14 +75,10 @@ class JwtAuthController extends Controller
         );
     }
 
-    #[OA\Post(path: '/api/auth/refresh', operationId: 'authRefresh', summary: 'Renovar access token', tags: ['Autenticación'], responses: [new OA\Response(response: 200, description: 'Token renovado'), new OA\Response(response: 401, description: 'Refresh token inválido')])]
+    #[OA\Post(path: '/api/auth/refresh', operationId: 'authRefresh', summary: 'Renovar access token', tags: ['Autenticación'], responses: [new OA\Response(response: 200, description: 'Token renovado'), new OA\Response(response: 401, description: 'Refresh token inválido o expirado'), new OA\Response(response: 403, description: 'Usuario deshabilitado o inactivo'), new OA\Response(response: 429, description: 'Demasiados intentos')])]
     public function refresh(RefreshTokenRequest $request): JsonResponse
     {
-        try {
-            $tokens = $this->authService->refresh($request->validated('refresh_token'), $request);
-        } catch (RuntimeException $exception) {
-            return ApiResponse::error($exception->getMessage(), 401, code: 'refresh_token_invalid');
-        }
+        $tokens = $this->authService->refresh($request->validated('refresh_token'), $request);
 
         return ApiResponse::success(
             data: $this->tokenResponse($tokens),

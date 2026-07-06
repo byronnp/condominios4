@@ -44,14 +44,27 @@ class AuthenticateJwt
         }
 
         $user = User::find((int) $payload->sub);
+
+        if (! $user) {
+            return ApiResponse::error('Sesión inválida o expirada.', 401, code: 'session_invalid');
+        }
+
         $session = AuthSession::query()
             ->active()
             ->whereKey((int) $payload->auth_session_id)
-            ->where('user_id', $user?->id)
+            ->where('user_id', $user->id)
             ->first();
 
-        if (! $user || ! $session) {
+        if (! $session) {
             return ApiResponse::error('Sesión inválida o expirada.', 401, code: 'session_invalid');
+        }
+
+        if (! $user->is_access_enabled) {
+            return ApiResponse::error('Tu acceso aún no ha sido activado. Revisa tu correo de invitación.', 403, code: 'user_access_disabled');
+        }
+
+        if ($this->userIsInactive($user)) {
+            return ApiResponse::error('El usuario está inactivo.', 403, code: 'user_inactive');
         }
 
         $session->update(['last_activity_at' => now()]);
@@ -62,5 +75,14 @@ class AuthenticateJwt
         $request->attributes->set('auth_session', $session);
 
         return $next($request);
+    }
+
+    private function userIsInactive(User $user): bool
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasColumn($user->getTable(), 'is_active')) {
+            return false;
+        }
+
+        return ! (bool) $user->getAttribute('is_active');
     }
 }

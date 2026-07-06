@@ -6,7 +6,10 @@ use App\Models\Condominium;
 use App\Models\User;
 use App\Policies\CondominiumPolicy;
 use App\Policies\UserPolicy;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -26,5 +29,17 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(Condominium::class, CondominiumPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+
+        RateLimiter::for('auth-login', function (Request $request): Limit {
+            return Limit::perMinute(5)->by(sprintf('%s|%s', $request->ip(), (string) $request->input('email')));
+        });
+
+        RateLimiter::for('auth-refresh', function (Request $request): Limit {
+            return Limit::perMinute(10)->by($request->ip());
+        });
+
+        RateLimiter::for('auth-activate-access', function (Request $request): Limit {
+            return Limit::perMinute(5)->by($request->ip());
+        });
     }
 }

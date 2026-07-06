@@ -2,6 +2,8 @@
 
 namespace App\Domain\Users\Services;
 
+use App\Exceptions\Auth\InvitationAlreadyUsedException;
+use App\Exceptions\Auth\InvitationExpiredException;
 use App\Mail\UserAccessInvitationMail;
 use App\Models\Condominium;
 use App\Models\Role;
@@ -10,7 +12,6 @@ use App\Models\UserAccessInvitation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class UserInvitationService
 {
@@ -41,20 +42,19 @@ class UserInvitationService
     /** @param array<string, mixed> $data */
     public function accept(array $data): UserAccessInvitation
     {
-        $result = DB::transaction(function () use ($data): UserAccessInvitation|string {
+        $result = DB::transaction(function () use ($data): UserAccessInvitation {
             $invitation = UserAccessInvitation::query()
                 ->where('token_hash', hash('sha256', $data['token']))
                 ->lockForUpdate()
                 ->first();
 
             if (! $invitation || $invitation->status !== UserAccessInvitation::STATUS_PENDING || $invitation->revoked_at !== null) {
-                throw new RuntimeException('Invitación inválida o ya utilizada.');
+                throw new InvitationAlreadyUsedException();
             }
 
             if ($invitation->expires_at->isPast()) {
                 $invitation->update(['status' => UserAccessInvitation::STATUS_EXPIRED, 'token_hash' => null]);
-
-                return 'La invitación ha expirado. Solicita un nuevo envío.';
+                throw new InvitationExpiredException();
             }
 
             $assigned = $invitation->unit_id !== null
@@ -71,7 +71,7 @@ class UserInvitationService
                     ->exists();
 
             if (! $invitation->user || ! $assigned) {
-                throw new RuntimeException('La invitación ya no es válida.');
+                throw new InvitationAlreadyUsedException();
             }
 
             $invitation->user->update([
@@ -96,10 +96,6 @@ class UserInvitationService
 
             return $invitation;
         });
-
-        if (is_string($result)) {
-            throw new RuntimeException($result);
-        }
 
         return $result;
     }

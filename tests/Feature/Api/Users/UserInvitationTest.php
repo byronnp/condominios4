@@ -56,14 +56,55 @@ class UserInvitationTest extends TestCase
 
         $this->postJson('/api/auth/login', ['email' => $user->email, 'password' => 'ClaveSegura123!'])
             ->assertUnauthorized()
-            ->assertJsonPath('message', 'Tu acceso aún no ha sido activado. Revisa tu correo de invitación.');
+            ->assertJsonPath('message', 'Credenciales inválidas.');
 
         $payload = ['token' => $mail->plainToken, 'password' => 'ClaveSegura123!', 'password_confirmation' => 'ClaveSegura123!'];
         $this->postJson('/api/auth/activate-access', $payload)->assertOk();
-        $this->postJson('/api/auth/activate-access', $payload)->assertUnprocessable();
+        $this->postJson('/api/auth/activate-access', $payload)
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'access_invitation_used');
         $this->postJson('/api/auth/login', ['email' => $user->email, 'password' => 'ClaveSegura123!'])->assertOk();
 
         $this->assertDatabaseHas('user_access_invitations', ['user_id' => $user->id, 'status' => 'accepted', 'token_hash' => null]);
+    }
+
+    public function test_activate_access_rejects_expired_invitation(): void
+    {
+        Mail::fake();
+        $actor = User::where('email', 'byron_np@hotmail.com')->firstOrFail();
+        $condominium = Condominium::firstOrFail();
+        $role = Role::where('condominium_id', $condominium->id)->where('code', 'administrador')->firstOrFail();
+        $user = User::create([
+            'first_name' => 'Expirada',
+            'last_name' => 'Segura',
+            'email' => 'expirada@example.com',
+            'country' => 'EC',
+            'document_number' => 'INV-EXPIRED',
+            'password' => null,
+            'is_access_enabled' => false,
+        ]);
+        $condominium->users()->attach($user->id, ['is_active' => true, 'joined_at' => now()]);
+
+        app(UserInvitationService::class)->invite($user, $condominium, $role, $actor);
+
+        $mail = null;
+        Mail::assertQueued(UserAccessInvitationMail::class, function (UserAccessInvitationMail $queued) use (&$mail): bool {
+            $mail = $queued;
+
+            return true;
+        });
+
+        $user->accessInvitations()->latest('id')->firstOrFail()->update([
+            'expires_at' => now()->subMinute(),
+        ]);
+
+        $this->postJson('/api/auth/activate-access', [
+            'token' => $mail->plainToken,
+            'password' => 'ClaveSegura123!',
+            'password_confirmation' => 'ClaveSegura123!',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'access_invitation_expired');
     }
 
     public function test_senior_administrator_can_resend_invitation_and_revoke_previous_one(): void

@@ -7,10 +7,10 @@ use App\Http\Middleware\AuthenticateJwt;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
-    Route::post('activate-access', ActivateAccessController::class);
+    Route::post('activate-access', ActivateAccessController::class)->middleware('throttle:auth-activate-access');
     Route::post('register', [JwtAuthController::class, 'register']);
-    Route::post('login', [JwtAuthController::class, 'login']);
-    Route::post('refresh', [JwtAuthController::class, 'refresh']);
+    Route::post('login', [JwtAuthController::class, 'login'])->middleware('throttle:auth-login');
+    Route::post('refresh', [JwtAuthController::class, 'refresh'])->middleware('throttle:auth-refresh');
 
     Route::middleware(AuthenticateJwt::class)->group(function () {
         Route::post('logout', [JwtAuthController::class, 'logout']);
@@ -20,12 +20,4 @@ Route::prefix('auth')->group(function () {
         Route::get('sessions', [JwtAuthController::class, 'sessions']);
         Route::delete('sessions/{session}', [JwtAuthController::class, 'revokeSession']);
     });
-});
-
-Route::post('register', [JwtAuthController::class, 'register']);
-Route::post('login', [JwtAuthController::class, 'login']);
-
-Route::middleware(AuthenticateJwt::class)->group(function () {
-    Route::post('logout', [JwtAuthController::class, 'logout']);
-    Route::get('user', [JwtAuthController::class, 'me']);
 });

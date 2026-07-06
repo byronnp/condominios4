@@ -1,6 +1,14 @@
 <?php
 
 use App\Support\Api\ApiResponse;
+use App\Exceptions\Auth\InvitationAlreadyUsedException;
+use App\Exceptions\Auth\InvitationExpiredException;
+use App\Exceptions\Auth\InvalidCredentialsException;
+use App\Exceptions\Auth\RefreshTokenExpiredException;
+use App\Exceptions\Auth\RefreshTokenRevokedException;
+use App\Exceptions\Auth\SessionInactiveException;
+use App\Exceptions\Auth\UserAccessDisabledException;
+use App\Exceptions\Auth\UserInactiveException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -8,6 +16,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -62,6 +71,82 @@ return Application::configure(basePath: dirname(__DIR__))
                 message: 'No tienes permiso para realizar esta acción.',
                 status: 403,
                 code: 'forbidden',
+            );
+        });
+
+        $exceptions->render(function (InvalidCredentialsException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), 401, code: 'invalid_credentials');
+        });
+
+        $exceptions->render(function (UserAccessDisabledException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), 403, code: 'user_access_disabled');
+        });
+
+        $exceptions->render(function (UserInactiveException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), 403, code: 'user_inactive');
+        });
+
+        $exceptions->render(function (SessionInactiveException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), 401, code: 'session_invalid');
+        });
+
+        $exceptions->render(function (RefreshTokenExpiredException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), 401, code: 'refresh_token_expired');
+        });
+
+        $exceptions->render(function (RefreshTokenRevokedException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), 401, code: 'refresh_token_revoked');
+        });
+
+        $exceptions->render(function (InvitationExpiredException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), 422, code: 'access_invitation_expired');
+        });
+
+        $exceptions->render(function (InvitationAlreadyUsedException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), 422, code: 'access_invitation_used');
+        });
+
+        $exceptions->render(function (ThrottleRequestsException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                message: 'Demasiados intentos. Intenta nuevamente más tarde.',
+                status: 429,
+                code: 'too_many_attempts',
             );
         });
 
