@@ -23,17 +23,13 @@ class UpdateUserRequest extends FormRequest
             $this->merge(['document_type_id' => $target?->document_type_id]);
         }
 
-        if ($this->user()?->isPlatformAdmin() || ! $this->has('assignments')) {
-            return;
+        if ($this->has('role_id')) {
+            $this->merge([
+                'assignments' => [
+                    ['role_id' => $this->input('role_id')],
+                ],
+            ]);
         }
-
-        $allowedIds = $this->user()?->manageableCondominiumIds('users.update') ?? [];
-        $condominiumId = $target?->condominiums()->wherePivot('is_active', true)->wherePivotNull('deleted_at')
-            ->whereIn('condominiums.id', $allowedIds)->value('condominiums.id');
-        $this->merge(['assignments' => collect($this->input('assignments', []))->map(fn ($assignment) => [
-            ...(array) $assignment,
-            'condominium_id' => $condominiumId,
-        ])->all()]);
     }
 
     public function rules(): array
@@ -50,8 +46,8 @@ class UpdateUserRequest extends FormRequest
             'document_number' => ['sometimes', 'required', 'string', 'max:30', new ValidDocumentNumber, Rule::unique('users', 'document_number')->where(fn ($query) => $query->where('country', $this->input('country', $user?->country))->where('document_type_id', $this->input('document_type_id', $user?->document_type_id)))->ignore($user?->id)],
             'phone' => ['sometimes', 'nullable', 'string', 'max:50'],
             'secondary_phone' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'role_id' => ['sometimes', 'integer'],
             'assignments' => ['sometimes', 'array', 'min:1'],
-            'assignments.*.condominium_id' => ['nullable', 'integer', 'distinct'],
             'assignments.*.role_id' => ['required_with:assignments', 'integer', 'distinct'],
         ];
     }
@@ -59,10 +55,11 @@ class UpdateUserRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
+            $condominium = $this->route('condominium');
+
             foreach ($this->input('assignments', []) as $index => $assignment) {
                 $role = Role::query()->whereKey($assignment['role_id'] ?? null)->where('is_active', true)->first();
-                $condominiumId = isset($assignment['condominium_id']) ? (int) $assignment['condominium_id'] : null;
-                if (! $role || $role->condominium_id !== $condominiumId) {
+                if (! $role || ! $condominium || (int) $role->condominium_id !== (int) $condominium->id) {
                     $validator->errors()->add("assignments.$index.role_id", 'El rol no pertenece al condominio indicado.');
 
                     continue;

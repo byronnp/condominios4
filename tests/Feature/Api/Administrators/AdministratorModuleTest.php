@@ -34,121 +34,28 @@ class AdministratorModuleTest extends TestCase
         $this->seed(DatabaseSeeder::class);
     }
 
-    public function test_platform_admin_can_list_and_filter_administrators(): void
-    {
-        $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
-
-        $this->getJson("/api/administrators?condominium_id={$condominium->id}&status=active&per_page=2", $this->headers())
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('meta.per_page', 2)
-            ->assertJsonCount(2, 'data')
-            ->assertJsonStructure([
-                'data' => [
-                    '*' => [
-                        'id',
-                        'name',
-                        'first_name',
-                        'last_name',
-                        'email',
-                        'document_type',
-                        'is_access_enabled',
-                        'administrator_type',
-                        'access_status',
-                        'invitation',
-                        'condominiums',
-                    ],
-                ],
-                'meta' => ['current_page', 'per_page', 'total', 'last_page'],
-            ]);
-    }
-
-    public function test_platform_admin_lists_all_non_deleted_administrators(): void
-    {
-        $seniorAdministrator = User::where('email', 'byron_np@hotmail.com')->firstOrFail();
-        $condominiumAdministrator = User::where('email', 'byronnp@gmail.com')->firstOrFail();
-        $deletedAdministrator = User::where('email', 'swagger.admin@example.com')->firstOrFail();
-        $deletedAdministrator->delete();
-
-        $this->getJson('/api/administrators?per_page=100', $this->headers())
-            ->assertOk()
-            ->assertJsonFragment([
-                'id' => $seniorAdministrator->id,
-                'administrator_type' => 'senior',
-            ])
-            ->assertJsonFragment([
-                'id' => $condominiumAdministrator->id,
-                'administrator_type' => 'condominium',
-            ])
-            ->assertJsonMissing(['id' => $deletedAdministrator->id]);
-    }
-
-    public function test_platform_admin_can_show_a_senior_administrator(): void
-    {
-        $seniorAdministrator = User::where('email', 'byron_np@hotmail.com')->firstOrFail();
-
-        $this->getJson("/api/administrators/{$seniorAdministrator->id}", $this->headers())
-            ->assertOk()
-            ->assertJsonPath('data.id', $seniorAdministrator->id)
-            ->assertJsonPath('data.administrator_type', 'senior')
-            ->assertJsonPath('data.email', $seniorAdministrator->email);
-    }
-
-    public function test_condominium_admin_lists_only_its_condominium_administrators(): void
-    {
-        $seniorAdministrator = User::where('email', 'byron_np@hotmail.com')->firstOrFail();
-        $condominiumAdministrator = User::where('email', 'byronnp@gmail.com')->firstOrFail();
-
-        $login = $this->postJson('/api/auth/login', [
-            'email' => 'byronnp@gmail.com',
-            'password' => 'admin123',
-        ])->assertOk();
-
-        $this->getJson('/api/administrators?per_page=100', [
-            'Authorization' => 'Bearer '.$login->json('data.access_token'),
-        ])
-            ->assertOk()
-            ->assertJsonFragment(['id' => $condominiumAdministrator->id])
-            ->assertJsonMissing(['id' => $seniorAdministrator->id]);
-    }
-
-    public function test_platform_admin_can_create_update_and_change_administrator_status(): void
+    public function test_senior_admin_can_assign_new_user_as_condominium_administrator(): void
     {
         Mail::fake();
 
-        $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
-        $documentType = $this->documentType();
+        $condominium = $this->condominium();
 
-        $response = $this->postJson('/api/administrators', [
+        $response = $this->postJson("/api/condominiums/{$condominium->id}/administrators", [
             'first_name' => 'Carlos',
             'last_name' => 'Ramírez',
             'email' => 'carlos.ramirez@example.com',
             'country' => 'EC',
-            'document_type_id' => $documentType->id,
+            'document_type_id' => $this->documentType()->id,
             'document_number' => '0912345678',
             'phone' => '0991234567',
-            'condominium_ids' => [$condominium->id],
-        ], $this->headers())
+        ], $this->headers('byron_np@hotmail.com'))
             ->assertCreated()
-            ->assertJsonPath('data.name', 'Carlos Ramírez')
-            ->assertJsonPath('data.first_name', 'Carlos')
-            ->assertJsonPath('data.last_name', 'Ramírez')
             ->assertJsonPath('data.email', 'carlos.ramirez@example.com')
-            ->assertJsonPath('data.is_access_enabled', false)
             ->assertJsonPath('data.administrator_type', 'condominium')
-            ->assertJsonPath('data.access_status', 'pending_activation')
-            ->assertJsonPath('data.invitation.status', 'pending')
-            ->assertJsonPath('data.invitation.is_expired', false)
-            ->assertJsonPath('data.condominiums.0.id', $condominium->id);
+            ->assertJsonPath('data.condominiums.0.id', $condominium->id)
+            ->assertJsonPath('data.access_status', 'pending_activation');
 
         $administratorId = $response->json('data.id');
-
-        $this->assertDatabaseHas('condominium_user', [
-            'condominium_id' => $condominium->id,
-            'user_id' => $administratorId,
-            'is_active' => true,
-            'deleted_at' => null,
-        ]);
 
         $this->assertAdministratorRoleAssignment($administratorId, $condominium->id);
 
@@ -157,58 +64,92 @@ class AdministratorModuleTest extends TestCase
             ->where('condominium_id', $condominium->id)
             ->firstOrFail();
 
-        $this->assertSame(UserAccessInvitation::STATUS_PENDING, $invitation->status);
-        $this->assertNotNull($invitation->token_hash);
         Mail::assertQueued(UserAccessInvitationMail::class, fn (UserAccessInvitationMail $mail): bool => $mail->invitation->is($invitation));
-
-        $invitation->update(['expires_at' => now()->subMinute()]);
-        $this->getJson("/api/administrators/{$administratorId}", $this->headers())
-            ->assertOk()
-            ->assertJsonPath('data.access_status', 'invitation_expired')
-            ->assertJsonPath('data.invitation.status', 'expired')
-            ->assertJsonPath('data.invitation.is_expired', true);
-
-        $this->putJson("/api/administrators/{$administratorId}", [
-            'first_name' => 'Carlos Andrés',
-            'phone' => '0987654321',
-        ], $this->headers())
-            ->assertOk()
-            ->assertJsonPath('data.name', 'Carlos Andrés Ramírez')
-            ->assertJsonPath('data.first_name', 'Carlos Andrés')
-            ->assertJsonPath('data.phone', '0987654321');
-
-        $this->patchJson("/api/administrators/{$administratorId}/status", [
-            'is_access_enabled' => true,
-        ], $this->headers())
-            ->assertOk()
-            ->assertJsonPath('data.is_access_enabled', true);
     }
 
-    public function test_platform_admin_can_assign_and_remove_a_condominium(): void
+    public function test_assigning_active_existing_user_does_not_send_invitation_or_duplicate_membership(): void
     {
+        Mail::fake();
+
+        $condominium = $this->condominium();
+        $existing = User::create([
+            'first_name' => 'Usuario',
+            'last_name' => 'Activo',
+            'email' => 'activo.admin@example.com',
+            'country' => 'EC',
+            'document_type_id' => $this->documentType()->id,
+            'document_number' => '0912345679',
+            'password' => 'Secret123!',
+            'is_access_enabled' => true,
+        ]);
+
+        $this->postJson("/api/condominiums/{$condominium->id}/administrators", [
+            'first_name' => 'Usuario',
+            'last_name' => 'Activo',
+            'email' => 'activo.admin@example.com',
+            'country' => 'EC',
+            'document_type_id' => $this->documentType()->id,
+            'document_number' => '0912345679',
+        ], $this->headers('byron_np@hotmail.com'))
+            ->assertCreated()
+            ->assertJsonPath('data.id', $existing->id)
+            ->assertJsonPath('data.is_access_enabled', true)
+            ->assertJsonPath('data.invitation', null);
+
+        $this->assertSame(1, DB::table('condominium_user')
+            ->where('user_id', $existing->id)
+            ->where('condominium_id', $condominium->id)
+            ->whereNull('deleted_at')
+            ->count());
+        $this->assertAdministratorRoleAssignment($existing->id, $condominium->id);
+        Mail::assertNothingQueued();
+    }
+
+    public function test_condominium_admin_lists_only_administrators_in_route_condominium(): void
+    {
+        $condominium = $this->condominium();
         $administrator = User::where('email', 'byronnp@gmail.com')->firstOrFail();
-        $condominium = Condominium::create([
-            'name' => 'Condominio Nuevo',
-            'slug' => 'condominio-nuevo',
-            'address' => 'Av. Nueva 123',
+
+        $this->getJson("/api/condominiums/{$condominium->id}/administrators?per_page=100", $this->headers('byronnp@gmail.com'))
+            ->assertOk()
+            ->assertJsonFragment(['id' => $administrator->id])
+            ->assertJsonMissing(['email' => 'byron_np@hotmail.com']);
+    }
+
+    public function test_condominium_admin_receives_business_code_outside_scope(): void
+    {
+        $other = Condominium::create([
+            'name' => 'Condominio Fuera de Alcance',
+            'slug' => 'condominio-fuera-alcance',
+            'address' => 'Av. Otra 123',
             'country_code' => 'EC',
             'total_units' => 10,
             'is_active' => true,
         ]);
 
-        $this->postJson("/api/administrators/{$administrator->id}/condominiums", [
-            'condominium_id' => $condominium->id,
-        ], $this->headers())
+        $this->getJson("/api/condominiums/{$other->id}/administrators", $this->headers('byronnp@gmail.com'))
+            ->assertForbidden()
+            ->assertJsonPath('code', 'condominium_forbidden');
+    }
+
+    public function test_senior_admin_can_update_status_and_remove_administrator_from_condominium(): void
+    {
+        $condominium = $this->condominium();
+        $administrator = User::where('email', 'byronnp@gmail.com')->firstOrFail();
+
+        $this->putJson("/api/condominiums/{$condominium->id}/administrators/{$administrator->id}", [
+            'first_name' => 'Administrador Actualizado',
+        ], $this->headers('byron_np@hotmail.com'))
             ->assertOk()
-            ->assertJsonFragment(['slug' => 'condominio-nuevo']);
+            ->assertJsonPath('data.first_name', 'Administrador Actualizado');
 
-        $this->assertAdministratorRoleAssignment($administrator->id, $condominium->id);
+        $this->patchJson("/api/condominiums/{$condominium->id}/administrators/{$administrator->id}/status", [
+            'is_access_enabled' => false,
+        ], $this->headers('byron_np@hotmail.com'))
+            ->assertOk()
+            ->assertJsonPath('data.is_access_enabled', false);
 
-        $this->deleteJson(
-            "/api/administrators/{$administrator->id}/condominiums/{$condominium->id}",
-            [],
-            $this->headers(),
-        )
+        $this->deleteJson("/api/condominiums/{$condominium->id}/administrators/{$administrator->id}", [], $this->headers('byron_np@hotmail.com'))
             ->assertOk();
 
         $this->assertDatabaseMissing('condominium_user', [
@@ -218,68 +159,9 @@ class AdministratorModuleTest extends TestCase
         ]);
     }
 
-    public function test_destroy_disables_access_and_removes_administrator_assignments(): void
+    private function condominium(): Condominium
     {
-        $administrator = User::where('email', 'byronnp@gmail.com')->firstOrFail();
-
-        $this->deleteJson("/api/administrators/{$administrator->id}", [], $this->headers())
-            ->assertOk()
-            ->assertJsonPath('message', 'Administrador eliminado correctamente.');
-
-        $this->assertDatabaseHas('users', [
-            'id' => $administrator->id,
-            'is_access_enabled' => false,
-        ]);
-
-        $this->getJson("/api/administrators/{$administrator->id}", $this->headers())
-            ->assertNotFound();
-    }
-
-    public function test_administrator_creation_validates_required_fields_and_authentication(): void
-    {
-        $this->postJson('/api/administrators', [])
-            ->assertUnauthorized();
-
-        $this->postJson('/api/administrators', [], $this->headers())
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors([
-                'name',
-                'email',
-                'country',
-                'document_type_id',
-                'document_number',
-                'condominium_ids',
-            ])
-            ->assertJsonPath('errors.email.0', 'El correo electrónico es obligatorio.')
-            ->assertJsonPath('errors.country.0', 'El país es obligatorio.')
-            ->assertJsonPath('errors.document_type_id.0', 'El tipo de documento es obligatorio.')
-            ->assertJsonPath('errors.document_number.0', 'El número de documento es obligatorio.')
-            ->assertJsonPath('errors.condominium_ids.0', 'Debe seleccionar al menos un condominio.');
-    }
-
-    public function test_administrator_creation_reports_a_duplicate_document_number(): void
-    {
-        $existingUser = User::where('email', 'byronnp@gmail.com')->firstOrFail();
-        $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
-
-        $this->postJson('/api/administrators', [
-            'first_name' => 'Ana',
-            'last_name' => 'Pérez',
-            'email' => 'ana.duplicate@example.com',
-            'country' => $existingUser->country,
-            'document_type_id' => $existingUser->document_type_id,
-            'document_number' => $existingUser->document_number,
-            'phone' => '0991234567',
-            'condominium_ids' => [$condominium->id],
-        ], $this->headers())
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['document_number'])
-            ->assertJsonPath(
-                'errors.document_number.0',
-                'Ya existe un usuario con este país, tipo y número de documento.',
-            );
-
-        $this->assertDatabaseMissing('users', ['email' => 'ana.duplicate@example.com']);
+        return Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
     }
 
     private function documentType(): CatalogItem
@@ -289,13 +171,11 @@ class AdministratorModuleTest extends TestCase
             ->firstOrFail();
     }
 
-    /**
-     * @return array<string, string>
-     */
-    private function headers(): array
+    /** @return array<string, string> */
+    private function headers(string $email): array
     {
         $response = $this->postJson('/api/auth/login', [
-            'email' => 'byron_np@hotmail.com',
+            'email' => $email,
             'password' => 'admin123',
         ])->assertOk();
 

@@ -18,33 +18,40 @@ class AdministratorService
     /**
      * @param  array<string, mixed>  $data
      */
-    public function create(array $data, User $invitedBy): User
+    public function assignUserAsAdministrator(Condominium $condominium, array $data, User $invitedBy): User
     {
-        return DB::transaction(function () use ($data, $invitedBy): User {
-            $condominiumIds = $data['condominium_ids'];
-            unset($data['condominium_ids']);
+        return DB::transaction(function () use ($condominium, $data, $invitedBy): User {
+            $administrator = $this->findUser($data);
 
-            $administrator = User::create([
-                ...$data,
-                'password' => null,
-                'is_access_enabled' => false,
-            ]);
-
-            $invitationCondominium = null;
-            $invitationRole = null;
-
-            foreach ($condominiumIds as $condominiumId) {
-                $condominium = Condominium::findOrFail($condominiumId);
-                $role = $this->assignToCondominium($administrator, $condominium);
-
-                $invitationCondominium ??= $condominium;
-                $invitationRole ??= $role;
+            if (! $administrator) {
+                $administrator = User::create([
+                    ...$data,
+                    'password' => null,
+                    'is_access_enabled' => false,
+                ]);
             }
 
-            $this->invitationService->invite($administrator, $invitationCondominium, $invitationRole, $invitedBy);
+            $role = $this->assignToCondominium($administrator, $condominium);
+
+            if (! $administrator->is_access_enabled) {
+                $this->invitationService->invite($administrator, $condominium, $role, $invitedBy);
+            }
 
             return $administrator->fresh('documentType');
         });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function findUser(array $data): ?User
+    {
+        return User::query()
+            ->where('country', $data['country'])
+            ->where('document_type_id', $data['document_type_id'])
+            ->where('document_number', $data['document_number'])
+            ->first()
+            ?? User::query()->where('email', $data['email'])->first();
     }
 
     public function assignToCondominium(User $administrator, Condominium $condominium): Role

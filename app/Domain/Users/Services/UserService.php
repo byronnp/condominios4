@@ -2,10 +2,12 @@
 
 namespace App\Domain\Users\Services;
 
+use App\Models\Condominium;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class UserService
 {
@@ -48,6 +50,12 @@ class UserService
     }
 
     /** @param array<string, mixed> $data */
+    public function createInCondominium(User $actor, Condominium $condominium, array $data): User
+    {
+        return $this->create($actor, $this->withCondominiumAssignments($condominium, $data));
+    }
+
+    /** @param array<string, mixed> $data */
     public function update(User $actor, User $user, array $data): User
     {
         return DB::transaction(function () use ($actor, $user, $data): User {
@@ -63,6 +71,50 @@ class UserService
 
             return $user->fresh('documentType');
         });
+    }
+
+    /** @param array<string, mixed> $data */
+    public function updateInCondominium(User $actor, User $user, Condominium $condominium, array $data): User
+    {
+        return $this->update($actor, $user, $this->withCondominiumAssignments($condominium, $data));
+    }
+
+    public function updateStatusInCondominium(User $actor, User $user, Condominium $condominium, bool $isActive): void
+    {
+        $updated = DB::table('condominium_user')
+            ->where('user_id', $user->id)
+            ->where('condominium_id', $condominium->id)
+            ->whereNull('deleted_at')
+            ->update(['is_active' => $isActive, 'updated_at' => now()]);
+
+        abort_if($updated === 0, 404);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function withCondominiumAssignments(Condominium $condominium, array $data): array
+    {
+        if (array_key_exists('role_id', $data)) {
+            $data['assignments'] = [
+                ['condominium_id' => $condominium->id, 'role_id' => $data['role_id']],
+            ];
+            unset($data['role_id']);
+
+            return $data;
+        }
+
+        if (array_key_exists('assignments', $data)) {
+            $data['assignments'] = collect($data['assignments'])
+                ->map(fn (array $assignment): array => [
+                    ...$assignment,
+                    'condominium_id' => $condominium->id,
+                ])
+                ->all();
+        }
+
+        return $data;
     }
 
     /**
@@ -91,6 +143,7 @@ class UserService
     {
         $condominiumAssignments = collect($assignments)->filter(fn (array $item): bool => $item['condominium_id'] !== null);
         $globalAssignments = collect($assignments)->filter(fn (array $item): bool => $item['condominium_id'] === null);
+        $this->validateCondominiumAssignments($condominiumAssignments->values()->all());
 
         $currentMemberships = DB::table('condominium_user')->where('user_id', $user->id)->whereNull('deleted_at')->get();
         $requestedCondominiumIds = $condominiumAssignments->pluck('condominium_id')->map(fn ($id): int => (int) $id)->all();
@@ -138,6 +191,65 @@ class UserService
                     ['created_at' => now(), 'updated_at' => now()],
                 );
             }
+        }
+    }
+
+    /**
+     * @param  array<int, array{condominium_id: int|null, role_id: int}>  $assignments
+     */
+    private function validateCondominiumAssignments(array $assignments): void
+    {
+        $errors = [];
+        $roleIds = collect($assignments)
+            ->filter(fn (array $assignment): bool => $assignment['condominium_id'] !== null)
+            ->pluck('role_id')
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->all();
+
+        if ($roleIds === []) {
+            return;
+        }
+
+        $roles = Role::withTrashed()
+            ->whereIn('id', $roleIds)
+            ->get()
+            ->keyBy('id');
+
+        foreach ($assignments as $index => $assignment) {
+            $condominiumId = $assignment['condominium_id'];
+
+            if ($condominiumId === null) {
+                continue;
+            }
+
+            $role = $roles->get((int) $assignment['role_id']);
+
+            if (! $role) {
+                $errors["assignments.$index.role_id"][] = 'El rol seleccionado no existe.';
+
+                continue;
+            }
+
+            if ($role->condominium === null || ! $role->condominium->is_active) {
+                $errors["assignments.$index.role_id"][] = 'El condominio del rol está inactivo.';
+            }
+
+            if ($role->deleted_at !== null) {
+                $errors["assignments.$index.role_id"][] = 'El rol seleccionado fue eliminado.';
+            }
+
+            if (! $role->is_active) {
+                $errors["assignments.$index.role_id"][] = 'El rol seleccionado está inactivo.';
+            }
+
+            if ((int) $role->condominium_id !== (int) $condominiumId) {
+                $errors["assignments.$index.role_id"][] = 'El rol no pertenece al condominio indicado.';
+            }
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
         }
     }
 }

@@ -4,6 +4,7 @@ namespace Tests\Feature\Api\Users;
 
 use App\Domain\Users\Services\UserInvitationService;
 use App\Mail\UserAccessInvitationMail;
+use App\Models\CatalogItem;
 use App\Models\Condominium;
 use App\Models\Role;
 use App\Models\User;
@@ -113,9 +114,17 @@ class UserInvitationTest extends TestCase
         $actor = User::where('email', 'byron_np@hotmail.com')->firstOrFail();
         $condominium = Condominium::firstOrFail();
         $role = Role::where('condominium_id', $condominium->id)->where('code', 'administrador')->firstOrFail();
+        $documentType = CatalogItem::whereHas('catalog', fn ($query) => $query->where('code', 'document_types'))
+            ->where('code', 'cedula')
+            ->firstOrFail();
         $user = User::create([
-            'first_name' => 'Pendiente', 'email' => 'pendiente@example.com', 'country' => 'EC',
-            'document_number' => 'INV-002', 'password' => null, 'is_access_enabled' => false,
+            'first_name' => 'Pendiente',
+            'email' => 'pendiente@example.com',
+            'country' => 'EC',
+            'document_type_id' => $documentType->id,
+            'document_number' => '0911111111',
+            'password' => null,
+            'is_access_enabled' => false,
         ]);
         $condominium->users()->attach($user->id, ['is_active' => true, 'joined_at' => now()]);
         app(UserInvitationService::class)->invite($user, $condominium, $role, $actor);
@@ -123,9 +132,15 @@ class UserInvitationTest extends TestCase
         $token = $this->postJson('/api/auth/login', ['email' => $actor->email, 'password' => 'admin123'])
             ->assertOk()->json('data.access_token');
 
-        $this->postJson("/api/users/{$user->id}/resend-invitation", ['condominium_id' => $condominium->id], [
+        $this->postJson("/api/condominiums/{$condominium->id}/administrators", [
+            'first_name' => $user->first_name,
+            'email' => $user->email,
+            'country' => $user->country,
+            'document_type_id' => $user->document_type_id,
+            'document_number' => $user->document_number,
+        ], [
             'Authorization' => "Bearer {$token}",
-        ])->assertOk();
+        ])->assertCreated();
 
         $this->assertSame(2, $user->accessInvitations()->count());
         $this->assertDatabaseHas('user_access_invitations', ['user_id' => $user->id, 'status' => 'revoked', 'token_hash' => null]);

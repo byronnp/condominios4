@@ -80,7 +80,7 @@ class MenuSeeder extends Seeder
             ['name' => 'Residentes', 'code' => 'residentes', 'path' => '/residentes', 'icon' => 'users-round', 'sort_order' => 9, 'permissions' => ['unit_users.view'], 'parent_code' => null, ...$principal],
             ['name' => 'Pagos y cobros', 'code' => 'pagos', 'path' => '/pagos', 'icon' => 'wallet-cards', 'sort_order' => 10, 'permissions' => ['payments.view'], 'parent_code' => null, ...$principal],
             ['name' => 'Reservas', 'code' => 'reservas', 'path' => '/reservas', 'icon' => 'calendar-days', 'sort_order' => 11, 'permissions' => ['reservations.view'], 'parent_code' => null, ...$principal],
-            ['name' => 'Mantenimientos', 'code' => 'mantenimiento', 'path' => '/mantenimiento', 'icon' => 'wrench', 'sort_order' => 12, 'permissions' => ['maintenance.view'], 'parent_code' => null, ...$principal],
+            ['name' => 'Mantenimientos', 'code' => 'mantenimiento', 'path' => '/mantenimiento', 'icon' => 'wrench', 'sort_order' => 12, 'permissions' => ['maintenances.view'], 'parent_code' => null, ...$principal],
             ['name' => 'Comunicados', 'code' => 'comunicados', 'path' => '/comunicados', 'icon' => 'megaphone', 'sort_order' => 13, 'permissions' => ['announcements.view'], 'parent_code' => null, ...$principal],
             ['name' => 'Visitantes', 'code' => 'visitantes', 'path' => '/visitantes', 'icon' => 'contact', 'sort_order' => 14, 'permissions' => ['visitors.view'], 'parent_code' => null, ...$principal],
             ['name' => 'Reportes', 'code' => 'reportes', 'path' => '/reportes', 'icon' => 'chart-column', 'sort_order' => 1, 'permissions' => ['reports.view'], 'parent_code' => null, ...$herramientas],

@@ -5,12 +5,10 @@ use App\Http\Middleware\AuthenticateJwt;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(AuthenticateJwt::class)->group(function () {
-    Route::get('administrators', [AdministratorController::class, 'index']);
-    Route::post('administrators', [AdministratorController::class, 'store']);
-    Route::get('administrators/{administrator}', [AdministratorController::class, 'show']);
-    Route::put('administrators/{administrator}', [AdministratorController::class, 'update']);
-    Route::patch('administrators/{administrator}/status', [AdministratorController::class, 'updateStatus']);
-    Route::post('administrators/{administrator}/condominiums', [AdministratorController::class, 'assignCondominium']);
-    Route::delete('administrators/{administrator}/condominiums/{condominium}', [AdministratorController::class, 'removeCondominium']);
-    Route::delete('administrators/{administrator}', [AdministratorController::class, 'destroy']);
+    Route::get('condominiums/{condominium}/administrators', [AdministratorController::class, 'indexByCondominium']);
+    Route::post('condominiums/{condominium}/administrators', [AdministratorController::class, 'storeInCondominium']);
+    Route::get('condominiums/{condominium}/administrators/{user}', [AdministratorController::class, 'showInCondominium']);
+    Route::put('condominiums/{condominium}/administrators/{user}', [AdministratorController::class, 'updateInCondominium']);
+    Route::patch('condominiums/{condominium}/administrators/{user}/status', [AdministratorController::class, 'updateStatusInCondominium']);
+    Route::delete('condominiums/{condominium}/administrators/{user}', [AdministratorController::class, 'destroyInCondominium']);
 });

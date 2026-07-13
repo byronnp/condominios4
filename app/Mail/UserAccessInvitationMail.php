@@ -21,7 +21,11 @@ class UserAccessInvitationMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Activa tu acceso al condominio');
+        $subject = $this->invitation->condominium_id === null
+            ? 'Activa tu acceso de administrador de plataforma'
+            : 'Activa tu acceso al condominio';
+
+        return new Envelope(subject: $subject);
     }
 
     public function content(): Content

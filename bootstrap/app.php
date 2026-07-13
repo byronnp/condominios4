@@ -1,22 +1,24 @@
 <?php
 
-use App\Support\Api\ApiResponse;
+use App\Exceptions\Auth\InvalidCredentialsException;
 use App\Exceptions\Auth\InvitationAlreadyUsedException;
 use App\Exceptions\Auth\InvitationExpiredException;
-use App\Exceptions\Auth\InvalidCredentialsException;
 use App\Exceptions\Auth\RefreshTokenExpiredException;
 use App\Exceptions\Auth\RefreshTokenRevokedException;
 use App\Exceptions\Auth\SessionInactiveException;
 use App\Exceptions\Auth\UserAccessDisabledException;
 use App\Exceptions\Auth\UserInactiveException;
+use App\Exceptions\Condominiums\CondominiumForbiddenException;
+use App\Exceptions\Condominiums\CondominiumInactiveException;
+use App\Support\Api\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -138,6 +140,22 @@ return Application::configure(basePath: dirname(__DIR__))
             return ApiResponse::error($exception->getMessage(), 422, code: 'access_invitation_used');
         });
 
+        $exceptions->render(function (CondominiumForbiddenException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), 403, code: 'condominium_forbidden');
+        });
+
+        $exceptions->render(function (CondominiumInactiveException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), 403, code: 'condominium_inactive');
+        });
+
         $exceptions->render(function (ThrottleRequestsException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;
@@ -174,7 +192,7 @@ return Application::configure(basePath: dirname(__DIR__))
             );
         });
 
-        $exceptions->render(function (\Throwable $exception, Request $request) {
+        $exceptions->render(function (Throwable $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;
             }

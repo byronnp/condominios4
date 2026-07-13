@@ -25,4 +25,21 @@ class RoleStoreRequest extends FormRequest
             'is_active' => ['nullable', 'boolean'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'El nombre es obligatorio.',
+            'name.string' => 'El nombre debe ser una cadena de texto.',
+            'name.max' => 'El nombre no puede superar los 255 caracteres.',
+            'code.string' => 'El código debe ser una cadena de texto.',
+            'code.max' => 'El código no puede superar los 100 caracteres.',
+            'code.unique' => 'Ya existe un rol con ese código en el condominio.',
+            'description.string' => 'La descripción debe ser una cadena de texto.',
+            'permission_ids.array' => 'Los permisos deben enviarse como un arreglo.',
+            'permission_ids.*.integer' => 'Cada permiso debe ser un entero válido.',
+            'permission_ids.*.exists' => 'Uno de los permisos seleccionados no existe o está inactivo.',
+            'is_active.boolean' => 'El estado debe ser verdadero o falso.',
+        ];
+    }
 }

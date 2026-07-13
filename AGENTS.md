@@ -21,8 +21,10 @@ Completed phases:
 Additional completed modules:
 
 - Locations: normalized `countries`, `provinces`, and `cities` tables, location seed data, public location APIs, Swagger/OpenAPI documentation, and tests. Use this module for geographic selections instead of generic catalogs.
-- Administrator access invitations: condominium creation creates or reuses the administrator from `admin_*`, assigns the condominium administrator role, keeps `is_access_enabled = false`, creates a 24-hour single-use invitation with a hashed token, and queues the activation email after the database transaction commits. Access is enabled only after the user defines a strong password through `POST /api/auth/activate-access`. Protected resends use `POST /api/users/{user}/resend-invitation` and require a senior administrator or `users.invite`/`users.resend_invitation`. Existing unit-user invitations remain supported.
-- Administrator visibility: `GET /api/administrators` lets senior administrators list all non-deleted senior and condominium administrators. Condominium administrators may list only administrators assigned to condominiums where they have the required permission. `GET /api/administrators/{administrator}` follows the same read scope. Do not broaden senior-administrator mutation access implicitly when changing shared administrator queries.
+- Administrator access invitations: condominium creation creates or reuses the administrator from `admin_*`, assigns the condominium administrator role, keeps `is_access_enabled = false`, creates a 24-hour single-use invitation with a hashed token, and queues the activation email after the database transaction commits. Access is enabled only after the user defines a strong password through `POST /api/auth/activate-access`. Condominium administrator assignment through `POST /api/condominiums/{condominium}/administrators` creates or resends access invitations when the user still has access disabled. Existing unit-user invitations remain supported.
+- Administrator visibility: `GET /api/condominiums/{condominium}/administrators` lists condominium administrators only inside the route condominium. Senior administrators may access any active condominium context. Condominium administrators may list only administrators in condominiums where they have the required permission. Do not reintroduce global condominium-administrator routes.
+- Platform administrators: senior/platform administrators are users with the global `administrador_senior` role through `role_user`. They do not belong to condominiums and must never be assigned through `condominium_user` or `condominium_user_role`. Use the independent `/api/platform-administrators` module for senior administrator CRUD, status changes, invitation creation, session/refresh-token revocation on disable, and global-role removal on delete.
+- Condominium-scoped users and administrators: official routes exist only under `/api/condominiums/{condominium}/users` and `/api/condominiums/{condominium}/administrators`. These routes derive business context from the URL and must not require `condominium_id` or `condominium_ids` in JSON bodies. Do not maintain or add legacy global routes for condominium-owned users or administrators.
 
 Upcoming phases:
 
@@ -32,6 +34,66 @@ Upcoming phases:
 - Phase 11: reports, optimization, and closure. Implement economic summaries, unit account statements, payments, late fees, expenses, bank reconciliation, treasury handover, visits, and reservations reports. Review indexes, query performance, Swagger/OpenAPI coverage, seed data quality, and final project documentation. Create a `docs/` folder only in this phase if final documentation files are required.
 
 Every new phase must include migrations, seeders with usable test data, Swagger updates, module-specific routes, FormRequest validation classes, reusable rules when needed, and tests.
+
+## Multi-Condominium API Architecture
+
+The architectural rule for condominium-owned resources is: the URL defines business context and the JWT defines the actor. Any resource that belongs to a condominium should be exposed through nested routes using `condominiums/{condominium}`.
+
+Correct:
+
+```http
+POST /api/condominiums/{condominium}/units
+POST /api/condominiums/{condominium}/users
+POST /api/condominiums/{condominium}/administrators
+POST /api/condominiums/{condominium}/common-areas
+```
+
+Incorrect for condominium-scoped APIs:
+
+```http
+POST /api/units
+{
+  "condominium_id": 15
+}
+```
+
+Do not put `condominium_id` or `condominium_ids` in the body when the route already contains `{condominium}`. FormRequests may use the route-bound `Condominium` to validate child resources, such as `role_id`, `unit_id`, `condominium_block_id`, payment methods, common areas, or reservations, but the request payload should contain only attributes of the resource being created or updated.
+
+Authorization for condominium-scoped routes must follow this chain:
+
+1. JWT is valid.
+2. User is active and session is active.
+3. `Condominium` is resolved from the route through route model binding.
+4. If `condominiums.is_active` is false, return `403 condominium_inactive` for operational condominium-scoped endpoints.
+5. If the actor is `User::isPlatformAdmin()`, allow platform-level access.
+6. Otherwise validate active membership, active role, and effective permission in the route condominium.
+7. If the actor has no scope over the route condominium, return `403 condominium_forbidden`.
+8. If a child resource does not belong to the route condominium, return `404`.
+
+Policies for condominium-owned resources should receive the `Condominium` context explicitly where practical and use existing user helpers instead of duplicating authorization logic:
+
+```php
+if ($user->isPlatformAdmin()) {
+    return true;
+}
+
+return $user->hasPermission('units.create', $condominium);
+```
+
+Controllers for condominium-scoped resources should remain orchestration-only:
+
+- receive the route-bound `Condominium`;
+- call `Gate::authorize()` or a shared condominium-context authorization helper;
+- call a service with the `Condominium` model and validated data;
+- return `ApiResponse`.
+
+Services for condominium-scoped resources should receive the `Condominium` model, not a loose `condominium_id`. Prefer signatures like:
+
+```php
+UnitService::create(Condominium $condominium, array|CreateUnitData $data);
+```
+
+Global platform resources are exceptions and should not be nested under a condominium. Examples include `/api/platform-administrators`, `/api/permissions`, platform-level menus, authentication, public catalogs, and location endpoints.
 
 ## Build, Test, and Development Commands
 
@@ -67,7 +129,9 @@ Do not place `$request->validate()` rules inside API controllers. Create FormReq
 
 Controllers should call `$request->validated()` and remain focused on orchestration only. Cross-field, catalog, condominium-scoped, or reusable validation logic should live in dedicated rule classes under `app/Rules`, for example `ValidCatalogItem`, instead of being duplicated across requests.
 
-Every FormRequest must define explicit Spanish messages for all of its declared validation rules through `messages()`. Include wildcard messages for array elements, such as `condominium_ids.*.exists`. Reusable custom rules must return their own clear domain-specific message. Expected client errors must produce a field-level `422 validation_failed` response and must not be allowed to reach a database constraint and become a generic server error.
+Every FormRequest must define explicit Spanish messages for all of its declared validation rules through `messages()`. Include wildcard messages for array elements when the payload legitimately contains arrays. Reusable custom rules must return their own clear domain-specific message. Expected client errors must produce a field-level `422 validation_failed` response and must not be allowed to reach a database constraint and become a generic server error.
+
+For nested condominium routes, FormRequests must not validate `condominium_id` or `condominium_ids` as body fields. Read the route-bound `Condominium` with `$this->route('condominium')` and use it to scope `exists`, `unique`, and cross-field rules.
 
 For condominium create and update payloads, the external fields are `towers` and `houses`, which map to `towers_count` and `houses_count`. `total_units` is a separate explicit field and is not currently calculated from `houses`, apartments, or rows in `units`; send it when the total must be stored. Do not assume these counters remain synchronized automatically.
 
@@ -75,7 +139,7 @@ For condominium create and update payloads, the external fields are `towers` and
 
 Condominium deletion is a soft delete. It does not delete or disable associated users and does not revoke their sessions or tokens. Inactivation currently changes only `condominiums.is_active`; it does not disable memberships, prevent login, or enforce a platform-wide operational block. Authentication continues to depend on `users.is_access_enabled`.
 
-Do not claim that inactivation fully blocks condominium access until a centralized active-condominium check and session revocation behavior have been implemented and tested. Any future implementation must consistently cover context selection, route authorization, existing sessions, refresh tokens, users with another active condominium, and unrestricted platform access for senior administrators.
+Some canonical nested endpoints now return `403 condominium_inactive` when the route condominium is inactive. Do not claim that inactivation fully blocks all condominium access until a centralized active-condominium check and session revocation behavior have been implemented and tested across every module. Any future implementation must consistently cover context selection, route authorization, existing sessions, refresh tokens, users with another active condominium, and unrestricted platform access for senior administrators.
 
 ## Testing Guidelines
 

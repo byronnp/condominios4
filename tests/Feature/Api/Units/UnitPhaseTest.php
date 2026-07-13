@@ -212,7 +212,7 @@ class UnitPhaseTest extends TestCase
         $token = $this->loginToken();
         $house = Unit::where('code', 'CASA-01')->firstOrFail();
 
-        $this->getJson("/api/units/{$house->id}", [
+        $this->getJson("/api/condominiums/{$house->condominium_id}/units/{$house->id}", [
             'Authorization' => "Bearer {$token}",
         ])
             ->assertOk()
@@ -226,11 +226,11 @@ class UnitPhaseTest extends TestCase
     {
         $house = Unit::where('code', 'CASA-01')->firstOrFail();
 
-        $this->getJson("/api/units/{$house->id}")->assertUnauthorized();
+        $this->getJson("/api/condominiums/{$house->condominium_id}/units/{$house->id}")->assertUnauthorized();
 
         $token = $this->loginToken();
 
-        $this->getJson('/api/units/999999', [
+        $this->getJson("/api/condominiums/{$house->condominium_id}/units/999999", [
             'Authorization' => "Bearer {$token}",
         ])->assertNotFound();
     }

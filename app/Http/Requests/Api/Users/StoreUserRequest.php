@@ -18,16 +18,13 @@ class StoreUserRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if ($this->user()?->isPlatformAdmin()) {
-            return;
+        if ($this->has('role_id')) {
+            $this->merge([
+                'assignments' => [
+                    ['role_id' => $this->input('role_id')],
+                ],
+            ]);
         }
-
-        $condominiumId = $this->user()?->manageableCondominiumIds('users.create')[0] ?? null;
-        $assignments = collect($this->input('assignments', []))->map(fn ($assignment) => [
-            ...(array) $assignment,
-            'condominium_id' => $condominiumId,
-        ])->all();
-        $this->merge(['assignments' => $assignments]);
     }
 
     public function rules(): array
@@ -43,8 +40,8 @@ class StoreUserRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'secondary_phone' => ['nullable', 'string', 'max:50'],
             'is_access_enabled' => ['sometimes', 'boolean'],
-            'assignments' => ['required', 'array', 'min:1'],
-            'assignments.*.condominium_id' => ['nullable', 'integer', 'distinct'],
+            'role_id' => ['sometimes', 'integer'],
+            'assignments' => ['required_without:role_id', 'array', 'min:1'],
             'assignments.*.role_id' => ['required', 'integer', 'distinct'],
         ];
     }
@@ -52,19 +49,17 @@ class StoreUserRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
+            $condominium = $this->route('condominium');
+
             foreach ($this->input('assignments', []) as $index => $assignment) {
                 $role = Role::query()->whereKey($assignment['role_id'] ?? null)->where('is_active', true)->first();
-                $condominiumId = isset($assignment['condominium_id']) ? (int) $assignment['condominium_id'] : null;
-                if (! $role || $role->condominium_id !== $condominiumId) {
+                if (! $role || ! $condominium || (int) $role->condominium_id !== (int) $condominium->id) {
                     $validator->errors()->add("assignments.$index.role_id", 'El rol no pertenece al condominio indicado.');
 
                     continue;
                 }
                 if (! $this->user()->isPlatformAdmin() && ! in_array($role->code, ['administrador', 'directiva', 'presidente', 'tesorero', 'secretario', 'contabilidad', 'propietario', 'residente'], true)) {
                     $validator->errors()->add("assignments.$index.role_id", 'No puede asignar este rol.');
-                }
-                if (! $this->user()->isPlatformAdmin() && $role->condominium_id === null) {
-                    $validator->errors()->add("assignments.$index.role_id", 'No puede asignar roles globales.');
                 }
             }
         }];

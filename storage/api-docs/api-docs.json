@@ -12,63 +12,13 @@
         }
     ],
     "paths": {
-        "/api/administrators": {
+        "/api/condominiums/{condominium}/administrators": {
             "get": {
                 "tags": [
                     "Administradores"
                 ],
-                "summary": "Listar administradores",
-                "description": "Devuelve administradores con su estado de acceso, tipo y última invitación. El administrador senior ve todos los administradores no eliminados; un administrador de condominio ve únicamente los administradores de sus condominios autorizados.",
-                "operationId": "administratorsIndex",
-                "parameters": [
-                    {
-                        "name": "search",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "Carlos"
-                    },
-                    {
-                        "name": "condominium_id",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": 1
-                    },
-                    {
-                        "name": "status",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "active",
-                                "inactive"
-                            ]
-                        },
-                        "example": "active"
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1
-                        },
-                        "example": 1
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "maximum": 100,
-                            "minimum": 1
-                        },
-                        "example": 20
-                    }
-                ],
+                "summary": "Listar administradores del condominio",
+                "operationId": "condominiumAdministratorsIndex",
                 "responses": {
                     "200": {
                         "description": "Administradores encontrados",
@@ -157,79 +107,13 @@
                 "tags": [
                     "Administradores"
                 ],
-                "summary": "Crear administrador",
-                "description": "Crea el administrador con acceso deshabilitado, lo asigna a los condominios indicados y envía por correo una invitación de activación de 24 horas.",
-                "operationId": "administratorsStore",
+                "summary": "Crear administrador del condominio",
+                "operationId": "condominiumAdministratorsStore",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
-                            "schema": {
-                                "required": [
-                                    "email",
-                                    "country",
-                                    "document_type_id",
-                                    "document_number",
-                                    "condominium_ids"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "description": "Nombre completo compatible. Puede enviarse en lugar de first_name.",
-                                        "type": "string",
-                                        "example": "Carlos Ramírez",
-                                        "nullable": true
-                                    },
-                                    "first_name": {
-                                        "description": "Nombres. Obligatorio cuando no se envía name.",
-                                        "type": "string",
-                                        "example": "Carlos",
-                                        "nullable": true
-                                    },
-                                    "last_name": {
-                                        "type": "string",
-                                        "example": "Ramírez",
-                                        "nullable": true
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "carlos.ramirez@example.com"
-                                    },
-                                    "country": {
-                                        "type": "string",
-                                        "example": "EC"
-                                    },
-                                    "document_type_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "document_number": {
-                                        "description": "Debe tener el formato del tipo seleccionado y ser único para la combinación de país y tipo de documento.",
-                                        "type": "string",
-                                        "example": "0912345678"
-                                    },
-                                    "phone": {
-                                        "type": "string",
-                                        "example": "0991234567",
-                                        "nullable": true
-                                    },
-                                    "secondary_phone": {
-                                        "type": "string",
-                                        "example": "042345678",
-                                        "nullable": true
-                                    },
-                                    "condominium_ids": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "integer"
-                                        },
-                                        "example": [
-                                            1
-                                        ]
-                                    }
-                                },
-                                "type": "object"
-                            },
+                            "schema": [],
                             "example": {
                                 "first_name": "Carlos",
                                 "last_name": "Ramírez",
@@ -237,17 +121,14 @@
                                 "country": "EC",
                                 "document_type_id": 1,
                                 "document_number": "0912345678",
-                                "phone": "0991234567",
-                                "condominium_ids": [
-                                    1
-                                ]
+                                "phone": "0991234567"
                             }
                         }
                     }
                 },
                 "responses": {
                     "201": {
-                        "description": "Administrador creado e invitación enviada",
+                        "description": "Administrador creado",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -303,6 +184,23 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Datos inválidos",
                         "content": {
@@ -332,14 +230,13 @@
                 ]
             }
         },
-        "/api/administrators/{administrator}": {
+        "/api/condominiums/{condominium}/administrators/{user}": {
             "get": {
                 "tags": [
                     "Administradores"
                 ],
-                "summary": "Consultar administrador",
-                "description": "Un administrador senior puede consultar tanto administradores globales como administradores de condominio. Los administradores de condominio quedan limitados a su alcance autorizado.",
-                "operationId": "administratorsShow",
+                "summary": "Consultar administrador del condominio",
+                "operationId": "condominiumAdministratorsShow",
                 "responses": {
                     "200": {
                         "description": "Administrador encontrado",
@@ -443,71 +340,8 @@
                 "tags": [
                     "Administradores"
                 ],
-                "summary": "Actualizar administrador",
-                "operationId": "administratorsUpdate",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Carlos Ramírez"
-                                    },
-                                    "first_name": {
-                                        "type": "string",
-                                        "example": "Carlos"
-                                    },
-                                    "last_name": {
-                                        "type": "string",
-                                        "example": "Ramírez",
-                                        "nullable": true
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "carlos.ramirez@example.com"
-                                    },
-                                    "country": {
-                                        "type": "string",
-                                        "example": "EC"
-                                    },
-                                    "document_type_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "document_number": {
-                                        "type": "string",
-                                        "example": "0912345678"
-                                    },
-                                    "phone": {
-                                        "type": "string",
-                                        "example": "0991234567",
-                                        "nullable": true
-                                    },
-                                    "secondary_phone": {
-                                        "type": "string",
-                                        "example": "042345678",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            },
-                            "example": {
-                                "name": "Carlos Ramírez",
-                                "first_name": "Carlos",
-                                "last_name": "Ramírez",
-                                "email": "carlos.ramirez@example.com",
-                                "country": "EC",
-                                "document_type_id": 1,
-                                "document_number": "0912345678",
-                                "phone": "0991234567",
-                                "secondary_phone": "042345678"
-                            }
-                        }
-                    }
-                },
+                "summary": "Actualizar administrador del condominio",
+                "operationId": "condominiumAdministratorsUpdate",
                 "responses": {
                     "200": {
                         "description": "Administrador actualizado",
@@ -566,6 +400,40 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Datos inválidos",
                         "content": {
@@ -592,236 +460,28 @@
                     {
                         "bearerAuth": []
                     }
-                ]
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            },
+                            "example": {
+                                "first_name": "Carlos Andrés",
+                                "phone": "0987654321"
+                            }
+                        }
+                    }
+                }
             },
             "delete": {
                 "tags": [
                     "Administradores"
                 ],
-                "summary": "Desactivar administrador y retirar sus asignaciones",
-                "operationId": "administratorsDestroy",
-                "responses": {
-                    "200": {
-                        "description": "Administrador eliminado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "success": true,
-                                    "message": "Operación realizada correctamente.",
-                                    "data": null,
-                                    "meta": {}
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/administrators/{administrator}/status": {
-            "patch": {
-                "tags": [
-                    "Administradores"
-                ],
-                "summary": "Activar o inactivar acceso de administrador",
-                "operationId": "administratorsUpdateStatus",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "is_access_enabled"
-                                ],
-                                "properties": {
-                                    "is_access_enabled": {
-                                        "type": "boolean",
-                                        "example": true
-                                    }
-                                },
-                                "type": "object"
-                            },
-                            "example": {
-                                "is_access_enabled": true
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Estado actualizado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "success": true,
-                                    "message": "Operación realizada correctamente.",
-                                    "data": {
-                                        "id": 2,
-                                        "name": "Carlos Ramírez",
-                                        "first_name": "Carlos",
-                                        "last_name": "Ramírez",
-                                        "email": "carlos.ramirez@example.com",
-                                        "country": "EC",
-                                        "document_type": {
-                                            "id": 1,
-                                            "catalog_id": 1,
-                                            "code": "cedula",
-                                            "name": "Cédula",
-                                            "description": "Documento de identidad",
-                                            "sort_order": 1,
-                                            "is_active": true
-                                        },
-                                        "document_number": "0912345678",
-                                        "phone": "0991234567",
-                                        "secondary_phone": null,
-                                        "is_access_enabled": false,
-                                        "administrator_type": "condominium",
-                                        "access_status": "pending_activation",
-                                        "invitation": {
-                                            "id": 1,
-                                            "status": "pending",
-                                            "expires_at": "2026-07-01T12:00:00Z",
-                                            "accepted_at": null,
-                                            "revoked_at": null,
-                                            "is_expired": false
-                                        },
-                                        "condominiums": [
-                                            {
-                                                "id": 1,
-                                                "name": "Condominio Los Cedros",
-                                                "slug": "condominio-los-cedros",
-                                                "is_active": true,
-                                                "joined_at": "2026-06-30T12:00:00Z"
-                                            }
-                                        ],
-                                        "created_at": "2026-06-30T12:00:00Z",
-                                        "updated_at": "2026-06-30T12:00:00Z"
-                                    },
-                                    "meta": {}
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/administrators/{administrator}/condominiums": {
-            "post": {
-                "tags": [
-                    "Administradores"
-                ],
-                "summary": "Asignar administrador a condominio",
-                "operationId": "administratorsAssignCondominium",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "condominium_id"
-                                ],
-                                "properties": {
-                                    "condominium_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    }
-                                },
-                                "type": "object"
-                            },
-                            "example": {
-                                "condominium_id": 1
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Administrador asignado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "success": true,
-                                    "message": "Operación realizada correctamente.",
-                                    "data": {
-                                        "id": 2,
-                                        "name": "Carlos Ramírez",
-                                        "first_name": "Carlos",
-                                        "last_name": "Ramírez",
-                                        "email": "carlos.ramirez@example.com",
-                                        "country": "EC",
-                                        "document_type": {
-                                            "id": 1,
-                                            "catalog_id": 1,
-                                            "code": "cedula",
-                                            "name": "Cédula",
-                                            "description": "Documento de identidad",
-                                            "sort_order": 1,
-                                            "is_active": true
-                                        },
-                                        "document_number": "0912345678",
-                                        "phone": "0991234567",
-                                        "secondary_phone": null,
-                                        "is_access_enabled": false,
-                                        "administrator_type": "condominium",
-                                        "access_status": "pending_activation",
-                                        "invitation": {
-                                            "id": 1,
-                                            "status": "pending",
-                                            "expires_at": "2026-07-01T12:00:00Z",
-                                            "accepted_at": null,
-                                            "revoked_at": null,
-                                            "is_expired": false
-                                        },
-                                        "condominiums": [
-                                            {
-                                                "id": 1,
-                                                "name": "Condominio Los Cedros",
-                                                "slug": "condominio-los-cedros",
-                                                "is_active": true,
-                                                "joined_at": "2026-06-30T12:00:00Z"
-                                            }
-                                        ],
-                                        "created_at": "2026-06-30T12:00:00Z",
-                                        "updated_at": "2026-06-30T12:00:00Z"
-                                    },
-                                    "meta": {}
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/administrators/{administrator}/condominiums/{condominium}": {
-            "delete": {
-                "tags": [
-                    "Administradores"
-                ],
-                "summary": "Desvincular administrador de condominio",
-                "operationId": "administratorsRemoveCondominium",
+                "summary": "Desvincular administrador del condominio",
+                "operationId": "condominiumAdministratorsDestroy",
                 "responses": {
                     "200": {
                         "description": "Administrador desvinculado",
@@ -879,6 +539,40 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -886,6 +580,126 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/condominiums/{condominium}/administrators/{user}/status": {
+            "patch": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Activar o inactivar administrador del condominio",
+                "operationId": "condominiumAdministratorsUpdateStatus",
+                "responses": {
+                    "200": {
+                        "description": "Estado actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 2,
+                                        "name": "Carlos Ramírez",
+                                        "first_name": "Carlos",
+                                        "last_name": "Ramírez",
+                                        "email": "carlos.ramirez@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "0912345678",
+                                        "phone": "0991234567",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": false,
+                                        "administrator_type": "condominium",
+                                        "access_status": "pending_activation",
+                                        "invitation": {
+                                            "id": 1,
+                                            "status": "pending",
+                                            "expires_at": "2026-07-01T12:00:00Z",
+                                            "accepted_at": null,
+                                            "revoked_at": null,
+                                            "is_expired": false
+                                        },
+                                        "condominiums": [
+                                            {
+                                                "id": 1,
+                                                "name": "Condominio Los Cedros",
+                                                "slug": "condominio-los-cedros",
+                                                "is_active": true,
+                                                "joined_at": "2026-06-30T12:00:00Z"
+                                            }
+                                        ],
+                                        "created_at": "2026-06-30T12:00:00Z",
+                                        "updated_at": "2026-06-30T12:00:00Z"
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            },
+                            "example": {
+                                "is_access_enabled": true
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/auth/activate-access": {
@@ -4196,6 +4010,23 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "description": "Solo administrador senior",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -4231,6 +4062,23 @@
                                             "children": []
                                         }
                                     ],
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Solo administrador senior",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
                                     "meta": {}
                                 }
                             }
@@ -4454,6 +4302,44 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "description": "Condominio no permitido o inactivo",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Contexto de condominio requerido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
+                                    "meta": {}
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -4495,6 +4381,23 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "description": "Sin permiso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -4509,6 +4412,29 @@
                 ],
                 "summary": "Crear permiso",
                 "operationId": "permissionsStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "module",
+                                    "action",
+                                    "name",
+                                    "code"
+                                ]
+                            },
+                            "example": {
+                                "module": "reports",
+                                "action": "view",
+                                "name": "Ver reportes",
+                                "code": "reports.view",
+                                "description": "Permite consultar reportes.",
+                                "is_active": true
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
                         "description": "Permiso creado",
@@ -4528,6 +4454,23 @@
                                         "name": "Administrar roles",
                                         "is_active": true
                                     },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sin permiso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
                                     "meta": {}
                                 }
                             }
@@ -4559,25 +4502,844 @@
                     {
                         "bearerAuth": []
                     }
+                ]
+            }
+        },
+        "/api/permissions/{permission}": {
+            "put": {
+                "tags": [
+                    "Permisos"
+                ],
+                "summary": "Actualizar permiso",
+                "operationId": "permissionsUpdate",
+                "parameters": [
+                    {
+                        "name": "permission",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
                 ],
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "required": [
+                                    "module",
+                                    "action",
+                                    "name",
+                                    "code"
+                                ]
                             },
-                            "example": {
-                                "module": "reports",
-                                "action": "view",
-                                "name": "Ver reportes",
-                                "code": "reports.view",
-                                "description": "Permite consultar reportes.",
-                                "is_active": true
+                            "example": []
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Permiso actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 1,
+                                        "module": "roles",
+                                        "action": "manage",
+                                        "code": "roles.manage",
+                                        "name": "Administrar roles",
+                                        "is_active": true
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sin permiso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Permiso no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
+                                    "meta": {}
+                                }
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Permisos"
+                ],
+                "summary": "Eliminar permiso",
+                "operationId": "permissionsDestroy",
+                "parameters": [
+                    {
+                        "name": "permission",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Permiso eliminado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 1,
+                                        "module": "roles",
+                                        "action": "manage",
+                                        "code": "roles.manage",
+                                        "name": "Administrar roles",
+                                        "is_active": true
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sin permiso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Permiso no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/platform-administrators": {
+            "get": {
+                "tags": [
+                    "Administradores de Plataforma"
+                ],
+                "summary": "Listar administradores senior",
+                "operationId": "platformAdministratorsIndex",
+                "responses": {
+                    "200": {
+                        "description": "Administradores encontrados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": [
+                                        {
+                                            "id": 3,
+                                            "name": "Ana Senior",
+                                            "first_name": "Ana",
+                                            "last_name": "Senior",
+                                            "email": "ana.senior@example.com",
+                                            "country": "EC",
+                                            "document_type": {
+                                                "id": 1,
+                                                "catalog_id": 1,
+                                                "code": "cedula",
+                                                "name": "Cédula",
+                                                "description": "Documento de identidad",
+                                                "sort_order": 1,
+                                                "is_active": true
+                                            },
+                                            "document_number": "0912345678",
+                                            "phone": "0991234567",
+                                            "secondary_phone": null,
+                                            "is_access_enabled": false,
+                                            "access_status": "pending_activation",
+                                            "platform_role": {
+                                                "code": "administrador_senior",
+                                                "name": "Administrador Senior"
+                                            },
+                                            "invitation": {
+                                                "id": 1,
+                                                "status": "pending",
+                                                "expires_at": "2026-07-01T12:00:00Z",
+                                                "accepted_at": null,
+                                                "revoked_at": null,
+                                                "is_expired": false
+                                            },
+                                            "created_at": "2026-06-30T12:00:00Z",
+                                            "updated_at": "2026-06-30T12:00:00Z"
+                                        }
+                                    ],
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Administradores de Plataforma"
+                ],
+                "summary": "Crear o asignar administrador senior",
+                "operationId": "platformAdministratorsStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": [],
+                            "example": {
+                                "first_name": "Ana",
+                                "last_name": "Senior",
+                                "email": "ana.senior@example.com",
+                                "country": "EC",
+                                "document_type_id": 1,
+                                "document_number": "0912345678",
+                                "phone": "0991234567"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Administrador creado o asignado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 3,
+                                        "name": "Ana Senior",
+                                        "first_name": "Ana",
+                                        "last_name": "Senior",
+                                        "email": "ana.senior@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "0912345678",
+                                        "phone": "0991234567",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": false,
+                                        "access_status": "pending_activation",
+                                        "platform_role": {
+                                            "code": "administrador_senior",
+                                            "name": "Administrador Senior"
+                                        },
+                                        "invitation": {
+                                            "id": 1,
+                                            "status": "pending",
+                                            "expires_at": "2026-07-01T12:00:00Z",
+                                            "accepted_at": null,
+                                            "revoked_at": null,
+                                            "is_expired": false
+                                        },
+                                        "created_at": "2026-06-30T12:00:00Z",
+                                        "updated_at": "2026-06-30T12:00:00Z"
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/platform-administrators/{user}": {
+            "get": {
+                "tags": [
+                    "Administradores de Plataforma"
+                ],
+                "summary": "Consultar administrador senior",
+                "operationId": "platformAdministratorsShow",
+                "responses": {
+                    "200": {
+                        "description": "Administrador encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 3,
+                                        "name": "Ana Senior",
+                                        "first_name": "Ana",
+                                        "last_name": "Senior",
+                                        "email": "ana.senior@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "0912345678",
+                                        "phone": "0991234567",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": false,
+                                        "access_status": "pending_activation",
+                                        "platform_role": {
+                                            "code": "administrador_senior",
+                                            "name": "Administrador Senior"
+                                        },
+                                        "invitation": {
+                                            "id": 1,
+                                            "status": "pending",
+                                            "expires_at": "2026-07-01T12:00:00Z",
+                                            "accepted_at": null,
+                                            "revoked_at": null,
+                                            "is_expired": false
+                                        },
+                                        "created_at": "2026-06-30T12:00:00Z",
+                                        "updated_at": "2026-06-30T12:00:00Z"
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Administradores de Plataforma"
+                ],
+                "summary": "Eliminar rol de administrador senior",
+                "operationId": "platformAdministratorsDestroy",
+                "responses": {
+                    "200": {
+                        "description": "Rol eliminado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": null,
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Administradores de Plataforma"
+                ],
+                "summary": "Actualizar administrador senior",
+                "operationId": "platformAdministratorsUpdate",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": [],
+                            "example": {
+                                "first_name": "Ana María",
+                                "phone": "0987654321"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Administrador actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 3,
+                                        "name": "Ana Senior",
+                                        "first_name": "Ana",
+                                        "last_name": "Senior",
+                                        "email": "ana.senior@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "0912345678",
+                                        "phone": "0991234567",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": false,
+                                        "access_status": "pending_activation",
+                                        "platform_role": {
+                                            "code": "administrador_senior",
+                                            "name": "Administrador Senior"
+                                        },
+                                        "invitation": {
+                                            "id": 1,
+                                            "status": "pending",
+                                            "expires_at": "2026-07-01T12:00:00Z",
+                                            "accepted_at": null,
+                                            "revoked_at": null,
+                                            "is_expired": false
+                                        },
+                                        "created_at": "2026-06-30T12:00:00Z",
+                                        "updated_at": "2026-06-30T12:00:00Z"
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/platform-administrators/{user}/status": {
+            "patch": {
+                "tags": [
+                    "Administradores de Plataforma"
+                ],
+                "summary": "Activar o desactivar administrador senior",
+                "operationId": "platformAdministratorsUpdateStatus",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": [],
+                            "example": {
+                                "is_access_enabled": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Estado actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 3,
+                                        "name": "Ana Senior",
+                                        "first_name": "Ana",
+                                        "last_name": "Senior",
+                                        "email": "ana.senior@example.com",
+                                        "country": "EC",
+                                        "document_type": {
+                                            "id": 1,
+                                            "catalog_id": 1,
+                                            "code": "cedula",
+                                            "name": "Cédula",
+                                            "description": "Documento de identidad",
+                                            "sort_order": 1,
+                                            "is_active": true
+                                        },
+                                        "document_number": "0912345678",
+                                        "phone": "0991234567",
+                                        "secondary_phone": null,
+                                        "is_access_enabled": false,
+                                        "access_status": "pending_activation",
+                                        "platform_role": {
+                                            "code": "administrador_senior",
+                                            "name": "Administrador Senior"
+                                        },
+                                        "invitation": {
+                                            "id": 1,
+                                            "status": "pending",
+                                            "expires_at": "2026-07-01T12:00:00Z",
+                                            "accepted_at": null,
+                                            "revoked_at": null,
+                                            "is_expired": false
+                                        },
+                                        "created_at": "2026-06-30T12:00:00Z",
+                                        "updated_at": "2026-06-30T12:00:00Z"
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/condominiums/{condominium}/roles": {
@@ -4587,6 +5349,16 @@
                 ],
                 "summary": "Listar roles por condominio",
                 "operationId": "rolesIndex",
+                "parameters": [
+                    {
+                        "name": "condominium",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Roles encontrados",
@@ -4620,6 +5392,23 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "description": "Sin permiso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -4634,6 +5423,38 @@
                 ],
                 "summary": "Crear rol por condominio",
                 "operationId": "rolesStore",
+                "parameters": [
+                    {
+                        "name": "condominium",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ]
+                            },
+                            "example": {
+                                "name": "Administrador operativo",
+                                "code": "administrador_operativo",
+                                "description": "Rol operativo de administración.",
+                                "permission_ids": [
+                                    1,
+                                    2,
+                                    3
+                                ]
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
                         "description": "Rol creado",
@@ -4666,8 +5487,8 @@
                             }
                         }
                     },
-                    "422": {
-                        "description": "Datos inválidos",
+                    "403": {
+                        "description": "Sin permiso",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -4675,72 +5496,9 @@
                                 },
                                 "example": {
                                     "success": false,
-                                    "message": "Los datos enviados no son válidos.",
-                                    "errors": {
-                                        "field": [
-                                            "El campo es obligatorio."
-                                        ]
-                                    },
-                                    "code": "validation_failed",
-                                    "meta": {}
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            },
-                            "example": {
-                                "name": "Administrador operativo",
-                                "code": "administrador_operativo",
-                                "description": "Rol operativo de administración.",
-                                "permission_ids": [
-                                    1,
-                                    2,
-                                    3
-                                ]
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/condominiums/{condominium}/roles/{role}/permissions": {
-            "put": {
-                "tags": [
-                    "Roles"
-                ],
-                "summary": "Asignar permisos a rol",
-                "operationId": "rolesSyncPermissions",
-                "responses": {
-                    "200": {
-                        "description": "Permisos actualizados",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "success": true,
-                                    "message": "Operación realizada correctamente.",
-                                    "data": {
-                                        "id": 1,
-                                        "module": "roles",
-                                        "action": "manage",
-                                        "code": "roles.manage",
-                                        "name": "Administrar roles",
-                                        "is_active": true
-                                    },
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
                                     "meta": {}
                                 }
                             }
@@ -4772,13 +5530,371 @@
                     {
                         "bearerAuth": []
                     }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/roles/{role}": {
+            "get": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Obtener rol por condominio",
+                "operationId": "rolesShow",
+                "parameters": [
+                    {
+                        "name": "condominium",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rol encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": [
+                                        {
+                                            "id": 1,
+                                            "condominium_id": 1,
+                                            "name": "Administrador",
+                                            "code": "administrador",
+                                            "permissions": [
+                                                {
+                                                    "id": 1,
+                                                    "module": "roles",
+                                                    "action": "manage",
+                                                    "code": "roles.manage",
+                                                    "name": "Administrar roles",
+                                                    "is_active": true
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sin permiso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Rol no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Actualizar rol por condominio",
+                "operationId": "rolesUpdate",
+                "parameters": [
+                    {
+                        "name": "condominium",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
                 ],
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "required": [
+                                    "name"
+                                ]
+                            },
+                            "example": []
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rol actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 1,
+                                        "condominium_id": 1,
+                                        "name": "Administrador",
+                                        "code": "administrador",
+                                        "permissions": [
+                                            {
+                                                "id": 1,
+                                                "module": "roles",
+                                                "action": "manage",
+                                                "code": "roles.manage",
+                                                "name": "Administrar roles",
+                                                "is_active": true
+                                            }
+                                        ]
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sin permiso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Rol no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Eliminar rol por condominio",
+                "operationId": "rolesDestroy",
+                "parameters": [
+                    {
+                        "name": "condominium",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rol eliminado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 1,
+                                        "condominium_id": 1,
+                                        "name": "Administrador",
+                                        "code": "administrador",
+                                        "permissions": [
+                                            {
+                                                "id": 1,
+                                                "module": "roles",
+                                                "action": "manage",
+                                                "code": "roles.manage",
+                                                "name": "Administrar roles",
+                                                "is_active": true
+                                            }
+                                        ]
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sin permiso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Rol no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/condominiums/{condominium}/roles/{role}/permissions": {
+            "put": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Asignar permisos a rol",
+                "operationId": "rolesSyncPermissions",
+                "parameters": [
+                    {
+                        "name": "condominium",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "permission_ids"
+                                ]
                             },
                             "example": {
                                 "permission_ids": [
@@ -4789,7 +5905,100 @@
                             }
                         }
                     }
-                }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Permisos actualizados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Operación realizada correctamente.",
+                                    "data": {
+                                        "id": 1,
+                                        "condominium_id": 1,
+                                        "name": "Administrador",
+                                        "code": "administrador",
+                                        "permissions": [
+                                            {
+                                                "id": 1,
+                                                "module": "roles",
+                                                "action": "manage",
+                                                "code": "roles.manage",
+                                                "name": "Administrar roles",
+                                                "is_active": true
+                                            }
+                                        ]
+                                    },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sin permiso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Rol no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Los datos enviados no son válidos.",
+                                    "errors": {
+                                        "field": [
+                                            "El campo es obligatorio."
+                                        ]
+                                    },
+                                    "code": "validation_failed",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/health": {
@@ -4986,13 +6195,11 @@
                                     "data": [
                                         {
                                             "id": 1,
-                                            "condominium_id": 1,
-                                            "code": "CASA-01",
-                                            "number": "01",
-                                            "floor": null,
-                                            "area_m2": 120,
-                                            "current_aliquot_percentage": 5,
-                                            "is_active": true
+                                            "name": "Administración",
+                                            "code": "administracion",
+                                            "icon": "settings",
+                                            "route": "/admin",
+                                            "children": []
                                         }
                                     ],
                                     "meta": {}
@@ -5048,13 +6255,11 @@
                                     "data": [
                                         {
                                             "id": 1,
-                                            "condominium_id": 1,
-                                            "code": "CASA-01",
-                                            "number": "01",
-                                            "floor": null,
-                                            "area_m2": 120,
-                                            "current_aliquot_percentage": 5,
-                                            "is_active": true
+                                            "name": "Administración",
+                                            "code": "administracion",
+                                            "icon": "settings",
+                                            "route": "/admin",
+                                            "children": []
                                         }
                                     ],
                                     "meta": {}
@@ -5340,92 +6545,6 @@
                 ]
             }
         },
-        "/api/units/{unit}": {
-            "get": {
-                "tags": [
-                    "Unidades"
-                ],
-                "summary": "Obtener una casa o unidad por ID",
-                "operationId": "unitsShowById",
-                "parameters": [
-                    {
-                        "name": "unit",
-                        "in": "path",
-                        "description": "ID de la casa o unidad",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1
-                        },
-                        "example": 1
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Casa o unidad encontrada",
-                        "content": {
-                            "application/json": {
-                                "schema": [],
-                                "example": {
-                                    "success": true,
-                                    "message": "Operación realizada correctamente.",
-                                    "data": {
-                                        "id": 1,
-                                        "condominium_id": 1,
-                                        "code": "CASA-01",
-                                        "number": "01",
-                                        "floor": null,
-                                        "area_m2": 120,
-                                        "current_aliquot_percentage": 5,
-                                        "is_active": true
-                                    },
-                                    "meta": {}
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Token no proporcionado o inválido",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "success": false,
-                                    "message": "No se pudo procesar la solicitud.",
-                                    "errors": {},
-                                    "code": "request_error",
-                                    "meta": {}
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Casa o unidad no encontrada",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "success": false,
-                                    "message": "No se pudo procesar la solicitud.",
-                                    "errors": {},
-                                    "code": "request_error",
-                                    "meta": {}
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/condominiums/{condominium}/units/{unit}/users": {
             "get": {
                 "tags": [
@@ -5668,95 +6787,6 @@
                 ]
             }
         },
-        "/api/users/{user}/resend-invitation": {
-            "post": {
-                "tags": [
-                    "Invitaciones"
-                ],
-                "summary": "Reenviar invitación de acceso",
-                "operationId": "usersResendInvitation",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": [],
-                            "example": []
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Invitación reenviada",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "success": true,
-                                    "message": "Operación realizada correctamente.",
-                                    "data": null,
-                                    "meta": {}
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "No autorizado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "success": false,
-                                    "message": "No se pudo procesar la solicitud.",
-                                    "errors": {},
-                                    "code": "request_error",
-                                    "meta": {}
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Usuario activo o asignación inválida",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "success": false,
-                                    "message": "Los datos enviados no son válidos.",
-                                    "errors": {
-                                        "field": [
-                                            "El campo es obligatorio."
-                                        ]
-                                    },
-                                    "code": "validation_failed",
-                                    "meta": {}
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/condominiums/{condominium}/units/{unit}/users/{user}/access-invitations": {
             "post": {
                 "tags": [
@@ -5850,13 +6880,13 @@
                 }
             }
         },
-        "/api/users/{user}/billing-profiles": {
+        "/api/condominiums/{condominium}/units/{unit}/users/{user}/billing-profiles": {
             "get": {
                 "tags": [
                     "Facturación usuarios"
                 ],
-                "summary": "Listar perfiles de facturación",
-                "operationId": "userBillingProfilesIndex",
+                "summary": "Listar perfiles de facturación del usuario en la vivienda",
+                "operationId": "unitUserBillingProfilesIndex",
                 "responses": {
                     "200": {
                         "description": "Perfiles encontrados",
@@ -5882,6 +6912,23 @@
                                 }
                             }
                         }
+                    },
+                    "404": {
+                        "description": "Recurso fuera del condominio o vivienda",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -5894,8 +6941,8 @@
                 "tags": [
                     "Facturación usuarios"
                 ],
-                "summary": "Crear perfil de facturación",
-                "operationId": "userBillingProfilesStore",
+                "summary": "Crear perfil de facturación del usuario en la vivienda",
+                "operationId": "unitUserBillingProfilesStore",
                 "responses": {
                     "201": {
                         "description": "Perfil creado",
@@ -5915,6 +6962,23 @@
                                         "document_number": "1799999999",
                                         "is_default": true
                                     },
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso fuera del condominio o vivienda",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
                                     "meta": {}
                                 }
                             }
@@ -5951,51 +7015,13 @@
                 }
             }
         },
-        "/api/users": {
+        "/api/condominiums/{condominium}/users": {
             "get": {
                 "tags": [
                     "Usuarios"
                 ],
-                "summary": "Listar usuarios visibles",
-                "operationId": "usersIndex",
-                "parameters": [
-                    {
-                        "name": "search",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "Ana"
-                    },
-                    {
-                        "name": "condominium_id",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": 1
-                    },
-                    {
-                        "name": "role_id",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": 2
-                    },
-                    {
-                        "name": "status",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "active",
-                                "inactive"
-                            ]
-                        },
-                        "example": "active"
-                    }
-                ],
+                "summary": "Listar usuarios del condominio",
+                "operationId": "condominiumUsersIndex",
                 "responses": {
                     "200": {
                         "description": "Usuarios encontrados",
@@ -6063,95 +7089,13 @@
                 "tags": [
                     "Usuarios"
                 ],
-                "summary": "Crear usuario administrativo",
-                "description": "Crea un usuario desde administración, sin contraseña inicial, y lo asigna a uno o más condominios y roles. Si is_access_enabled no se envía, el usuario queda activo por defecto; para obligar activación por invitación, enviar is_access_enabled=false y luego usar el endpoint de reenvío o creación de invitación según el flujo.",
-                "operationId": "usersStore",
+                "summary": "Crear usuario en condominio",
+                "operationId": "condominiumUsersStore",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
-                            "schema": {
-                                "required": [
-                                    "email",
-                                    "country",
-                                    "document_type_id",
-                                    "document_number",
-                                    "assignments"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "description": "Nombre completo compatible. Puede enviarse en lugar de first_name.",
-                                        "type": "string",
-                                        "example": "Ana Pérez",
-                                        "nullable": true
-                                    },
-                                    "first_name": {
-                                        "type": "string",
-                                        "example": "Ana",
-                                        "nullable": true
-                                    },
-                                    "last_name": {
-                                        "type": "string",
-                                        "example": "Pérez",
-                                        "nullable": true
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "ana@example.com"
-                                    },
-                                    "country": {
-                                        "type": "string",
-                                        "example": "EC"
-                                    },
-                                    "document_type_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "document_number": {
-                                        "type": "string",
-                                        "example": "0912345678"
-                                    },
-                                    "phone": {
-                                        "type": "string",
-                                        "example": "0991112222",
-                                        "nullable": true
-                                    },
-                                    "secondary_phone": {
-                                        "type": "string",
-                                        "example": null,
-                                        "nullable": true
-                                    },
-                                    "is_access_enabled": {
-                                        "description": "Controla si el usuario puede iniciar sesión inmediatamente. En false requiere activación posterior mediante invitación.",
-                                        "type": "boolean",
-                                        "example": false,
-                                        "nullable": true
-                                    },
-                                    "assignments": {
-                                        "type": "array",
-                                        "items": {
-                                            "required": [
-                                                "role_id"
-                                            ],
-                                            "properties": {
-                                                "condominium_id": {
-                                                    "description": "Obligatorio para administradores de plataforma; se infiere para administradores de condominio.",
-                                                    "type": "integer",
-                                                    "example": 1,
-                                                    "nullable": true
-                                                },
-                                                "role_id": {
-                                                    "type": "integer",
-                                                    "example": 2
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    }
-                                },
-                                "type": "object"
-                            },
+                            "schema": [],
                             "example": {
                                 "first_name": "Ana",
                                 "last_name": "Pérez",
@@ -6162,12 +7106,7 @@
                                 "phone": "0991112222",
                                 "secondary_phone": null,
                                 "is_access_enabled": false,
-                                "assignments": [
-                                    {
-                                        "condominium_id": 1,
-                                        "role_id": 2
-                                    }
-                                ]
+                                "role_id": 2
                             }
                         }
                     }
@@ -6255,23 +7194,13 @@
                 ]
             }
         },
-        "/api/users/{user}": {
+        "/api/condominiums/{condominium}/users/{user}": {
             "get": {
                 "tags": [
                     "Usuarios"
                 ],
-                "summary": "Mostrar usuario",
-                "operationId": "usersShow",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
+                "summary": "Mostrar usuario del condominio",
+                "operationId": "condominiumUsersShow",
                 "responses": {
                     "200": {
                         "description": "Usuario encontrado",
@@ -6325,6 +7254,23 @@
                                 }
                             }
                         }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -6337,24 +7283,17 @@
                 "tags": [
                     "Usuarios"
                 ],
-                "summary": "Actualizar usuario y asignaciones",
-                "operationId": "usersUpdate",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
+                "summary": "Actualizar usuario del condominio",
+                "operationId": "condominiumUsersUpdate",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": [],
-                            "example": []
+                            "example": {
+                                "first_name": "Ana María",
+                                "role_id": 3
+                            }
                         }
                     }
                 },
@@ -6395,6 +7334,40 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "Sin permiso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Datos inválidos",
                         "content": {
@@ -6424,29 +7397,21 @@
                 ]
             }
         },
-        "/api/users/{user}/status": {
+        "/api/condominiums/{condominium}/users/{user}/status": {
             "patch": {
                 "tags": [
                     "Usuarios"
                 ],
-                "summary": "Activar o inactivar usuario",
-                "operationId": "usersStatus",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
+                "summary": "Activar o inactivar usuario en condominio",
+                "operationId": "condominiumUsersStatus",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": [],
-                            "example": []
+                            "example": {
+                                "is_access_enabled": false
+                            }
                         }
                     }
                 },
@@ -6486,6 +7451,40 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "description": "Sin permiso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "No se pudo procesar la solicitud.",
+                                    "errors": {},
+                                    "code": "request_error",
+                                    "meta": {}
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -6495,13 +7494,13 @@
                 ]
             }
         },
-        "/api/users/form-options": {
+        "/api/condominiums/{condominium}/users/form-options": {
             "get": {
                 "tags": [
                     "Usuarios"
                 ],
-                "summary": "Opciones permitidas para formularios",
-                "operationId": "usersFormOptions",
+                "summary": "Opciones permitidas para formularios de usuarios del condominio",
+                "operationId": "condominiumUsersFormOptions",
                 "responses": {
                     "200": {
                         "description": "Opciones disponibles",
@@ -8339,49 +9338,6 @@
                                             "direction": "debit",
                                             "amount": 50,
                                             "balance_after": 50
-                                        }
-                                    ],
-                                    "meta": {}
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/my/units": {
-            "get": {
-                "tags": [
-                    "Unidades"
-                ],
-                "summary": "Listar mis unidades",
-                "operationId": "myUnitsIndex",
-                "responses": {
-                    "200": {
-                        "description": "Unidades del usuario autenticado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "success": true,
-                                    "message": "Operación realizada correctamente.",
-                                    "data": [
-                                        {
-                                            "id": 1,
-                                            "condominium_id": 1,
-                                            "code": "CASA-01",
-                                            "number": "01",
-                                            "floor": null,
-                                            "area_m2": 120,
-                                            "current_aliquot_percentage": 5,
-                                            "is_active": true
                                         }
                                     ],
                                     "meta": {}
@@ -11783,6 +12739,10 @@
         {
             "name": "Permisos",
             "description": "Permisos"
+        },
+        {
+            "name": "Administradores de Plataforma",
+            "description": "Administradores de Plataforma"
         },
         {
             "name": "Roles",

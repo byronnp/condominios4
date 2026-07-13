@@ -39,6 +39,31 @@ class UserInvitationService
         return $invitation;
     }
 
+    public function invitePlatformAdministrator(User $user, Role $role, User $invitedBy): UserAccessInvitation
+    {
+        $plainToken = Str::random(64);
+
+        $this->revokePendingPlatform($user, $role);
+
+        $invitation = UserAccessInvitation::create([
+            'condominium_id' => null,
+            'unit_id' => null,
+            'user_id' => $user->id,
+            'role_id' => $role->id,
+            'invited_by_user_id' => $invitedBy->id,
+            'email' => $user->email,
+            'token_hash' => hash('sha256', $plainToken),
+            'status' => UserAccessInvitation::STATUS_PENDING,
+            'expires_at' => now()->addHours((int) config('invitations.expires_hours', 24)),
+        ]);
+
+        Mail::to($user->email)->queue(
+            (new UserAccessInvitationMail($invitation, $plainToken))->afterCommit()
+        );
+
+        return $invitation;
+    }
+
     /** @param array<string, mixed> $data */
     public function accept(array $data): UserAccessInvitation
     {
@@ -49,29 +74,35 @@ class UserInvitationService
                 ->first();
 
             if (! $invitation || $invitation->status !== UserAccessInvitation::STATUS_PENDING || $invitation->revoked_at !== null) {
-                throw new InvitationAlreadyUsedException();
+                throw new InvitationAlreadyUsedException;
             }
 
             if ($invitation->expires_at->isPast()) {
                 $invitation->update(['status' => UserAccessInvitation::STATUS_EXPIRED, 'token_hash' => null]);
-                throw new InvitationExpiredException();
+                throw new InvitationExpiredException;
             }
 
-            $assigned = $invitation->unit_id !== null
-                ? DB::table('unit_user')
+            $assigned = match (true) {
+                $invitation->unit_id !== null => DB::table('unit_user')
                     ->where('unit_id', $invitation->unit_id)
                     ->where('user_id', $invitation->user_id)
                     ->where('is_active', true)
                     ->whereNull('deleted_at')
-                    ->exists()
-                : DB::table('condominium_user')
+                    ->exists(),
+                $invitation->condominium_id !== null => DB::table('condominium_user')
                     ->where('condominium_id', $invitation->condominium_id)
                     ->where('user_id', $invitation->user_id)
                     ->whereNull('deleted_at')
-                    ->exists();
+                    ->exists(),
+                $invitation->role_id !== null => DB::table('role_user')
+                    ->where('role_id', $invitation->role_id)
+                    ->where('user_id', $invitation->user_id)
+                    ->exists(),
+                default => false,
+            };
 
             if (! $invitation->user || ! $assigned) {
-                throw new InvitationAlreadyUsedException();
+                throw new InvitationAlreadyUsedException;
             }
 
             $invitation->user->update([
@@ -89,7 +120,15 @@ class UserInvitationService
 
             UserAccessInvitation::query()
                 ->where('user_id', $invitation->user_id)
-                ->where('condominium_id', $invitation->condominium_id)
+                ->when(
+                    $invitation->condominium_id === null,
+                    fn ($query) => $query->whereNull('condominium_id'),
+                    fn ($query) => $query->where('condominium_id', $invitation->condominium_id),
+                )
+                ->when(
+                    $invitation->condominium_id === null && $invitation->role_id !== null,
+                    fn ($query) => $query->where('role_id', $invitation->role_id),
+                )
                 ->whereKeyNot($invitation->id)
                 ->where('status', UserAccessInvitation::STATUS_PENDING)
                 ->update(['status' => UserAccessInvitation::STATUS_REVOKED, 'revoked_at' => now(), 'token_hash' => null]);
@@ -105,6 +144,16 @@ class UserInvitationService
         UserAccessInvitation::query()
             ->where('user_id', $user->id)
             ->where('condominium_id', $condominium->id)
+            ->where('status', UserAccessInvitation::STATUS_PENDING)
+            ->update(['status' => UserAccessInvitation::STATUS_REVOKED, 'revoked_at' => now(), 'token_hash' => null]);
+    }
+
+    public function revokePendingPlatform(User $user, Role $role): void
+    {
+        UserAccessInvitation::query()
+            ->where('user_id', $user->id)
+            ->whereNull('condominium_id')
+            ->where('role_id', $role->id)
             ->where('status', UserAccessInvitation::STATUS_PENDING)
             ->update(['status' => UserAccessInvitation::STATUS_REVOKED, 'revoked_at' => now(), 'token_hash' => null]);
     }

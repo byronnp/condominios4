@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Api\Administrators;
 
 use App\Domain\Administrators\Services\AdministratorService;
+use App\Exceptions\Condominiums\CondominiumForbiddenException;
+use App\Exceptions\Condominiums\CondominiumInactiveException;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Administrators\AdministratorAssignCondominiumRequest;
 use App\Http\Requests\Api\Administrators\AdministratorIndexRequest;
 use App\Http\Requests\Api\Administrators\AdministratorStatusRequest;
 use App\Http\Requests\Api\Administrators\AdministratorStoreRequest;
@@ -25,36 +26,13 @@ class AdministratorController extends Controller
         private readonly AdministratorService $administratorService,
     ) {}
 
-    #[OA\Get(
-        path: '/api/administrators',
-        operationId: 'administratorsIndex',
-        summary: 'Listar administradores',
-        description: 'Devuelve administradores con su estado de acceso, tipo y última invitación. El administrador senior ve todos los administradores no eliminados; un administrador de condominio ve únicamente los administradores de sus condominios autorizados.',
-        tags: ['Administradores'],
-        security: [['bearerAuth' => []]],
-        parameters: [
-            new OA\Parameter(name: 'search', in: 'query', schema: new OA\Schema(type: 'string'), example: 'Carlos'),
-            new OA\Parameter(name: 'condominium_id', in: 'query', schema: new OA\Schema(type: 'integer'), example: 1),
-            new OA\Parameter(name: 'status', in: 'query', schema: new OA\Schema(type: 'string', enum: ['active', 'inactive']), example: 'active'),
-            new OA\Parameter(name: 'page', in: 'query', schema: new OA\Schema(type: 'integer', minimum: 1), example: 1),
-            new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', minimum: 1, maximum: 100), example: 20),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Administradores encontrados'),
-            new OA\Response(response: 403, description: 'No autorizado'),
-        ]
-    )]
-    public function index(AdministratorIndexRequest $request): JsonResponse
+    #[OA\Get(path: '/api/condominiums/{condominium}/administrators', operationId: 'condominiumAdministratorsIndex', summary: 'Listar administradores del condominio', tags: ['Administradores'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Administradores encontrados'), new OA\Response(response: 403, description: 'No autorizado')])]
+    public function indexByCondominium(AdministratorIndexRequest $request, Condominium $condominium): JsonResponse
     {
+        $this->assertCanUseCondominium($request->user(), $condominium, 'administrators.view');
+
         $data = $request->validated();
-        $accessibleCondominiumIds = $this->accessibleCondominiumIds($request->user(), 'administrators.view');
-
-        abort_if(! $request->user()->isPlatformAdmin() && $accessibleCondominiumIds === [], 403);
-
-        $query = $this->administratorQuery($request->user()->isPlatformAdmin())
-            ->when(! $request->user()->isPlatformAdmin(), function (Builder $query) use ($accessibleCondominiumIds): void {
-                $this->whereAdministratorInCondominiums($query, $accessibleCondominiumIds);
-            })
+        $query = $this->administratorQuery(false)
             ->when($data['search'] ?? null, function (Builder $query, string $search): void {
                 $query->where(function (Builder $query) use ($search): void {
                     $query->where('name', 'like', "%{$search}%")
@@ -64,12 +42,10 @@ class AdministratorController extends Controller
                         ->orWhere('document_number', 'like', "%{$search}%");
                 });
             })
-            ->when($data['condominium_id'] ?? null, function (Builder $query, int $condominiumId) use ($request, $accessibleCondominiumIds): void {
-                abort_if(! $request->user()->isPlatformAdmin() && ! in_array($condominiumId, $accessibleCondominiumIds, true), 403);
-                $this->whereAdministratorInCondominiums($query, [$condominiumId]);
-            })
             ->when(isset($data['status']), fn (Builder $query) => $query->where('is_access_enabled', $data['status'] === 'active'))
             ->orderBy('name');
+
+        $this->whereAdministratorInCondominiums($query, [$condominium->id]);
 
         $paginator = $query->paginate($data['per_page'] ?? 20);
 
@@ -85,146 +61,54 @@ class AdministratorController extends Controller
         );
     }
 
-    #[OA\Post(
-        path: '/api/administrators',
-        operationId: 'administratorsStore',
-        summary: 'Crear administrador',
-        description: 'Crea el administrador con acceso deshabilitado, lo asigna a los condominios indicados y envía por correo una invitación de activación de 24 horas.',
-        tags: ['Administradores'],
-        security: [['bearerAuth' => []]],
-        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
-            required: ['email', 'country', 'document_type_id', 'document_number', 'condominium_ids'],
-            properties: [
-                new OA\Property(property: 'name', description: 'Nombre completo compatible. Puede enviarse en lugar de first_name.', type: 'string', nullable: true, example: 'Carlos Ramírez'),
-                new OA\Property(property: 'first_name', description: 'Nombres. Obligatorio cuando no se envía name.', type: 'string', nullable: true, example: 'Carlos'),
-                new OA\Property(property: 'last_name', type: 'string', nullable: true, example: 'Ramírez'),
-                new OA\Property(property: 'email', type: 'string', format: 'email', example: 'carlos.ramirez@example.com'),
-                new OA\Property(property: 'country', type: 'string', example: 'EC'),
-                new OA\Property(property: 'document_type_id', type: 'integer', example: 1),
-                new OA\Property(property: 'document_number', description: 'Debe tener el formato del tipo seleccionado y ser único para la combinación de país y tipo de documento.', type: 'string', example: '0912345678'),
-                new OA\Property(property: 'phone', type: 'string', nullable: true, example: '0991234567'),
-                new OA\Property(property: 'secondary_phone', type: 'string', nullable: true, example: '042345678'),
-                new OA\Property(property: 'condominium_ids', type: 'array', items: new OA\Items(type: 'integer'), example: [1]),
-            ]
-        )),
-        responses: [
-            new OA\Response(response: 201, description: 'Administrador creado e invitación enviada'),
-            new OA\Response(response: 422, description: 'Datos inválidos'),
-        ]
-    )]
-    public function store(AdministratorStoreRequest $request): JsonResponse
+    #[OA\Post(path: '/api/condominiums/{condominium}/administrators', operationId: 'condominiumAdministratorsStore', summary: 'Crear administrador del condominio', tags: ['Administradores'], security: [['bearerAuth' => []]], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(example: ['first_name' => 'Carlos', 'last_name' => 'Ramírez', 'email' => 'carlos.ramirez@example.com', 'country' => 'EC', 'document_type_id' => 1, 'document_number' => '0912345678', 'phone' => '0991234567'])), responses: [new OA\Response(response: 201, description: 'Administrador creado'), new OA\Response(response: 403, description: 'No autorizado'), new OA\Response(response: 422, description: 'Datos inválidos')])]
+    public function storeInCondominium(AdministratorStoreRequest $request, Condominium $condominium): JsonResponse
     {
-        $data = $request->validated();
-        $this->assertCanManageCondominiums($request->user(), $data['condominium_ids'], 'administrators.create');
+        $this->assertCanUseCondominium($request->user(), $condominium, 'administrators.create');
 
-        $administrator = $this->administratorService->create($data, $request->user());
+        $administrator = $this->administratorService->assignUserAsAdministrator($condominium, $request->validated(), $request->user());
 
         return ApiResponse::success(new AdministratorResource($administrator), 'Administrador creado e invitación enviada correctamente.', 201);
     }
 
-    #[OA\Get(path: '/api/administrators/{administrator}', operationId: 'administratorsShow', summary: 'Consultar administrador', description: 'Un administrador senior puede consultar tanto administradores globales como administradores de condominio. Los administradores de condominio quedan limitados a su alcance autorizado.', tags: ['Administradores'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Administrador encontrado'), new OA\Response(response: 403, description: 'No autorizado'), new OA\Response(response: 404, description: 'No encontrado')])]
-    public function show(Request $request, User $administrator): JsonResponse
+    #[OA\Get(path: '/api/condominiums/{condominium}/administrators/{user}', operationId: 'condominiumAdministratorsShow', summary: 'Consultar administrador del condominio', tags: ['Administradores'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Administrador encontrado'), new OA\Response(response: 403, description: 'No autorizado'), new OA\Response(response: 404, description: 'No encontrado')])]
+    public function showInCondominium(Request $request, Condominium $condominium, User $user): JsonResponse
     {
-        $this->assertAdministrator($administrator, $request->user()->isPlatformAdmin());
-        $this->assertCanAccessAdministrator($request->user(), $administrator, 'administrators.view');
+        $this->assertAdministratorInCondominium($user, $condominium);
+        $this->assertCanUseCondominium($request->user(), $condominium, 'administrators.view');
 
-        return ApiResponse::success(new AdministratorResource($administrator->load('documentType')), 'Administrador encontrado.');
+        return ApiResponse::success(new AdministratorResource($user->load('documentType')), 'Administrador encontrado.');
     }
 
-    #[OA\Put(
-        path: '/api/administrators/{administrator}',
-        operationId: 'administratorsUpdate',
-        summary: 'Actualizar administrador',
-        tags: ['Administradores'],
-        security: [['bearerAuth' => []]],
-        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: 'name', type: 'string', example: 'Carlos Ramírez'),
-                new OA\Property(property: 'first_name', type: 'string', example: 'Carlos'),
-                new OA\Property(property: 'last_name', type: 'string', nullable: true, example: 'Ramírez'),
-                new OA\Property(property: 'email', type: 'string', format: 'email', example: 'carlos.ramirez@example.com'),
-                new OA\Property(property: 'country', type: 'string', example: 'EC'),
-                new OA\Property(property: 'document_type_id', type: 'integer', example: 1),
-                new OA\Property(property: 'document_number', type: 'string', example: '0912345678'),
-                new OA\Property(property: 'phone', type: 'string', nullable: true, example: '0991234567'),
-                new OA\Property(property: 'secondary_phone', type: 'string', nullable: true, example: '042345678'),
-            ]
-        )),
-        responses: [new OA\Response(response: 200, description: 'Administrador actualizado'), new OA\Response(response: 422, description: 'Datos inválidos')]
-    )]
-    public function update(AdministratorUpdateRequest $request, User $administrator): JsonResponse
+    #[OA\Put(path: '/api/condominiums/{condominium}/administrators/{user}', operationId: 'condominiumAdministratorsUpdate', summary: 'Actualizar administrador del condominio', tags: ['Administradores'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Administrador actualizado'), new OA\Response(response: 403, description: 'No autorizado'), new OA\Response(response: 404, description: 'No encontrado'), new OA\Response(response: 422, description: 'Datos inválidos')])]
+    public function updateInCondominium(AdministratorUpdateRequest $request, Condominium $condominium, User $user): JsonResponse
     {
-        $this->assertAdministrator($administrator);
-        $this->assertCanManageAdministrator($request->user(), $administrator, 'administrators.update');
+        $this->assertAdministratorInCondominium($user, $condominium);
+        $this->assertCanUseCondominium($request->user(), $condominium, 'administrators.update');
 
-        $administrator->update($request->validated());
+        $user->update($request->validated());
 
-        return ApiResponse::success(new AdministratorResource($administrator->fresh('documentType')), 'Administrador actualizado correctamente.');
+        return ApiResponse::success(new AdministratorResource($user->fresh('documentType')), 'Administrador actualizado correctamente.');
     }
 
-    #[OA\Patch(
-        path: '/api/administrators/{administrator}/status',
-        operationId: 'administratorsUpdateStatus',
-        summary: 'Activar o inactivar acceso de administrador',
-        tags: ['Administradores'],
-        security: [['bearerAuth' => []]],
-        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
-            required: ['is_access_enabled'],
-            properties: [new OA\Property(property: 'is_access_enabled', type: 'boolean', example: true)]
-        )),
-        responses: [new OA\Response(response: 200, description: 'Estado actualizado')]
-    )]
-    public function updateStatus(AdministratorStatusRequest $request, User $administrator): JsonResponse
+    #[OA\Patch(path: '/api/condominiums/{condominium}/administrators/{user}/status', operationId: 'condominiumAdministratorsUpdateStatus', summary: 'Activar o inactivar administrador del condominio', tags: ['Administradores'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Estado actualizado'), new OA\Response(response: 403, description: 'No autorizado'), new OA\Response(response: 404, description: 'No encontrado')])]
+    public function updateStatusInCondominium(AdministratorStatusRequest $request, Condominium $condominium, User $user): JsonResponse
     {
-        $this->assertAdministrator($administrator);
-        $this->assertCanManageAdministrator($request->user(), $administrator, 'administrators.update');
+        $this->assertAdministratorInCondominium($user, $condominium);
+        $this->assertCanUseCondominium($request->user(), $condominium, 'administrators.update');
 
-        $administrator->update($request->validated());
+        $user->update($request->validated());
 
-        return ApiResponse::success(new AdministratorResource($administrator->fresh('documentType')), 'Estado del administrador actualizado correctamente.');
+        return ApiResponse::success(new AdministratorResource($user->fresh('documentType')), 'Estado del administrador actualizado correctamente.');
     }
 
-    #[OA\Post(
-        path: '/api/administrators/{administrator}/condominiums',
-        operationId: 'administratorsAssignCondominium',
-        summary: 'Asignar administrador a condominio',
-        tags: ['Administradores'],
-        security: [['bearerAuth' => []]],
-        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
-            required: ['condominium_id'],
-            properties: [new OA\Property(property: 'condominium_id', type: 'integer', example: 1)]
-        )),
-        responses: [new OA\Response(response: 200, description: 'Administrador asignado')]
-    )]
-    public function assignCondominium(AdministratorAssignCondominiumRequest $request, User $administrator): JsonResponse
+    #[OA\Delete(path: '/api/condominiums/{condominium}/administrators/{user}', operationId: 'condominiumAdministratorsDestroy', summary: 'Desvincular administrador del condominio', tags: ['Administradores'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Administrador desvinculado'), new OA\Response(response: 403, description: 'No autorizado'), new OA\Response(response: 404, description: 'No encontrado')])]
+    public function destroyInCondominium(Request $request, Condominium $condominium, User $user): JsonResponse
     {
-        $this->assertAdministrator($administrator);
-        $condominium = Condominium::findOrFail($request->integer('condominium_id'));
-        $this->assertCanManageCondominiums($request->user(), [$condominium->id], 'administrators.assign');
+        $this->assertAdministratorInCondominium($user, $condominium);
+        $this->assertCanUseCondominium($request->user(), $condominium, 'administrators.delete');
 
-        $this->administratorService->assignToCondominium($administrator, $condominium);
-
-        return ApiResponse::success(new AdministratorResource($administrator->fresh('documentType')), 'Administrador asignado al condominio correctamente.');
-    }
-
-    #[OA\Delete(path: '/api/administrators/{administrator}/condominiums/{condominium}', operationId: 'administratorsRemoveCondominium', summary: 'Desvincular administrador de condominio', tags: ['Administradores'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Administrador desvinculado')])]
-    public function removeCondominium(Request $request, User $administrator, Condominium $condominium): JsonResponse
-    {
-        $this->assertAdministrator($administrator);
-        $this->assertCanManageCondominiums($request->user(), [$condominium->id], 'administrators.assign');
-
-        $this->administratorService->removeFromCondominium($administrator, $condominium);
-
-        return ApiResponse::success(new AdministratorResource($administrator->fresh('documentType')), 'Administrador desvinculado del condominio correctamente.');
-    }
-
-    #[OA\Delete(path: '/api/administrators/{administrator}', operationId: 'administratorsDestroy', summary: 'Desactivar administrador y retirar sus asignaciones', tags: ['Administradores'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Administrador eliminado')])]
-    public function destroy(Request $request, User $administrator): JsonResponse
-    {
-        $this->assertAdministrator($administrator);
-        $this->assertCanManageAdministrator($request->user(), $administrator, 'administrators.delete');
-
-        $this->administratorService->deactivate($administrator);
+        $this->administratorService->removeFromCondominium($user, $condominium);
 
         return ApiResponse::success(message: 'Administrador eliminado correctamente.');
     }
@@ -333,6 +217,35 @@ class AdministratorController extends Controller
         $requestedIds = array_map('intval', $condominiumIds);
 
         abort_if(array_diff($requestedIds, $accessibleIds) !== [], 403);
+    }
+
+    private function assertCanUseCondominium(User $user, Condominium $condominium, string $permission): void
+    {
+        if (! $condominium->is_active) {
+            throw new CondominiumInactiveException;
+        }
+
+        if ($user->isPlatformAdmin()) {
+            return;
+        }
+
+        if (! in_array($condominium->id, $this->accessibleCondominiumIds($user, $permission), true)) {
+            throw new CondominiumForbiddenException;
+        }
+    }
+
+    private function assertAdministratorInCondominium(User $administrator, Condominium $condominium): void
+    {
+        abort_if(! DB::table('condominium_user')
+            ->join('condominium_user_role', 'condominium_user_role.condominium_user_id', '=', 'condominium_user.id')
+            ->join('roles', 'roles.id', '=', 'condominium_user_role.role_id')
+            ->where('condominium_user.user_id', $administrator->id)
+            ->where('condominium_user.condominium_id', $condominium->id)
+            ->where('roles.code', 'administrador')
+            ->whereNull('condominium_user.deleted_at')
+            ->whereNull('condominium_user_role.deleted_at')
+            ->whereNull('roles.deleted_at')
+            ->exists(), 404);
     }
 
     /**

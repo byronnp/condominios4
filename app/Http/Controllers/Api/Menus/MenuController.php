@@ -8,17 +8,21 @@ use App\Http\Resources\Api\Menus\MenuResource;
 use App\Models\Condominium;
 use App\Models\Menu;
 use App\Models\Permission;
+use App\Models\User;
 use App\Support\Api\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use OpenApi\Attributes as OA;
 
 class MenuController extends Controller
 {
-    #[OA\Get(path: '/api/menus', operationId: 'menusIndex', summary: 'Listar menús', tags: ['Menús'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Menús encontrados')])]
+    #[OA\Get(path: '/api/menus', operationId: 'menusIndex', summary: 'Listar menús', tags: ['Menús'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Menús encontrados'), new OA\Response(response: 403, description: 'Solo administrador senior')])]
     public function index(): JsonResponse
     {
+        Gate::authorize('viewAny', Menu::class);
+
         return ApiResponse::success(
             MenuResource::collection(Menu::query()
                 ->with(['children.permissions', 'permissions'])
@@ -29,9 +33,11 @@ class MenuController extends Controller
         );
     }
 
-    #[OA\Post(path: '/api/menus', operationId: 'menusStore', summary: 'Crear menú padre o hijo', tags: ['Menús'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 201, description: 'Menú creado'), new OA\Response(response: 422, description: 'Datos inválidos')])]
+    #[OA\Post(path: '/api/menus', operationId: 'menusStore', summary: 'Crear menú padre o hijo', tags: ['Menús'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 201, description: 'Menú creado'), new OA\Response(response: 403, description: 'Solo administrador senior'), new OA\Response(response: 422, description: 'Datos inválidos')])]
     public function store(MenuStoreRequest $request): JsonResponse
     {
+        Gate::authorize('create', Menu::class);
+
         $data = $request->validated();
 
         if (isset($data['parent_id'])) {
@@ -57,14 +63,15 @@ class MenuController extends Controller
         return ApiResponse::success(new MenuResource($menu->load('permissions')), 'Menú creado correctamente.', 201);
     }
 
-    #[OA\Get(path: '/api/auth/menu', operationId: 'authMenu', summary: 'Obtener menú del usuario autenticado', tags: ['Menús'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Menú obtenido')])]
+    #[OA\Get(path: '/api/auth/menu', operationId: 'authMenu', summary: 'Obtener menú del usuario autenticado', tags: ['Menús'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Menú obtenido'), new OA\Response(response: 403, description: 'Condominio no permitido o inactivo'), new OA\Response(response: 422, description: 'Contexto de condominio requerido')])]
     public function current(Request $request): JsonResponse
     {
         $user = $request->user();
-        $condominium = Condominium::query()
-            ->whereKey($request->header('X-Condominium-Id'))
-            ->first()
-            ?? $user->condominiums()->first();
+        $condominium = $this->resolveCondominiumForMenu($request, $user);
+
+        if ($condominium instanceof JsonResponse) {
+            return $condominium;
+        }
 
         if (! $condominium && ! $user->isPlatformAdmin()) {
             return ApiResponse::success(MenuResource::collection(collect()), 'Menú obtenido correctamente.');
@@ -149,5 +156,73 @@ class MenuController extends Controller
             ->values();
 
         return ApiResponse::success(MenuResource::collection($parents), 'Menú obtenido correctamente.');
+    }
+
+    private function resolveCondominiumForMenu(Request $request, User $user): Condominium|JsonResponse|null
+    {
+        $headerCondominiumId = $request->header('X-Condominium-Id');
+
+        if ($user->isPlatformAdmin()) {
+            if (! $headerCondominiumId) {
+                return null;
+            }
+
+            $condominium = Condominium::query()->whereKey($headerCondominiumId)->first();
+
+            if (! $condominium) {
+                return ApiResponse::error('El condominio solicitado no existe.', 404, code: 'condominium_not_found');
+            }
+
+            if (! $condominium->is_active) {
+                return ApiResponse::error('El condominio está inactivo.', 403, code: 'condominium_inactive');
+            }
+
+            return $condominium;
+        }
+
+        $activeCondominiums = $user->condominiums()
+            ->wherePivot('is_active', true)
+            ->wherePivotNull('deleted_at')
+            ->where('condominiums.is_active', true)
+            ->get();
+
+        if ($headerCondominiumId) {
+            $condominium = $activeCondominiums->firstWhere('id', (int) $headerCondominiumId);
+
+            if (! $condominium) {
+                $belongsToInactive = $user->condominiums()
+                    ->whereKey($headerCondominiumId)
+                    ->wherePivotNull('deleted_at')
+                    ->first();
+
+                if ($belongsToInactive && ! $belongsToInactive->is_active) {
+                    return ApiResponse::error('El condominio está inactivo.', 403, code: 'condominium_inactive');
+                }
+
+                return ApiResponse::error('El condominio no pertenece al usuario autenticado.', 403, code: 'condominium_forbidden');
+            }
+
+            return $condominium;
+        }
+
+        if ($activeCondominiums->count() === 1) {
+            return $activeCondominiums->first();
+        }
+
+        if ($activeCondominiums->count() > 1) {
+            return ApiResponse::error(
+                'Debes indicar el condominio activo para consultar el menú.',
+                422,
+                code: 'condominium_context_required',
+            );
+        }
+
+        $hasInactiveMemberships = $user->condominiums()->wherePivotNull('deleted_at')->exists();
+
+        if ($hasInactiveMemberships) {
+            return ApiResponse::error('El condominio está inactivo.', 403, code: 'condominium_inactive');
+        }
+
+        return null;
     }
 }

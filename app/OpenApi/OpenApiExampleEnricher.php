@@ -140,7 +140,7 @@ class OpenApiExampleEnricher
             'POST /api/auth/login' => $login,
             'POST /api/auth/refresh' => ['refresh_token' => 'refresh-token'],
             'POST /api/auth/logout' => ['refresh_token' => 'refresh-token'],
-            'POST /api/users' => [
+            'POST /api/condominiums/{condominium}/users' => [
                 'first_name' => 'Ana',
                 'last_name' => 'Pérez',
                 'email' => 'ana@example.com',
@@ -150,11 +150,16 @@ class OpenApiExampleEnricher
                 'phone' => '0991112222',
                 'secondary_phone' => null,
                 'is_access_enabled' => false,
-                'assignments' => [
-                    ['condominium_id' => 1, 'role_id' => 2],
-                ],
+                'role_id' => 2,
             ],
-            'POST /api/administrators' => [
+            'PUT /api/condominiums/{condominium}/users/{user}' => [
+                'first_name' => 'Ana María',
+                'role_id' => 3,
+            ],
+            'PATCH /api/condominiums/{condominium}/users/{user}/status' => [
+                'is_access_enabled' => false,
+            ],
+            'POST /api/condominiums/{condominium}/administrators' => [
                 'first_name' => 'Carlos',
                 'last_name' => 'Ramírez',
                 'email' => 'carlos.ramirez@example.com',
@@ -162,7 +167,29 @@ class OpenApiExampleEnricher
                 'document_type_id' => 1,
                 'document_number' => '0912345678',
                 'phone' => '0991234567',
-                'condominium_ids' => [1],
+            ],
+            'PUT /api/condominiums/{condominium}/administrators/{user}' => [
+                'first_name' => 'Carlos Andrés',
+                'phone' => '0987654321',
+            ],
+            'PATCH /api/condominiums/{condominium}/administrators/{user}/status' => [
+                'is_access_enabled' => true,
+            ],
+            'POST /api/platform-administrators' => [
+                'first_name' => 'Ana',
+                'last_name' => 'Senior',
+                'email' => 'ana.senior@example.com',
+                'country' => 'EC',
+                'document_type_id' => 1,
+                'document_number' => '0912345678',
+                'phone' => '0991234567',
+            ],
+            'PATCH /api/platform-administrators/{user}' => [
+                'first_name' => 'Ana María',
+                'phone' => '0987654321',
+            ],
+            'PATCH /api/platform-administrators/{user}/status' => [
+                'is_access_enabled' => false,
             ],
             'POST /api/condominiums' => [
                 'name' => 'Condominio Vista Verde',
@@ -289,7 +316,7 @@ class OpenApiExampleEnricher
                 'password' => 'Password123!',
                 'password_confirmation' => 'Password123!',
             ],
-            'POST /api/users/{user}/billing-profiles' => [
+            'POST /api/condominiums/{condominium}/units/{unit}/users/{user}/billing-profiles' => [
                 'document_type_id' => 1,
                 'document_number' => '1711111111',
                 'business_name' => 'Usuario Demo',
@@ -377,22 +404,28 @@ class OpenApiExampleEnricher
             ],
             str_contains($operationKey, '/auth/sessions') => [$this->authSession()],
             in_array($operationKey, [
-                'POST /api/users',
-                'GET /api/users/{user}',
-                'PUT /api/users/{user}',
-                'PATCH /api/users/{user}/status',
+                'POST /api/condominiums/{condominium}/users',
+                'GET /api/condominiums/{condominium}/users/{user}',
+                'PUT /api/condominiums/{condominium}/users/{user}',
+                'PATCH /api/condominiums/{condominium}/users/{user}/status',
             ], true) => $this->user(),
-            $operationKey === 'GET /api/users' => [$this->user()],
-            $operationKey === 'GET /api/administrators' => [$this->administrator()],
+            $operationKey === 'GET /api/condominiums/{condominium}/users' => [$this->user()],
+            $operationKey === 'GET /api/condominiums/{condominium}/administrators' => [$this->administrator()],
             in_array($operationKey, [
-                'POST /api/administrators',
-                'GET /api/administrators/{administrator}',
-                'PUT /api/administrators/{administrator}',
-                'PATCH /api/administrators/{administrator}/status',
-                'POST /api/administrators/{administrator}/condominiums',
-                'DELETE /api/administrators/{administrator}/condominiums/{condominium}',
+                'POST /api/condominiums/{condominium}/administrators',
+                'GET /api/condominiums/{condominium}/administrators/{user}',
+                'PUT /api/condominiums/{condominium}/administrators/{user}',
+                'PATCH /api/condominiums/{condominium}/administrators/{user}/status',
+                'DELETE /api/condominiums/{condominium}/administrators/{user}',
             ], true) => $this->administrator(),
-            $operationKey === 'GET /api/users/form-options' => [
+            $operationKey === 'GET /api/platform-administrators' => [$this->platformAdministrator()],
+            in_array($operationKey, [
+                'POST /api/platform-administrators',
+                'GET /api/platform-administrators/{user}',
+                'PATCH /api/platform-administrators/{user}',
+                'PATCH /api/platform-administrators/{user}/status',
+            ], true) => $this->platformAdministrator(),
+            $operationKey === 'GET /api/condominiums/{condominium}/users/form-options' => [
                 'roles' => [$this->role()],
                 'condominiums' => [
                     ['id' => 1, 'name' => 'Condominio Los Cedros'],
@@ -444,8 +477,8 @@ class OpenApiExampleEnricher
                 : ['user' => $this->user(), 'unit_relation' => $this->unitUser()],
             str_contains($operationKey, '/units/{unit}') => $this->unit(),
             str_contains($operationKey, '/units'),
-            str_contains($operationKey, '/my/units') => [$this->unit()],
             str_contains($operationKey, '/menus') || str_contains($operationKey, '/auth/menu') => [$this->menu()],
+            str_contains($operationKey, '/roles/{role}/permissions') => $this->role(),
             str_contains($operationKey, '/permissions') => $this->collectionOrItem($operationKey, $this->permission()),
             str_contains($operationKey, '/roles') => $this->collectionOrItem($operationKey, $this->role()),
             str_contains($operationKey, '/condominiums/options') => [
@@ -525,6 +558,38 @@ class OpenApiExampleEnricher
                 'is_active' => true,
                 'joined_at' => '2026-06-30T12:00:00Z',
             ]],
+            'created_at' => '2026-06-30T12:00:00Z',
+            'updated_at' => '2026-06-30T12:00:00Z',
+        ];
+    }
+
+    private function platformAdministrator(): array
+    {
+        return [
+            'id' => 3,
+            'name' => 'Ana Senior',
+            'first_name' => 'Ana',
+            'last_name' => 'Senior',
+            'email' => 'ana.senior@example.com',
+            'country' => 'EC',
+            'document_type' => $this->catalogItem(),
+            'document_number' => '0912345678',
+            'phone' => '0991234567',
+            'secondary_phone' => null,
+            'is_access_enabled' => false,
+            'access_status' => 'pending_activation',
+            'platform_role' => [
+                'code' => 'administrador_senior',
+                'name' => 'Administrador Senior',
+            ],
+            'invitation' => [
+                'id' => 1,
+                'status' => 'pending',
+                'expires_at' => '2026-07-01T12:00:00Z',
+                'accepted_at' => null,
+                'revoked_at' => null,
+                'is_expired' => false,
+            ],
             'created_at' => '2026-06-30T12:00:00Z',
             'updated_at' => '2026-06-30T12:00:00Z',
         ];

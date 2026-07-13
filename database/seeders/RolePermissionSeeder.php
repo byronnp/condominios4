@@ -157,6 +157,7 @@ class RolePermissionSeeder extends Seeder
             ['module' => 'boards', 'action' => 'manage', 'name' => 'Administrar directivas', 'code' => 'boards.manage'],
             ['module' => 'payment_methods', 'action' => 'view', 'name' => 'Ver métodos de pago', 'code' => 'payment_methods.view'],
             ['module' => 'payment_methods', 'action' => 'manage', 'name' => 'Administrar métodos de pago', 'code' => 'payment_methods.manage'],
+            ['module' => 'payments', 'action' => 'view', 'name' => 'Ver pagos', 'code' => 'payments.view'],
             ['module' => 'units', 'action' => 'view', 'name' => 'Ver unidades', 'code' => 'units.view'],
             ['module' => 'units', 'action' => 'manage', 'name' => 'Administrar unidades', 'code' => 'units.manage'],
             ['module' => 'unit_users', 'action' => 'view', 'name' => 'Ver personas por unidad', 'code' => 'unit_users.view'],
@@ -180,6 +181,9 @@ class RolePermissionSeeder extends Seeder
             ['module' => 'incidents', 'action' => 'manage', 'name' => 'Administrar incidentes', 'code' => 'incidents.manage'],
             ['module' => 'maintenances', 'action' => 'view', 'name' => 'Ver mantenimientos', 'code' => 'maintenances.view'],
             ['module' => 'maintenances', 'action' => 'manage', 'name' => 'Administrar mantenimientos', 'code' => 'maintenances.manage'],
+            ['module' => 'reports', 'action' => 'view', 'name' => 'Ver reportes', 'code' => 'reports.view'],
+            ['module' => 'settings', 'action' => 'view', 'name' => 'Ver configuración', 'code' => 'settings.view'],
+            ['module' => 'announcements', 'action' => 'view', 'name' => 'Ver comunicados', 'code' => 'announcements.view'],
         ];
     }
 }

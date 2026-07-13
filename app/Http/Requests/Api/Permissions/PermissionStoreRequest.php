@@ -32,4 +32,26 @@ class PermissionStoreRequest extends FormRequest
             'is_active' => ['nullable', 'boolean'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'module.required' => 'El módulo es obligatorio.',
+            'module.string' => 'El módulo debe ser una cadena de texto.',
+            'module.max' => 'El módulo no puede superar los 100 caracteres.',
+            'action.required' => 'La acción es obligatoria.',
+            'action.string' => 'La acción debe ser una cadena de texto.',
+            'action.max' => 'La acción no puede superar los 100 caracteres.',
+            'name.required' => 'El nombre es obligatorio.',
+            'name.string' => 'El nombre debe ser una cadena de texto.',
+            'name.max' => 'El nombre no puede superar los 255 caracteres.',
+            'code.required' => 'El código es obligatorio.',
+            'code.string' => 'El código debe ser una cadena de texto.',
+            'code.max' => 'El código no puede superar los 150 caracteres.',
+            'code.regex' => 'El código debe tener el formato module.action.',
+            'code.unique' => 'Ya existe un permiso con ese código.',
+            'description.string' => 'La descripción debe ser una cadena de texto.',
+            'is_active.boolean' => 'El estado debe ser verdadero o falso.',
+        ];
+    }
 }

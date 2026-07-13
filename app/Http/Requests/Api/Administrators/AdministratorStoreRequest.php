@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests\Api\Administrators;
 
+use App\Models\User;
 use App\Rules\ValidCatalogItem;
 use App\Rules\ValidDocumentNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class AdministratorStoreRequest extends FormRequest
 {
@@ -20,7 +22,7 @@ class AdministratorStoreRequest extends FormRequest
             'name' => ['nullable', 'required_without:first_name', 'string', 'max:255'],
             'first_name' => ['nullable', 'required_without:name', 'string', 'max:255'],
             'last_name' => ['nullable', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'email' => ['required', 'email', 'max:255'],
             'country' => ['required', 'string', 'size:2', Rule::exists('countries', 'code')->where('is_active', true)],
             'document_type_id' => ['required', 'integer', new ValidCatalogItem('document_types')],
             'document_number' => [
@@ -28,14 +30,9 @@ class AdministratorStoreRequest extends FormRequest
                 'string',
                 'max:30',
                 new ValidDocumentNumber,
-                Rule::unique('users', 'document_number')->where(fn ($query) => $query
-                    ->where('country', $this->input('country'))
-                    ->where('document_type_id', $this->input('document_type_id'))),
             ],
             'phone' => ['nullable', 'string', 'max:50'],
             'secondary_phone' => ['nullable', 'string', 'max:50'],
-            'condominium_ids' => ['required', 'array', 'min:1'],
-            'condominium_ids.*' => ['integer', 'distinct', Rule::exists('condominiums', 'id')->whereNull('deleted_at')],
         ];
     }
 
@@ -68,12 +65,27 @@ class AdministratorStoreRequest extends FormRequest
             'phone.max' => 'El teléfono no puede tener más de 50 caracteres.',
             'secondary_phone.string' => 'El teléfono secundario debe ser una cadena de texto.',
             'secondary_phone.max' => 'El teléfono secundario no puede tener más de 50 caracteres.',
-            'condominium_ids.required' => 'Debe seleccionar al menos un condominio.',
-            'condominium_ids.array' => 'Los condominios deben enviarse como una lista.',
-            'condominium_ids.min' => 'Debe seleccionar al menos un condominio.',
-            'condominium_ids.*.integer' => 'Cada condominio debe ser un identificador entero.',
-            'condominium_ids.*.distinct' => 'No se puede seleccionar el mismo condominio más de una vez.',
-            'condominium_ids.*.exists' => 'Uno de los condominios seleccionados no existe.',
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                $documentUser = User::query()
+                    ->where('country', $this->input('country'))
+                    ->where('document_type_id', $this->input('document_type_id'))
+                    ->where('document_number', $this->input('document_number'))
+                    ->first();
+
+                $emailUser = User::query()
+                    ->where('email', $this->input('email'))
+                    ->first();
+
+                if ($documentUser && $emailUser && $documentUser->id !== $emailUser->id) {
+                    $validator->errors()->add('email', 'El correo electrónico pertenece a otro usuario.');
+                }
+            },
         ];
     }
 }

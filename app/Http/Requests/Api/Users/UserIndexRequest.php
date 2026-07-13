@@ -16,7 +16,6 @@ class UserIndexRequest extends FormRequest
     {
         return [
             'search' => ['nullable', 'string', 'max:255'],
-            'condominium_id' => ['nullable', 'integer', Rule::exists('condominiums', 'id')->whereNull('deleted_at')],
             'role_id' => ['nullable', 'integer', Rule::exists('roles', 'id')->whereNull('deleted_at')],
             'status' => ['nullable', Rule::in(['active', 'inactive'])],
             'page' => ['nullable', 'integer', 'min:1'],

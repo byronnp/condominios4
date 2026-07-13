@@ -420,9 +420,6 @@ class ApiEndpointDocumentation
     #[OA\Get(path: '/api/condominiums/{condominium}/units/{unit}/account-movements', operationId: 'unitAccountMovementsIndex', summary: 'Listar movimientos de cuenta de unidad', tags: ['Unidades'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Movimientos de cuenta encontrados')])]
     public function unitAccountMovementsIndex(): void {}
 
-    #[OA\Get(path: '/api/my/units', operationId: 'myUnitsIndex', summary: 'Listar mis unidades', tags: ['Unidades'], security: [['bearerAuth' => []]], responses: [new OA\Response(response: 200, description: 'Unidades del usuario autenticado')])]
-    public function myUnitsIndex(): void {}
-
     #[OA\Patch(
         path: '/api/condominiums/{condominium}/units/{unit}/users/{user}/deactivate',
         operationId: 'unitUsersDeactivate',
