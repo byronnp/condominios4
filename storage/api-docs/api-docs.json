@@ -6281,23 +6281,12 @@
                                 "type": "object"
                             },
                             "example": {
-                                "condominium_block_id": 1,
-                                "parent_unit_id": null,
-                                "unit_type_id": 1,
-                                "number": "102",
-                                "code": "A-102",
-                                "floor": "1",
-                                "area_m2": 82.5,
-                                "current_aliquot_percentage": 3.5,
+                                "unit_type_id": 10,
+                                "code": "CASA-01",
+                                "number": "01",
+                                "area_m2": 120,
                                 "is_assignable": true,
-                                "is_active": true,
-                                "parking_units": [
-                                    {
-                                        "number": "13",
-                                        "code": "P-13",
-                                        "area_m2": 12.5
-                                    }
-                                ]
+                                "is_active": true
                             }
                         }
                     }
@@ -6352,7 +6341,7 @@
                                         "number": "01",
                                         "floor": null,
                                         "area_m2": 120,
-                                        "current_aliquot_percentage": 5,
+                                        "is_assignable": true,
                                         "is_active": true
                                     },
                                     "meta": {}
@@ -6457,7 +6446,7 @@
                                         "number": "01",
                                         "floor": null,
                                         "area_m2": 120,
-                                        "current_aliquot_percentage": 5,
+                                        "is_assignable": true,
                                         "is_active": true
                                     },
                                     "meta": {}
@@ -9515,7 +9504,7 @@
                                         "number": "01",
                                         "floor": null,
                                         "area_m2": 120,
-                                        "current_aliquot_percentage": 5,
+                                        "is_assignable": true,
                                         "is_active": true
                                     },
                                     "meta": {}

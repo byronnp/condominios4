@@ -22,7 +22,6 @@ class Unit extends Model
         'number',
         'floor',
         'area_m2',
-        'current_aliquot_percentage',
         'is_assignable',
         'is_active',
     ];
@@ -31,7 +30,6 @@ class Unit extends Model
     {
         return [
             'area_m2' => 'decimal:2',
-            'current_aliquot_percentage' => 'decimal:4',
             'is_assignable' => 'boolean',
             'is_active' => 'boolean',
         ];

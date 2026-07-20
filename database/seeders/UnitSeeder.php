@@ -71,7 +71,6 @@ class UnitSeeder extends Seeder
             'number' => '01',
             'floor' => null,
             'area_m2' => 120.00,
-            'current_aliquot_percentage' => 5.0000,
             'is_assignable' => true,
             'is_active' => true,
         ]);
@@ -85,7 +84,6 @@ class UnitSeeder extends Seeder
             'unit_type_id' => $unitTypes->get('parqueadero')->id,
             'number' => '12',
             'area_m2' => 12.50,
-            'current_aliquot_percentage' => 0,
             'is_assignable' => true,
             'is_active' => true,
         ]);
@@ -100,7 +98,6 @@ class UnitSeeder extends Seeder
             'number' => '101',
             'floor' => '1',
             'area_m2' => 80.50,
-            'current_aliquot_percentage' => 3.5000,
             'is_assignable' => true,
             'is_active' => true,
         ]);
@@ -183,7 +180,6 @@ class UnitSeeder extends Seeder
                     'number' => sprintf('%02d', $houseNumber),
                     'floor' => null,
                     'area_m2' => 100 + ($houseNumber * 5),
-                    'current_aliquot_percentage' => 20.0000,
                     'is_assignable' => true,
                     'is_active' => true,
                 ]);
@@ -198,7 +194,6 @@ class UnitSeeder extends Seeder
                     'number' => sprintf('%02d', $houseNumber),
                     'floor' => null,
                     'area_m2' => 12.50,
-                    'current_aliquot_percentage' => 0,
                     'is_assignable' => true,
                     'is_active' => true,
                 ]);

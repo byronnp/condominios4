@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('api_token', 64)->nullable()->unique()->after('remember_token');
+        Schema::table('units', function (Blueprint $table) {
+            $table->dropColumn('current_aliquot_percentage');
         });
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('api_token');
+        Schema::table('units', function (Blueprint $table) {
+            $table->decimal('current_aliquot_percentage', 8, 4)->nullable()->after('area_m2');
         });
     }
 };

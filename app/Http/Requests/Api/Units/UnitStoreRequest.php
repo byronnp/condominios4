@@ -25,8 +25,6 @@ class UnitStoreRequest extends FormRequest
             'number' => ['required', 'string', 'max:100'],
             'floor' => ['nullable', 'string', 'max:50'],
             'area_m2' => ['nullable', 'numeric', 'min:0'],
-            'current_aliquot_percentage' => ['nullable', 'numeric', 'min:0'],
-            'aliquot_starts_on' => ['nullable', 'date'],
             'is_assignable' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
         ];

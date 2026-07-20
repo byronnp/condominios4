@@ -281,19 +281,12 @@ class OpenApiExampleEnricher
                 'is_active' => true,
             ],
             'POST /api/condominiums/{condominium}/units' => [
-                'condominium_block_id' => 1,
-                'parent_unit_id' => null,
-                'unit_type_id' => 1,
-                'number' => '102',
-                'code' => 'A-102',
-                'floor' => '1',
-                'area_m2' => 82.5,
-                'current_aliquot_percentage' => 3.5,
+                'unit_type_id' => 10,
+                'code' => 'CASA-01',
+                'number' => '01',
+                'area_m2' => 120,
                 'is_assignable' => true,
                 'is_active' => true,
-                'parking_units' => [
-                    ['number' => '13', 'code' => 'P-13', 'area_m2' => 12.5],
-                ],
             ],
             'POST /api/condominiums/{condominium}/units/{unit}/users' => [
                 'first_name' => 'Persona',
@@ -725,7 +718,7 @@ class OpenApiExampleEnricher
 
     private function unit(): array
     {
-        return ['id' => 1, 'condominium_id' => 1, 'code' => 'CASA-01', 'number' => '01', 'floor' => null, 'area_m2' => 120, 'current_aliquot_percentage' => 5, 'is_active' => true];
+        return ['id' => 1, 'condominium_id' => 1, 'code' => 'CASA-01', 'number' => '01', 'floor' => null, 'area_m2' => 120, 'is_assignable' => true, 'is_active' => true];
     }
 
     private function unitUser(): array

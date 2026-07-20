@@ -31,14 +31,13 @@ class UnitPhaseTest extends TestCase
         $this->seed(DatabaseSeeder::class);
     }
 
-    public function test_phase_five_seeders_create_units_people_billing_profiles_aliquots_and_invitations(): void
+    public function test_phase_five_seeders_create_units_people_billing_profiles_and_invitations(): void
     {
         $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
         $house = Unit::where('code', 'CASA-01')->firstOrFail();
 
         $this->assertDatabaseHas('condominium_blocks', ['condominium_id' => $condominium->id, 'code' => 'TORRE-A']);
         $this->assertDatabaseHas('units', ['condominium_id' => $condominium->id, 'code' => 'P-12', 'parent_unit_id' => $house->id]);
-        $this->assertDatabaseHas('unit_aliquots', ['unit_id' => $house->id, 'period_year' => 2026, 'period_month' => 6]);
         $this->assertDatabaseHas('user_billing_profiles', ['business_name' => 'ADMINISTRADOR CONDOMINIO']);
         $this->assertDatabaseHas('user_access_invitations', ['email' => 'ana.perez@example.com']);
         $this->assertDatabaseHas('permissions', ['code' => 'unit_users.manage_all']);
@@ -136,7 +135,7 @@ class UnitPhaseTest extends TestCase
             ->assertJsonPath('data.unit_relation.relationship_code', 'propietario');
     }
 
-    public function test_unit_can_be_created_with_initial_aliquot(): void
+    public function test_unit_can_be_created_without_economic_attributes(): void
     {
         $token = $this->loginToken();
         $condominium = Condominium::where('slug', 'condominio-los-cedros')->firstOrFail();
@@ -147,14 +146,13 @@ class UnitPhaseTest extends TestCase
             'code' => 'CASA-02',
             'number' => '02',
             'area_m2' => 110.00,
-            'current_aliquot_percentage' => 4.75,
-            'aliquot_starts_on' => '2026-07-01',
         ], [
             'Authorization' => "Bearer {$token}",
         ])
             ->assertCreated()
             ->assertJsonPath('data.code', 'CASA-02')
-            ->assertJsonFragment(['period_month' => 7]);
+            ->assertJsonMissingPath('data.current_aliquot_percentage')
+            ->assertJsonMissingPath('data.aliquots');
     }
 
     public function test_senior_administrator_can_update_a_house(): void
@@ -166,8 +164,6 @@ class UnitPhaseTest extends TestCase
         $this->patchJson("/api/condominiums/{$condominium->id}/units/{$house->id}", [
             'number' => '01-A',
             'area_m2' => 135.50,
-            'current_aliquot_percentage' => 6.25,
-            'aliquot_starts_on' => '2026-07-01',
             'is_assignable' => false,
         ], [
             'Authorization' => "Bearer {$token}",
@@ -175,9 +171,9 @@ class UnitPhaseTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.number', '01-A')
             ->assertJsonPath('data.area_m2', '135.50')
-            ->assertJsonPath('data.current_aliquot_percentage', '6.2500')
             ->assertJsonPath('data.is_assignable', false)
-            ->assertJsonFragment(['period_month' => 7, 'percentage' => '6.2500']);
+            ->assertJsonMissingPath('data.current_aliquot_percentage')
+            ->assertJsonMissingPath('data.aliquots');
 
         $this->assertDatabaseHas('units', [
             'id' => $house->id,

@@ -28,8 +28,6 @@ class UnitUpdateRequest extends FormRequest
             'number' => ['sometimes', 'required', 'string', 'max:100'],
             'floor' => ['sometimes', 'nullable', 'string', 'max:50'],
             'area_m2' => ['sometimes', 'nullable', 'numeric', 'min:0'],
-            'current_aliquot_percentage' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:100'],
-            'aliquot_starts_on' => ['sometimes', 'nullable', 'date', 'required_with:current_aliquot_percentage'],
             'is_assignable' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],
         ];
@@ -83,11 +81,6 @@ class UnitUpdateRequest extends FormRequest
             'floor.max' => 'El piso no puede superar los 50 caracteres.',
             'area_m2.numeric' => 'El área debe ser un valor numérico.',
             'area_m2.min' => 'El área no puede ser negativa.',
-            'current_aliquot_percentage.numeric' => 'El porcentaje de alícuota debe ser numérico.',
-            'current_aliquot_percentage.min' => 'El porcentaje de alícuota no puede ser negativo.',
-            'current_aliquot_percentage.max' => 'El porcentaje de alícuota no puede ser mayor que 100.',
-            'aliquot_starts_on.date' => 'La fecha de inicio de la alícuota no es válida.',
-            'aliquot_starts_on.required_with' => 'La fecha de inicio es obligatoria al actualizar la alícuota.',
             'is_assignable.boolean' => 'El campo asignable debe ser verdadero o falso.',
             'is_active.boolean' => 'El estado debe ser verdadero o falso.',
         ];

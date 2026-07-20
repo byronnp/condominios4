@@ -10,9 +10,7 @@ use App\Http\Resources\Api\Units\UnitResource;
 use App\Models\Condominium;
 use App\Models\Unit;
 use App\Support\Api\ApiResponse;
-use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use OpenApi\Attributes as OA;
 
@@ -49,38 +47,19 @@ class UnitController extends Controller
             abort_if($parent->parent_unit_id !== null, 422, 'No se permite crear unidades de más de dos niveles.');
         }
 
-        $unit = DB::transaction(function () use ($condominium, $data): Unit {
-            $unit = $condominium->units()->create([
-                'condominium_block_id' => $data['condominium_block_id'] ?? null,
-                'parent_unit_id' => $data['parent_unit_id'] ?? null,
-                'unit_type_id' => $data['unit_type_id'],
-                'code' => $data['code'],
-                'number' => $data['number'],
-                'floor' => $data['floor'] ?? null,
-                'area_m2' => $data['area_m2'] ?? null,
-                'current_aliquot_percentage' => $data['current_aliquot_percentage'] ?? null,
-                'is_assignable' => $data['is_assignable'] ?? true,
-                'is_active' => $data['is_active'] ?? true,
-            ]);
+        $unit = $condominium->units()->create([
+            'condominium_block_id' => $data['condominium_block_id'] ?? null,
+            'parent_unit_id' => $data['parent_unit_id'] ?? null,
+            'unit_type_id' => $data['unit_type_id'],
+            'code' => $data['code'],
+            'number' => $data['number'],
+            'floor' => $data['floor'] ?? null,
+            'area_m2' => $data['area_m2'] ?? null,
+            'is_assignable' => $data['is_assignable'] ?? true,
+            'is_active' => $data['is_active'] ?? true,
+        ]);
 
-            if (isset($data['current_aliquot_percentage'])) {
-                $startsOn = CarbonImmutable::parse($data['aliquot_starts_on'] ?? now()->startOfMonth());
-                $unit->aliquots()->create([
-                    'period_year' => (int) $startsOn->format('Y'),
-                    'period_month' => (int) $startsOn->format('m'),
-                    'percentage' => $data['current_aliquot_percentage'],
-                    'amount' => null,
-                    'starts_on' => $startsOn->startOfMonth()->toDateString(),
-                    'ends_on' => $startsOn->endOfMonth()->toDateString(),
-                    'status' => 'active',
-                    'is_active' => true,
-                ]);
-            }
-
-            return $unit;
-        });
-
-        return ApiResponse::success(new UnitResource($unit->load(['block', 'parentUnit', 'unitType', 'aliquots'])), 'Unidad creada correctamente.', 201);
+        return ApiResponse::success(new UnitResource($unit->load(['block', 'parentUnit', 'unitType'])), 'Unidad creada correctamente.', 201);
     }
 
     #[OA\Get(
@@ -110,7 +89,6 @@ class UnitController extends Controller
                         'number' => '01',
                         'floor' => null,
                         'area_m2' => '120.00',
-                        'current_aliquot_percentage' => '5.0000',
                         'is_assignable' => true,
                         'is_active' => true,
                         'child_units' => [[
@@ -158,8 +136,6 @@ class UnitController extends Controller
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(example: [
             'number' => '01',
             'area_m2' => 135.50,
-            'current_aliquot_percentage' => 6.25,
-            'aliquot_starts_on' => '2026-07-01',
             'is_assignable' => true,
             'is_active' => true,
         ])),
@@ -178,28 +154,10 @@ class UnitController extends Controller
 
         $data = $request->validated();
 
-        DB::transaction(function () use ($unit, $data): void {
-            $unit->update(collect($data)->except('aliquot_starts_on')->all());
-
-            if (array_key_exists('current_aliquot_percentage', $data) && $data['current_aliquot_percentage'] !== null) {
-                $startsOn = CarbonImmutable::parse($data['aliquot_starts_on']);
-
-                $unit->aliquots()->updateOrCreate([
-                    'period_year' => (int) $startsOn->format('Y'),
-                    'period_month' => (int) $startsOn->format('m'),
-                ], [
-                    'percentage' => $data['current_aliquot_percentage'],
-                    'amount' => null,
-                    'starts_on' => $startsOn->startOfMonth()->toDateString(),
-                    'ends_on' => $startsOn->endOfMonth()->toDateString(),
-                    'status' => 'active',
-                    'is_active' => true,
-                ]);
-            }
-        });
+        $unit->update($data);
 
         return ApiResponse::success(
-            new UnitResource($unit->fresh()->load(['condominium', 'block', 'parentUnit', 'childUnits.unitType', 'unitType', 'aliquots'])),
+            new UnitResource($unit->fresh()->load(['condominium', 'block', 'parentUnit', 'childUnits.unitType', 'unitType'])),
             'Unidad actualizada correctamente.'
         );
     }
@@ -207,9 +165,8 @@ class UnitController extends Controller
     private function unitResponse(Unit $unit): JsonResponse
     {
         return ApiResponse::success(
-            new UnitResource($unit->load(['condominium', 'block', 'parentUnit', 'childUnits.unitType', 'unitType', 'aliquots'])),
+            new UnitResource($unit->load(['condominium', 'block', 'parentUnit', 'childUnits.unitType', 'unitType'])),
             'Unidad encontrada.'
         );
     }
-
 }
